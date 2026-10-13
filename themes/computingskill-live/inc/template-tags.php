@@ -15,7 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 function cs_card( $title, $url, $description = '', $icon = '' ) {
 	echo '<a class="cs-card" href="' . esc_url( $url ) . '">';
 	if ( $icon ) {
-		echo '<span class="cs-card-icon" aria-hidden="true">' . esc_html( $icon ) . '</span>';
+		// A known key (e.g. 'cpu') prints a line icon; anything else prints as text.
+		$svg = function_exists( 'cs_icon_svg' ) ? cs_icon_svg( $icon ) : '';
+		echo '<span class="cs-card-icon" aria-hidden="true">' . ( $svg ? $svg : esc_html( $icon ) ) . '</span>'; // $svg is a fixed theme string.
 	}
 	echo '<span class="cs-card-title">' . esc_html( $title ) . '</span>';
 	if ( $description ) {

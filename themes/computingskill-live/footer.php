@@ -10,7 +10,7 @@
 <footer id="cs-colophon" class="cs-site-footer">
 	<div class="cs-container cs-footer-inner">
 		<div class="cs-footer-col cs-footer-brand">
-			<p class="cs-footer-logo"><?php bloginfo( 'name' ); ?></p>
+			<p class="cs-footer-logo cs-wordmark"><?php echo cs_wordmark(); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts. ?></p>
 			<p><?php esc_html_e( 'Free PC hardware calculators, computer tools and computing guides — built to help you buy, build and upgrade with confidence.', 'computingskill' ); ?></p>
 		</div>
 

@@ -97,6 +97,7 @@ while ( have_posts() ) :
 
 				<section class="cs-bn-breakdown">
 					<h2><?php esc_html_e( 'Bottleneck Estimate by Resolution', 'computingskill' ); ?></h2>
+					<div class="cs-bn-visual cs-bn-visual-page"><?php echo cs_bn_load_bars( $results ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?></div>
 					<div class="cs-table-wrap">
 						<table class="cs-hardware-table cs-bn-table">
 							<thead>

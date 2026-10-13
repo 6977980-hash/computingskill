@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CS_THEME_VERSION', '1.0.30' );
+define( 'CS_THEME_VERSION', '1.0.31' );
 define( 'CS_THEME_DIR', get_template_directory() );
 define( 'CS_THEME_URI', get_template_directory_uri() );
 
@@ -30,6 +30,7 @@ require_once CS_THEME_DIR . '/inc/games-content.php';
 require_once CS_THEME_DIR . '/inc/extra-faq.php';
 require_once CS_THEME_DIR . '/inc/quick-answers.php';
 require_once CS_THEME_DIR . '/inc/template-tags.php';
+require_once CS_THEME_DIR . '/inc/design.php';
 require_once CS_THEME_DIR . '/inc/bottleneck.php';
 require_once CS_THEME_DIR . '/inc/bottleneck-content.php';
 require_once CS_THEME_DIR . '/inc/combo-pages.php';

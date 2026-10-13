@@ -10,14 +10,44 @@ get_header();
 <main id="cs-main" class="cs-main cs-front-page">
 
 	<section class="cs-hero">
-		<div class="cs-container cs-narrow">
-			<h1><?php esc_html_e( 'Free PC Hardware Calculators & Computer Tools', 'computingskill' ); ?></h1>
-			<p class="cs-hero-sub"><?php esc_html_e( 'Calculate, compare and optimize your PC before you buy, build or upgrade.', 'computingskill' ); ?></p>
-			<form class="cs-search-form cs-hero-search" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
-				<label class="screen-reader-text" for="cs-hero-search-input"><?php esc_html_e( 'Search ComputingSkill', 'computingskill' ); ?></label>
-				<input type="search" id="cs-hero-search-input" name="s" placeholder="<?php esc_attr_e( 'Search calculators, tools, guides…', 'computingskill' ); ?>" />
-				<button type="submit"><?php esc_html_e( 'Search', 'computingskill' ); ?></button>
-			</form>
+		<div class="cs-container cs-hero-grid">
+			<div class="cs-hero-copy">
+				<p class="cs-eyebrow"><?php esc_html_e( 'PC hardware calculators', 'computingskill' ); ?></p>
+				<h1><?php esc_html_e( 'Free PC Hardware Calculators & Computer Tools', 'computingskill' ); ?></h1>
+				<p class="cs-hero-sub"><?php esc_html_e( 'Calculate, compare and optimize your PC before you buy, build or upgrade.', 'computingskill' ); ?></p>
+				<ul class="cs-hero-facts">
+					<li><?php esc_html_e( 'Free', 'computingskill' ); ?></li>
+					<li><?php esc_html_e( 'No sign-up', 'computingskill' ); ?></li>
+					<li><?php esc_html_e( 'Runs in your browser', 'computingskill' ); ?></li>
+					<li><?php esc_html_e( 'Formula shown on every tool', 'computingskill' ); ?></li>
+				</ul>
+				<form class="cs-search-form cs-hero-search" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
+					<label class="screen-reader-text" for="cs-hero-search-input"><?php esc_html_e( 'Search ComputingSkill', 'computingskill' ); ?></label>
+					<input type="search" id="cs-hero-search-input" name="s" placeholder="<?php esc_attr_e( 'Search calculators, tools, guides…', 'computingskill' ); ?>" />
+					<button type="submit"><?php esc_html_e( 'Search', 'computingskill' ); ?></button>
+				</form>
+			</div>
+			<?php
+			// Example panel: a real engine result for one pair whose limiting
+			// part shifts with resolution. Skipped if either part is missing.
+			$hero_cpus = cs_get_cpu_data();
+			$hero_gpus = cs_get_gpu_data();
+			if ( isset( $hero_cpus['ryzen-5-5600'], $hero_gpus['rtx-4070'] ) ) :
+				$hero_cpu = $hero_cpus['ryzen-5-5600'];
+				$hero_gpu = $hero_gpus['rtx-4070'];
+				?>
+				<div class="cs-telemetry">
+					<p class="cs-telemetry-label"><?php esc_html_e( 'Bottleneck check · example', 'computingskill' ); ?></p>
+					<div class="cs-telemetry-pair">
+						<div class="cs-telemetry-part"><small><?php esc_html_e( 'CPU', 'computingskill' ); ?></small><strong><?php echo esc_html( $hero_cpu['name'] ); ?></strong></div>
+						<span class="cs-telemetry-plus" aria-hidden="true">+</span>
+						<div class="cs-telemetry-part"><small><?php esc_html_e( 'GPU', 'computingskill' ); ?></small><strong><?php echo esc_html( $hero_gpu['name'] ); ?></strong></div>
+					</div>
+					<?php echo cs_bn_load_bars( cs_calculate_bottleneck( $hero_cpu, $hero_gpu ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
+					<p class="cs-telemetry-note"><?php esc_html_e( 'Specs-based estimate. Try your own parts in the full calculator.', 'computingskill' ); ?></p>
+					<a class="cs-btn" href="<?php echo esc_url( home_url( '/pc-bottleneck-calculator/' ) ); ?>"><?php esc_html_e( 'Open Bottleneck Calculator', 'computingskill' ); ?> →</a>
+				</div>
+			<?php endif; ?>
 		</div>
 	</section>
 
@@ -35,14 +65,14 @@ get_header();
 			</p>
 		</section>
 
-		<section class="cs-home-section">
+		<section class="cs-home-section cs-featured">
 			<h2><?php esc_html_e( 'Featured Calculators', 'computingskill' ); ?></h2>
 			<?php
 			cs_card_grid( array(
-				array( 'title' => __( 'PC Bottleneck Calculator', 'computingskill' ), 'url' => home_url( '/pc-bottleneck-calculator/' ), 'desc' => __( 'See which part of your CPU/GPU pairing is holding the other back.', 'computingskill' ) ),
-				array( 'title' => __( 'PSU Calculator', 'computingskill' ), 'url' => home_url( '/psu-calculator/' ), 'desc' => __( 'Work out the power supply wattage your build actually needs.', 'computingskill' ) ),
-				array( 'title' => __( 'FPS Calculator', 'computingskill' ), 'url' => home_url( '/fps-calculator/' ), 'desc' => __( 'Estimate gaming FPS from your CPU, GPU and resolution.', 'computingskill' ) ),
-				array( 'title' => __( 'PC Build Cost Calculator', 'computingskill' ), 'url' => home_url( '/pc-build-cost-calculator/' ), 'desc' => __( 'Add up a full build and see where your budget is going.', 'computingskill' ) ),
+				array( 'title' => __( 'PC Bottleneck Calculator', 'computingskill' ), 'url' => home_url( '/pc-bottleneck-calculator/' ), 'desc' => __( 'See which part of your CPU/GPU pairing is holding the other back.', 'computingskill' ), 'icon' => 'cpu' ),
+				array( 'title' => __( 'PSU Calculator', 'computingskill' ), 'url' => home_url( '/psu-calculator/' ), 'desc' => __( 'Work out the power supply wattage your build actually needs.', 'computingskill' ), 'icon' => 'psu' ),
+				array( 'title' => __( 'FPS Calculator', 'computingskill' ), 'url' => home_url( '/fps-calculator/' ), 'desc' => __( 'Estimate gaming FPS from your CPU, GPU and resolution.', 'computingskill' ), 'icon' => 'fps' ),
+				array( 'title' => __( 'PC Build Cost Calculator', 'computingskill' ), 'url' => home_url( '/pc-build-cost-calculator/' ), 'desc' => __( 'Add up a full build and see where your budget is going.', 'computingskill' ), 'icon' => 'cost' ),
 			) );
 			?>
 		</section>
@@ -109,17 +139,20 @@ get_header();
 			$pairs = cs_get_bottleneck_pairs();
 			$cpus  = cs_get_cpu_data();
 			$gpus  = cs_get_gpu_data();
-			$items = array();
+			echo '<div class="cs-card-grid cs-combo-grid">';
 			foreach ( array_slice( $pairs, 0, 6 ) as $pair ) {
 				if ( isset( $cpus[ $pair['cpu'] ] ) && isset( $gpus[ $pair['gpu'] ] ) ) {
-					$items[] = array(
-						'title' => $cpus[ $pair['cpu'] ]['name'] . ' + ' . $gpus[ $pair['gpu'] ]['name'],
-						'url'   => cs_bottleneck_url( $pair['cpu'], $pair['gpu'] ),
-					);
+					$c = $cpus[ $pair['cpu'] ];
+					$g = $gpus[ $pair['gpu'] ];
+					echo '<a class="cs-card cs-combo-card" href="' . esc_url( cs_bottleneck_url( $pair['cpu'], $pair['gpu'] ) ) . '">';
+					echo '<span class="cs-card-title">' . esc_html( $c['name'] . ' + ' . $g['name'] ) . '</span>';
+					echo cs_bn_load_bars( cs_calculate_bottleneck( $c, $g ), true ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+					echo '</a>';
 				}
 			}
-			cs_card_grid( $items );
+			echo '</div>';
 			?>
+			<p class="cs-lb-legend"><span class="cs-lb-key cs-lb-cpu"><?php esc_html_e( 'CPU-bound', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-gpu"><?php esc_html_e( 'GPU-bound', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-balanced"><?php esc_html_e( 'Balanced (under 6%)', 'computingskill' ); ?></span></p>
 		</section>
 
 		<?php
@@ -148,10 +181,10 @@ get_header();
 		<section class="cs-home-section cs-why-us">
 			<h2><?php esc_html_e( 'Why Use ComputingSkill?', 'computingskill' ); ?></h2>
 			<div class="cs-why-grid">
-				<div><h3><?php esc_html_e( 'Free, no sign-up', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every calculator and tool works instantly in your browser — no account, no email wall.', 'computingskill' ); ?></p></div>
-				<div><h3><?php esc_html_e( 'Transparent methodology', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every result explains its formula and its limitations. We never dress up an estimate as a lab measurement.', 'computingskill' ); ?></p></div>
-				<div><h3><?php esc_html_e( 'Manufacturer-sourced specifications', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Hardware specs used in our calculators come from manufacturer data, not guesswork.', 'computingskill' ); ?></p></div>
-				<div><h3><?php esc_html_e( 'Built for mobile too', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every tool is designed to work as well on a phone as it does on a desktop.', 'computingskill' ); ?></p></div>
+				<div><span class="cs-card-icon" aria-hidden="true"><?php echo cs_icon_svg( 'check' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><h3><?php esc_html_e( 'Free, no sign-up', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every calculator and tool works instantly in your browser — no account, no email wall.', 'computingskill' ); ?></p></div>
+				<div><span class="cs-card-icon" aria-hidden="true"><?php echo cs_icon_svg( 'doc' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><h3><?php esc_html_e( 'Transparent methodology', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every result explains its formula and its limitations. We never dress up an estimate as a lab measurement.', 'computingskill' ); ?></p></div>
+				<div><span class="cs-card-icon" aria-hidden="true"><?php echo cs_icon_svg( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><h3><?php esc_html_e( 'Manufacturer-sourced specifications', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Hardware specs used in our calculators come from manufacturer data, not guesswork.', 'computingskill' ); ?></p></div>
+				<div><span class="cs-card-icon" aria-hidden="true"><?php echo cs_icon_svg( 'phone' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><h3><?php esc_html_e( 'Built for mobile too', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every tool is designed to work as well on a phone as it does on a desktop.', 'computingskill' ); ?></p></div>
 			</div>
 		</section>
 

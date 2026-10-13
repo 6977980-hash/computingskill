@@ -633,6 +633,33 @@
 		return 'The limiting part shifts with resolution: ' + parts[ 0 ] + ', ' + parts[ 1 ] + ' and ' + parts[ 2 ] + '. Higher resolutions give the GPU more pixels to draw, so load moves onto the graphics card.';
 	}
 
+	// Phase 8 (Oct 2026): visual for the bottleneck result, a ring gauge for
+	// the chosen resolution plus one bar per resolution. Display only; it
+	// reads the same bottleneckEstimate() output as the text and table.
+	var BN_RES_SHORT = { '1080p': '1080p', '1440p': '1440p', '4k': '4K' };
+	function bnWord( r ) {
+		if ( r.component === 'balanced' ) {
+			return 'balanced';
+		}
+		return r.component === 'cpu' ? 'CPU-bound' : 'GPU-bound';
+	}
+	function bnVisual( all, res ) {
+		var r = all[ res ];
+		var circ = 314.16; // 2 * PI * r(50)
+		var offset = ( circ * ( 1 - Math.max( r.percent, 2 ) / 100 ) ).toFixed( 2 );
+		var html = '<div class="cs-bn-visual">';
+		html += '<div class="cs-gauge cs-lb-' + r.component + '"><svg viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle class="cs-gauge-track" cx="60" cy="60" r="50"/><circle class="cs-gauge-arc" cx="60" cy="60" r="50" stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '"/></svg>';
+		html += '<div class="cs-gauge-c"><strong>' + r.percent + '%</strong><small>' + bnWord( r ) + '</small><small>' + BN_RES_SHORT[ res ] + '</small></div></div>';
+		html += '<div class="cs-lb" role="list">';
+		Object.keys( all ).forEach( function ( k ) {
+			var x = all[ k ];
+			var width = Math.max( 4, Math.min( 100, Math.round( x.percent / 60 * 100 ) ) );
+			html += '<div class="cs-lb-row cs-lb-' + x.component + ( k === res ? ' is-current' : '' ) + '" role="listitem"><span class="cs-lb-res">' + BN_RES_SHORT[ k ] + '</span><span class="cs-lb-track" aria-hidden="true"><span class="cs-lb-fill" style="width:' + width + '%"></span></span><span class="cs-lb-val">' + x.percent + '% ' + bnWord( x ) + '</span></div>';
+		} );
+		html += '</div></div>';
+		return html;
+	}
+
 	var CS_DEFS = {};
 
 	/* ---- 1. PC Bottleneck Calculator ---- */
@@ -669,7 +696,7 @@
 				[ '1440p', bnLabel( all[ '1440p' ] ) ],
 				[ '4K', bnLabel( all[ '4k' ] ) ]
 			];
-			return resultBlock( verdict, rows, 'bottleneck estimates use relative specs-based performance scores, not per-game benchmarks.' );
+			return bnVisual( all, v.resolution ) + resultBlock( verdict, rows, 'bottleneck estimates use relative specs-based performance scores, not per-game benchmarks.' );
 		}
 	};
 

@@ -25,11 +25,8 @@
 <header id="cs-masthead" class="cs-site-header">
 	<div class="cs-container cs-header-inner">
 		<div class="cs-branding">
-			<?php if ( has_custom_logo() ) : ?>
-				<?php the_custom_logo(); ?>
-			<?php else : ?>
-				<a class="cs-site-title" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php bloginfo( 'name' ); ?></a>
-			<?php endif; ?>
+			<?php // Phase 8: theme wordmark instead of the PNG logo, which is unreadable on the dark header (see cs_wordmark()). ?>
+			<a class="cs-site-title cs-wordmark" href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>"><?php echo cs_wordmark(); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts. ?></a>
 		</div>
 
 		<button class="cs-menu-toggle" aria-expanded="false" aria-controls="cs-primary-menu" type="button">
@@ -65,7 +62,7 @@
 		<form class="cs-search-form" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
 			<label class="screen-reader-text" for="cs-search-input"><?php esc_html_e( 'Search ComputingSkill', 'computingskill' ); ?></label>
 			<input type="search" id="cs-search-input" name="s" placeholder="<?php esc_attr_e( 'Search calculators, tools, guides…', 'computingskill' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" />
-			<button type="submit"><span class="screen-reader-text"><?php esc_html_e( 'Search', 'computingskill' ); ?></span>&#128269;</button>
+			<button type="submit"><span class="screen-reader-text"><?php esc_html_e( 'Search', 'computingskill' ); ?></span><?php echo cs_icon_svg( 'search' ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed theme SVG. ?></button>
 		</form>
 	</div>
 </header>
