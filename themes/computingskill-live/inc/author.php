@@ -26,11 +26,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function cs_site_author() {
 	return array(
-		'name' => 'Ali Ahmad',
-		'role' => __( 'Founder and writer', 'computingskill' ),
-		'url'  => home_url( '/about-us/' ),
-		'id'   => home_url( '/about-us/#ali-ahmad' ),
-		'bio'  => array(),
+		'name'     => 'Ali Ahmad',
+		'role'     => __( 'Founder and writer', 'computingskill' ),
+		'url'      => home_url( '/about-us/' ),
+		'id'       => home_url( '/about-us/#ali-ahmad' ),
+		'bio'      => array(),
+		// Profiles Ali Ahmad gave as his own; used for schema sameAs and the About Us link.
+		'profiles' => array(
+			'LinkedIn' => 'https://www.linkedin.com/in/ali-ahmad-chaudhry-12777486/',
+		),
 	);
 }
 
@@ -47,6 +51,9 @@ function cs_site_author_schema_node( $publisher_id = '' ) {
 		'url'      => $author['url'],
 		'jobTitle' => $author['role'],
 	);
+	if ( ! empty( $author['profiles'] ) ) {
+		$node['sameAs'] = array_values( $author['profiles'] );
+	}
 	if ( '' !== $publisher_id ) {
 		$node['worksFor'] = array( '@id' => $publisher_id );
 	}
@@ -82,6 +89,18 @@ function cs_about_author_section( $content ) {
 	) . '</p>';
 	foreach ( $author['bio'] as $line ) {
 		$html .= '<p>' . esc_html( $line ) . '</p>';
+	}
+	if ( ! empty( $author['profiles'] ) ) {
+		$links = array();
+		foreach ( $author['profiles'] as $label => $url ) {
+			$links[] = '<a href="' . esc_url( $url ) . '" rel="me noopener" target="_blank">' . esc_html( $label ) . '</a>';
+		}
+		$html .= '<p>' . sprintf(
+			/* translators: 1: author name, 2: profile link(s) */
+			esc_html__( 'Find %1$s on %2$s.', 'computingskill' ),
+			esc_html( $author['name'] ),
+			implode( ', ', $links )
+		) . '</p>';
 	}
 	$html .= '<p>' . sprintf(
 		/* translators: %s: contact page link */
