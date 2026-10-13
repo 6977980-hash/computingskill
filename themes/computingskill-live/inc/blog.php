@@ -102,7 +102,8 @@ add_filter( 'rank_math/sitemap/post_types', 'cs_sitemap_include_posts', 20 );
  * Creates each draft in data/blog-drafts/ once. Each file returns an array:
  * slug, title, excerpt, category, content (HTML for the block editor).
  * The created slugs are remembered, so a draft Ali deletes or renames is
- * not recreated.
+ * not recreated. Editing a draft file here updates the WordPress draft only
+ * while that draft is untouched (see the hash check below).
  */
 function cs_blog_drafts_sync() {
 	if ( wp_installing() || ! is_admin() ) {
@@ -126,7 +127,36 @@ function cs_blog_drafts_sync() {
 	$changed = false;
 	foreach ( $files as $file ) {
 		$d = include $file;
-		if ( ! is_array( $d ) || empty( $d['slug'] ) || isset( $done[ $d['slug'] ] ) ) {
+		if ( ! is_array( $d ) || empty( $d['slug'] ) ) {
+			continue;
+		}
+		$hash = md5( $d['title'] . $d['excerpt'] . $d['content'] );
+		if ( isset( $done[ $d['slug'] ] ) ) {
+			// A newer version of a draft we created replaces it only while
+			// it is still a draft nobody has edited (its content still
+			// matches what we wrote). Anything Ali touched is left alone.
+			$entry = $done[ $d['slug'] ];
+			$id    = is_array( $entry ) ? (int) $entry['id'] : (int) $entry;
+			$old   = is_array( $entry ) ? $entry['hash'] : '';
+			$post  = $id ? get_post( $id ) : null;
+			// Entries from theme 1.0.36 stored only the ID; for those, an
+			// untouched draft still has its modified time equal to its
+			// creation time.
+			$untouched = $post && ( $old
+				? md5( $post->post_title . $post->post_excerpt . $post->post_content ) === $old
+				: $post->post_modified === $post->post_date );
+			if ( $old !== $hash && $untouched && 'draft' === $post->post_status ) {
+				$r = wp_update_post( array(
+					'ID'           => $id,
+					'post_title'   => $d['title'],
+					'post_excerpt' => $d['excerpt'],
+					'post_content' => $d['content'],
+				), true );
+				if ( ! is_wp_error( $r ) ) {
+					$done[ $d['slug'] ] = array( 'id' => $id, 'hash' => $hash );
+					$changed            = true;
+				}
+			}
 			continue;
 		}
 		$existing = get_posts( array(
@@ -163,7 +193,7 @@ function cs_blog_drafts_sync() {
 			'comment_status' => 'closed',
 		), true );
 		if ( ! is_wp_error( $id ) ) {
-			$done[ $d['slug'] ] = (int) $id;
+			$done[ $d['slug'] ] = array( 'id' => (int) $id, 'hash' => $hash );
 			$changed            = true;
 		}
 	}

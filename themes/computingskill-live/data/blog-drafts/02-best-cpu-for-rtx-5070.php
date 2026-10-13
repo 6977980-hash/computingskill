@@ -61,6 +61,7 @@ return array(
 <ul>
 <li><strong>Balanced and efficient:</strong> <a href="/bottleneck/ryzen-7-7700x-rtx-5070/">Ryzen 7 7700X</a> or <a href="/bottleneck/ryzen-7-9700x-rtx-5070/">Ryzen 7 9700X</a>, both balanced at 1080p and fine on a 650W PSU.</li>
 <li><strong>Intel:</strong> <a href="/bottleneck/core-i5-14600k-rtx-5070/">Core i5-14600K</a> (6% at 1080p, 700W PSU) or the <a href="/bottleneck/core-ultra-5-245k-rtx-5070/">Core Ultra 5 245K</a> (11%, 650W).</li>
+<li><strong>Staying on AM4:</strong> the Ryzen 5 5600, 5600X and 5700X are all balanced with the RTX 5070 at 1440p but 28% to 32% CPU-limited at 1080p, so on AM4 the card makes most sense for 1440p gaming.</li>
 <li><strong>Budget AM5:</strong> <a href="/bottleneck/ryzen-5-7600-rtx-5070/">Ryzen 5 7600</a>, 12% at 1080p and the lowest power of the group.</li>
 </ul>
 <p>The RTX 5070's 12GB of VRAM matches what our <a href="/how-much-vram-do-i-need/">VRAM guide</a> treats as comfortable for 1440p; at 4K with high textures, 16GB is the more comfortable figure.</p>

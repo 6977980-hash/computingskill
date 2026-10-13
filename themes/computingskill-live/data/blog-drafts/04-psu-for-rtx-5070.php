@@ -66,6 +66,7 @@ return array(
 
 [cs_faq]
 [cs_faq_item q="Is a 650W PSU enough for an RTX 5070?"]Yes for most builds. NVIDIA recommends 650W, and our PSU Calculator also lands on 650W with CPUs up to the Ryzen 7 9800X3D, Core i5-13400F and Core Ultra 5 245K. High-power Intel K-series chips and the Ryzen 9 7900X need 700W to 800W.[/cs_faq_item]
+[cs_faq_item q="What PSU do I need for an RTX 5070 and Ryzen 7 9800X3D?"]650W. With the 9800X3D at its 162W boost power, our PSU Calculator estimates a 493W peak for the whole system, and 30% headroom rounds to 650W, the same as NVIDIA's recommendation.[/cs_faq_item]
 [cs_faq_item q="Is a 550W PSU enough for an RTX 5070?"]We do not recommend it. 550W is below NVIDIA's own 650W recommendation for the RTX 5070, even if a low-power CPU keeps the estimated peak around 420W.[/cs_faq_item]
 [cs_faq_item q="Do I need an 850W PSU for an RTX 5070?"]Only with a high-power CPU such as the Core i7-14700K or i9-13900K (our formula gives 800W, and 850W is the common size above that), if you overclock, or if you plan a bigger GPU upgrade later.[/cs_faq_item]
 [/cs_faq]
