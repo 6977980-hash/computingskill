@@ -82,12 +82,23 @@ function cs_print_ga4_tag() {
 		return;
 	}
 	?>
-<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $id ); ?>"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '<?php echo esc_js( $id ); ?>');
+// gtag.js (~150 KB) loads after the page has finished loading so it doesn't
+// compete with the page itself on mobile (PageSpeed, Oct 2026). The calls
+// above are queued in dataLayer and sent once it arrives.
+(function () {
+	function load() {
+		var s = document.createElement('script');
+		s.async = true;
+		s.src = 'https://www.googletagmanager.com/gtag/js?id=<?php echo esc_js( $id ); ?>';
+		document.head.appendChild(s);
+	}
+	if (document.readyState === 'complete') { load(); } else { window.addEventListener('load', load); }
+})();
 </script>
 	<?php
 }

@@ -63,7 +63,9 @@ function cs_enqueue_fix_assets() {
 			continue; // Skip the empty placeholder files.
 		}
 		if ( 'css' === $type ) {
-			wp_enqueue_style( 'cs-fixes', CS_THEME_URI . '/' . $path, array(), (string) filemtime( $file ) );
+			// Inlined after the main stylesheet: it's under 1 KB, and a second
+			// render-blocking request costs more on mobile than the bytes do.
+			wp_add_inline_style( 'computingskill-style', (string) file_get_contents( $file ) );
 		} else {
 			wp_enqueue_script( 'cs-fixes', CS_THEME_URI . '/' . $path, array(), (string) filemtime( $file ), true );
 		}
