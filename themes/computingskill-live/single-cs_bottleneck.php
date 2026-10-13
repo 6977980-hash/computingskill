@@ -144,18 +144,21 @@ while ( have_posts() ) :
 				$r1080 = $results['1080p'];
 				$r1440 = $results['1440p'];
 				$r4k   = $results['4k'];
+				// Phase 3: the branch comes from cs_bottleneck_primary_limit()
+				// so the Verdict below always names the same main limit.
+				$primary = cs_bottleneck_primary_limit( $results );
 				?>
-				<?php if ( 'gpu' === $r1440['component'] && $r1440['percent'] >= 15 ) : ?>
+				<?php if ( 'gpu' === $primary ) : ?>
 					<p><?php printf( esc_html__( 'The %2$s is the more limiting part of this pairing. If you want more FPS before considering a GPU upgrade, lowering shadow quality, ambient occlusion and render resolution scale typically helps more than any other settings on a GPU-bound system.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
 					<?php if ( 'cpu' === $r1080['component'] ) : ?>
 						<p><?php printf( esc_html__( 'At 1080p the balance tips the other way: the %1$s becomes the likely limit (~%2$d%%), mainly in CPU-heavy games or when chasing very high frame rates.', 'computingskill' ), esc_html( $cpu['name'] ), (int) $r1080['percent'] ); ?></p>
 					<?php endif; ?>
-				<?php elseif ( 'cpu' === $r1080['component'] && $r1080['percent'] >= 15 ) : ?>
+				<?php elseif ( 'cpu' === $primary ) : ?>
 					<p><?php printf( esc_html__( 'The %1$s is the more limiting part of this pairing, especially at 1080p and in CPU-heavy games (large open worlds, simulation and strategy titles, competitive shooters running uncapped framerates). A CPU upgrade — or simply raising the resolution/settings to shift load back onto the GPU — will get more out of the %2$s.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
 					<?php if ( 'gpu' === $r4k['component'] ) : ?>
 						<p><?php printf( esc_html__( 'At 4K the load moves onto the graphics card and the %1$s becomes the likely limit instead (~%2$d%%).', 'computingskill' ), esc_html( $gpu['name'] ), (int) $r4k['percent'] ); ?></p>
 					<?php endif; ?>
-				<?php elseif ( 'gpu' === $r4k['component'] && $r4k['percent'] >= 15 ) : ?>
+				<?php elseif ( 'gpu4k' === $primary ) : ?>
 					<p><?php printf( esc_html__( 'The %1$s and %2$s are well matched at 1080p and 1440p. At 4K the %2$s becomes the more limiting part (~%3$d%%), which is normal at that resolution: lowering shadow quality, ambient occlusion or render resolution scale (or using upscaling) helps most there.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ), (int) $r4k['percent'] ); ?></p>
 				<?php else : ?>
 					<p><?php printf( esc_html__( 'This is a well-balanced pairing. Neither the %1$s nor the %2$s is likely to hold the other back significantly across common resolutions, so upgrade decisions should be driven by which resolution and framerate target you actually want, not by rebalancing this pair.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
@@ -168,11 +171,19 @@ while ( have_posts() ) :
 					</ul>
 				</section>
 
-				<?php echo do_shortcode( '[cs_faq]
-[cs_faq_item q="Is this bottleneck calculator 100% accurate?"]No. Real bottleneck behavior depends on the specific game engine, driver version, RAM speed, background load and settings used — this page gives a specs-based estimate to help you spot an obviously mismatched pairing, not a lab-measured figure.[/cs_faq_item]
-[cs_faq_item q="Should I avoid this CPU and GPU combination?"]Not necessarily. Even a pairing with a double-digit estimated bottleneck can still deliver strong, playable framerates — a bottleneck simply means one part has spare capacity the other cannot fully use, not that the system performs badly.[/cs_faq_item]
-[cs_faq_item q="Does resolution really change which part bottlenecks?"]Yes. Higher resolutions shift more of the workload onto the GPU (more pixels to shade), which is why the same pairing can be GPU-bound at 4K and closer to CPU-bound at 1080p.[/cs_faq_item]
-[/cs_faq]' ); ?>
+				<section class="cs-bn-verdict">
+					<h2><?php esc_html_e( 'Verdict', 'computingskill' ); ?></h2>
+					<?php foreach ( cs_bottleneck_verdict( $cpu_slug, $cpu, $gpu, $results ) as $para ) : ?>
+						<p><?php echo esc_html( $para ); ?></p>
+					<?php endforeach; ?>
+				</section>
+
+				<?php
+				// Phase 3 (Oct 2026): pair-specific questions built from this
+				// page's own data and results (inc/bottleneck-content.php),
+				// replacing three answers every combo page used to share.
+				echo cs_bottleneck_faq_html( cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- [cs_faq] escapes its own output.
+				?>
 
 				<?php
 				echo cs_related_shortcode( array(
