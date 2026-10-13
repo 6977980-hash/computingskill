@@ -36,6 +36,21 @@ function cs_theme_setup() {
 add_action( 'after_setup_theme', 'cs_theme_setup' );
 
 /**
+ * Header logo (Oct 2026 audit, FIX-06). The uploaded logo is 1819×497 and
+ * WordPress gave it sizes="(max-width: 1819px) 100vw, 1819px", so phones
+ * fetched a large file and the logo filled the whole header row (the CSS
+ * cap is in style.css, .cs-branding .custom-logo). This tells the browser
+ * the real slot width so it picks a small srcset file, and keeps LiteSpeed
+ * from lazy-loading it, since it's always above the fold.
+ */
+function cs_custom_logo_attributes( $attr ) {
+	$attr['sizes']        = '190px';
+	$attr['data-no-lazy'] = '1';
+	return $attr;
+}
+add_filter( 'get_custom_logo_image_attributes', 'cs_custom_logo_attributes' );
+
+/**
  * Enqueue styles and scripts.
  *
  * IMPORTANT: calculator JS is only enqueued on pages that actually contain

@@ -371,7 +371,8 @@ function cs_is_calculator_page() {
  *  - About Us → AboutPage, Contact → ContactPage, legal pages → plain
  *    WebPage, none with Article;
  *  - the "Computing Skill" publisher node → Organization only (it's a
- *    site/brand, not a person). The @id is left as Rank Math set it so every
+ *    site/brand, not a person), including the homepage, where Rank Math
+ *    types it Person only. The @id is left as Rank Math set it so every
  *    reference to it keeps resolving.
  */
 function cs_schema_page_kind() {
@@ -417,6 +418,15 @@ function cs_schema_normalize_types( $graphs ) {
 		}
 		if ( in_array( 'Person', $types, true ) && in_array( 'Organization', $types, true ) ) {
 			$node['@type'] = 'Organization';
+		}
+		// On the homepage Rank Math types the same publisher node as Person
+		// only, with the logo under `image`. Same brand node, so same fix.
+		if ( array( 'Person' ) === $types && isset( $node['@id'] ) && home_url( '/#person' ) === $node['@id'] ) {
+			$node['@type'] = 'Organization';
+			if ( isset( $node['image'] ) && ! isset( $node['logo'] ) ) {
+				$node['logo'] = $node['image'];
+				unset( $node['image'] );
+			}
 		}
 		if ( isset( $webpage_types[ $kind ] ) && array( 'WebPage' ) === $types ) {
 			$node['@type'] = $webpage_types[ $kind ];
