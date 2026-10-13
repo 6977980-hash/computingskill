@@ -36,13 +36,6 @@ while ( have_posts() ) :
 	$results = cs_calculate_bottleneck( $cpu, $gpu );
 	$labels  = array( '1080p' => '1080p (Full HD)', '1440p' => '1440p (QHD)', '4k' => '4K (UHD)' );
 
-	// Find the resolution with the largest estimated bottleneck for the headline verdict.
-	$worst_res = '1080p';
-	foreach ( $results as $res => $r ) {
-		if ( $r['percent'] > $results[ $worst_res ]['percent'] ) {
-			$worst_res = $res;
-		}
-	}
 	?>
 	<main id="cs-main" class="cs-main cs-single-page">
 		<div class="cs-container cs-narrow">
@@ -66,7 +59,7 @@ while ( have_posts() ) :
 
 				<section class="cs-bn-summary">
 					<h2><?php esc_html_e( 'Quick Summary', 'computingskill' ); ?></h2>
-					<p><?php echo wp_kses_post( cs_bottleneck_sentence( $cpu['name'], $gpu['name'], $labels[ $worst_res ], $results[ $worst_res ] ) ); ?></p>
+					<p><?php echo wp_kses_post( cs_bottleneck_summary( $cpu['name'], $gpu['name'], $results, $labels ) ); ?></p>
 					<?php cs_estimate_disclaimer( 'bottleneck estimate' ); ?>
 				</section>
 
@@ -142,13 +135,31 @@ while ( have_posts() ) :
 
 				<section class="cs-bn-recommend">
 					<h2><?php esc_html_e( 'Recommended Settings & Upgrade Path', 'computingskill' ); ?></h2>
-					<?php if ( 'gpu' === $results['1440p']['component'] && $results['1440p']['percent'] >= 15 ) : ?>
-						<p><?php printf( esc_html__( 'The %2$s is the more limiting part of this pairing. If you want more FPS before considering a GPU upgrade, lowering shadow quality, ambient occlusion and render resolution scale typically helps more than any other settings on a GPU-bound system.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
-					<?php elseif ( 'cpu' === $results['1080p']['component'] && $results['1080p']['percent'] >= 15 ) : ?>
-						<p><?php printf( esc_html__( 'The %1$s is the more limiting part of this pairing, especially at 1080p and in CPU-heavy games (large open worlds, simulation and strategy titles, competitive shooters running uncapped framerates). A CPU upgrade — or simply raising the resolution/settings to shift load back onto the GPU — will get more out of the %2$s.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
-					<?php else : ?>
-						<p><?php printf( esc_html__( 'This is a well-balanced pairing. Neither the %1$s nor the %2$s is likely to hold the other back significantly across common resolutions, so upgrade decisions should be driven by which resolution and framerate target you actually want, not by rebalancing this pair.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+				<?php
+				// Phase 2 (Oct 2026): the engine can now return a different
+				// limiting part per resolution, so each branch also states
+				// the opposite end of the shift when there is one, and the
+				// "well-balanced" text is only used when no resolution
+				// shows a 15%+ estimate.
+				$r1080 = $results['1080p'];
+				$r1440 = $results['1440p'];
+				$r4k   = $results['4k'];
+				?>
+				<?php if ( 'gpu' === $r1440['component'] && $r1440['percent'] >= 15 ) : ?>
+					<p><?php printf( esc_html__( 'The %2$s is the more limiting part of this pairing. If you want more FPS before considering a GPU upgrade, lowering shadow quality, ambient occlusion and render resolution scale typically helps more than any other settings on a GPU-bound system.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<?php if ( 'cpu' === $r1080['component'] ) : ?>
+						<p><?php printf( esc_html__( 'At 1080p the balance tips the other way: the %1$s becomes the likely limit (~%2$d%%), mainly in CPU-heavy games or when chasing very high frame rates.', 'computingskill' ), esc_html( $cpu['name'] ), (int) $r1080['percent'] ); ?></p>
 					<?php endif; ?>
+				<?php elseif ( 'cpu' === $r1080['component'] && $r1080['percent'] >= 15 ) : ?>
+					<p><?php printf( esc_html__( 'The %1$s is the more limiting part of this pairing, especially at 1080p and in CPU-heavy games (large open worlds, simulation and strategy titles, competitive shooters running uncapped framerates). A CPU upgrade — or simply raising the resolution/settings to shift load back onto the GPU — will get more out of the %2$s.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<?php if ( 'gpu' === $r4k['component'] ) : ?>
+						<p><?php printf( esc_html__( 'At 4K the load moves onto the graphics card and the %1$s becomes the likely limit instead (~%2$d%%).', 'computingskill' ), esc_html( $gpu['name'] ), (int) $r4k['percent'] ); ?></p>
+					<?php endif; ?>
+				<?php elseif ( 'gpu' === $r4k['component'] && $r4k['percent'] >= 15 ) : ?>
+					<p><?php printf( esc_html__( 'The %1$s and %2$s are well matched at 1080p and 1440p. At 4K the %2$s becomes the more limiting part (~%3$d%%), which is normal at that resolution: lowering shadow quality, ambient occlusion or render resolution scale (or using upscaling) helps most there.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ), (int) $r4k['percent'] ); ?></p>
+				<?php else : ?>
+					<p><?php printf( esc_html__( 'This is a well-balanced pairing. Neither the %1$s nor the %2$s is likely to hold the other back significantly across common resolutions, so upgrade decisions should be driven by which resolution and framerate target you actually want, not by rebalancing this pair.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+				<?php endif; ?>
 					<p><?php esc_html_e( 'Also worth checking before you upgrade anything:', 'computingskill' ); ?></p>
 					<ul>
 						<li><a href="<?php echo esc_url( home_url( '/ram-calculator/' ) ); ?>"><?php esc_html_e( 'Is 16GB or 32GB of RAM enough for this build?', 'computingskill' ); ?></a></li>

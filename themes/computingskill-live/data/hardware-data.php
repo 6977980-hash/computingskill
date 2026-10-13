@@ -8,10 +8,37 @@
  * manufacturer reference-spec numbers; individual board partner cards can
  * vary slightly (factory overclocks, custom power limits).
  *
- * "score" fields are ComputingSkill's own simplified relative-performance
- * index (1-100) used ONLY to drive the estimate calculators on this site.
- * They are not benchmark results and are clearly labeled as estimates
+ * "score" fields are ComputingSkill's own simplified relative GAMING
+ * performance index, used ONLY to drive the estimate calculators on this
+ * site. They are not benchmark results and are clearly labeled as estimates
  * everywhere they are shown to a user.
+ *
+ * What the score represents (Phase 2 audit fix, Oct 2026):
+ *  - GPU score = average rasterized gaming throughput at high settings,
+ *    RTX 4090 = 100. Higher-end parts can exceed 100 (RTX 5090 = 133, see
+ *    its note). Resolution is NOT baked in: inc/bottleneck.php scales GPU
+ *    throughput by pixel load per resolution.
+ *  - CPU score = average gaming frame-rate ceiling (how many frames per
+ *    second the CPU can prepare when the GPU is not the limit). It is a
+ *    gaming index, not a multi-core/productivity index, which is why an
+ *    8-core X3D chip outranks 24-core parts.
+ *  - The two indexes are separate scales; inc/bottleneck.php's
+ *    CS_BN_CPU_PARITY converts between them. Compare CPUs with CPUs and
+ *    GPUs with GPUs, never a raw CPU score against a raw GPU score.
+ *
+ * Oct 2026 recalibration: scores were reviewed as one gaming index and
+ * outliers fixed. The biggest was ryzen-7-9800x3d at 78, below the
+ * i7-13700K (84) and i9-13900K (92) although it is the fastest gaming CPU
+ * here. Positions follow publicly reported review averages, e.g. TechSpot's
+ * 45-game 1080p tests (RTX 4090): 9800X3D ~18% ahead of the i9-14900K and
+ * ~24% ahead of the Core Ultra 9 285K
+ * (https://www.techspot.com/review/2931-amd-ryzen-9800x3d-vs-intel-core-14900k/),
+ * and GamersNexus's RX 9070 XT review (roughly RTX 4080-class raster, ahead
+ * of the RX 7900 XT, behind the RX 7900 XTX, clearly ahead of the RTX 5070:
+ * https://gamersnexus.net/gpus/amd-radeon-rx-9070-xt-gpu-review-benchmarks-vs-5070-ti-5070-7900-xt-sapphire-pulse).
+ * The remaining in-between positions are ComputingSkill's approximations
+ * from the same kind of public review averages; the Ryzen 5 5600 (52) and
+ * RTX 4090 (100) anchor the two scales. We do not run our own benchmarks.
  *
  * @package ComputingSkill
  */
@@ -59,14 +86,14 @@ function cs_get_gpu_data() {
 			'name' => 'GeForce RTX 4070 Super', 'brand' => 'NVIDIA', 'architecture' => 'Ada Lovelace',
 			'vram_gb' => 12, 'memory_type' => 'GDDR6X', 'memory_bus' => 192, 'boost_clock_mhz' => 2475,
 			'tdp_w' => 220, 'cores' => 7168, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 650,
-			'tier' => 'Mid-range / 1440p', 'score' => 61, 'release_year' => 2024,
+			'tier' => 'Mid-range / 1440p', 'score' => 62, 'release_year' => 2024,
 			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4070-family/',
 		),
 		'rtx-4080' => array(
 			'name' => 'GeForce RTX 4080', 'brand' => 'NVIDIA', 'architecture' => 'Ada Lovelace',
 			'vram_gb' => 16, 'memory_type' => 'GDDR6X', 'memory_bus' => 256, 'boost_clock_mhz' => 2505,
 			'tdp_w' => 320, 'cores' => 9728, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 750,
-			'tier' => 'High-end / 4K', 'score' => 75, 'release_year' => 2022,
+			'tier' => 'High-end / 4K', 'score' => 80, 'release_year' => 2022,
 			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4080-family/',
 		),
 		'rtx-4090' => array(
@@ -80,14 +107,14 @@ function cs_get_gpu_data() {
 			'name' => 'GeForce RTX 5070', 'brand' => 'NVIDIA', 'architecture' => 'Blackwell',
 			'vram_gb' => 12, 'memory_type' => 'GDDR7', 'memory_bus' => 192, 'boost_clock_mhz' => 2510,
 			'tdp_w' => 250, 'cores' => 6144, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 650,
-			'tier' => 'Mid-range / 1440p', 'score' => 63, 'release_year' => 2025,
+			'tier' => 'Mid-range / 1440p', 'score' => 65, 'release_year' => 2025,
 			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5070-family/',
 		),
 		'rtx-5080' => array(
 			'name' => 'GeForce RTX 5080', 'brand' => 'NVIDIA', 'architecture' => 'Blackwell',
 			'vram_gb' => 16, 'memory_type' => 'GDDR7', 'memory_bus' => 256, 'boost_clock_mhz' => 2620,
 			'tdp_w' => 360, 'cores' => 10752, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 850,
-			'tier' => 'High-end / 4K', 'score' => 82, 'release_year' => 2025,
+			'tier' => 'High-end / 4K', 'score' => 88, 'release_year' => 2025,
 			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5080/',
 		),
 		'rtx-5090' => array(
@@ -128,28 +155,28 @@ function cs_get_gpu_data() {
 			'name' => 'Radeon RX 7700 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 3',
 			'vram_gb' => 12, 'memory_type' => 'GDDR6', 'memory_bus' => 192, 'boost_clock_mhz' => 2544,
 			'tdp_w' => 245, 'cores' => 54, 'core_label' => 'Compute Units', 'recommended_psu_w' => 700,
-			'tier' => 'Mid-range / 1440p', 'score' => 56, 'release_year' => 2023,
+			'tier' => 'Mid-range / 1440p', 'score' => 52, 'release_year' => 2023,
 			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7700-xt.html',
 		),
 		'rx-7800-xt' => array(
 			'name' => 'Radeon RX 7800 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 3',
 			'vram_gb' => 16, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 2430,
 			'tdp_w' => 263, 'cores' => 60, 'core_label' => 'Compute Units', 'recommended_psu_w' => 700,
-			'tier' => 'Mid-range / 1440p', 'score' => 62, 'release_year' => 2023,
+			'tier' => 'Mid-range / 1440p', 'score' => 58, 'release_year' => 2023,
 			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7800-xt.html',
 		),
 		'rx-7900-xt' => array(
 			'name' => 'Radeon RX 7900 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 3',
 			'vram_gb' => 20, 'memory_type' => 'GDDR6', 'memory_bus' => 320, 'boost_clock_mhz' => 2400,
 			'tdp_w' => 315, 'cores' => 84, 'core_label' => 'Compute Units', 'recommended_psu_w' => 750,
-			'tier' => 'High-end / 4K', 'score' => 78, 'release_year' => 2022,
+			'tier' => 'High-end / 4K', 'score' => 70, 'release_year' => 2022,
 			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xt.html',
 		),
 		'rx-7900-xtx' => array(
 			'name' => 'Radeon RX 7900 XTX', 'brand' => 'AMD', 'architecture' => 'RDNA 3',
 			'vram_gb' => 24, 'memory_type' => 'GDDR6', 'memory_bus' => 384, 'boost_clock_mhz' => 2500,
 			'tdp_w' => 355, 'cores' => 96, 'core_label' => 'Compute Units', 'recommended_psu_w' => 800,
-			'tier' => 'Flagship / 4K', 'score' => 88, 'release_year' => 2022,
+			'tier' => 'Flagship / 4K', 'score' => 85, 'release_year' => 2022,
 			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html',
 		),
 		// RTX 5060 Ti and RX 9070 XT were added directly on the live site
@@ -165,14 +192,14 @@ function cs_get_gpu_data() {
 			'name' => 'GeForce RTX 5060 Ti (16GB)', 'brand' => 'NVIDIA', 'architecture' => 'Blackwell',
 			'vram_gb' => 16, 'memory_type' => 'GDDR7', 'memory_bus' => 128, 'boost_clock_mhz' => 2570,
 			'tdp_w' => 180, 'cores' => 4608, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 600,
-			'tier' => 'Mid-range / 1440p', 'score' => 56, 'release_year' => 2025,
+			'tier' => 'Mid-range / 1440p', 'score' => 50, 'release_year' => 2025,
 			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5060-family/',
 		),
 		'rx-9070-xt' => array(
 			'name' => 'Radeon RX 9070 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 4',
 			'vram_gb' => 16, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 2970,
 			'tdp_w' => 304, 'cores' => 64, 'core_label' => 'Compute Units', 'recommended_psu_w' => 750,
-			'tier' => 'High-end / 1440p-4K', 'score' => 84, 'release_year' => 2025,
+			'tier' => 'High-end / 1440p-4K', 'score' => 78, 'release_year' => 2025,
 			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html',
 		),
 	);
@@ -215,31 +242,31 @@ function cs_get_cpu_data() {
 		'ryzen-5-5600x' => array(
 			'name' => 'AMD Ryzen 5 5600X', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series)',
 			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 3.7, 'boost_clock_ghz' => 4.6,
-			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM4', 'score' => 55, 'release_year' => 2020,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM4', 'score' => 54, 'release_year' => 2020,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html',
 		),
 		'ryzen-7-5700x' => array(
 			'name' => 'AMD Ryzen 7 5700X', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series)',
 			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 3.4, 'boost_clock_ghz' => 4.6,
-			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM4', 'score' => 61, 'release_year' => 2022,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM4', 'score' => 55, 'release_year' => 2022,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-7-5700x.html',
 		),
 		'ryzen-5-7600' => array(
 			'name' => 'AMD Ryzen 5 7600', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series)',
 			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 3.8, 'boost_clock_ghz' => 5.1,
-			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM5', 'score' => 66, 'release_year' => 2023,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM5', 'score' => 67, 'release_year' => 2023,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600.html',
 		),
 		'ryzen-5-7600x' => array(
 			'name' => 'AMD Ryzen 5 7600X', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series)',
 			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 4.7, 'boost_clock_ghz' => 5.3,
-			'tdp_w' => 105, 'max_power_w' => 142, 'socket' => 'AM5', 'score' => 68, 'release_year' => 2022,
+			'tdp_w' => 105, 'max_power_w' => 142, 'socket' => 'AM5', 'score' => 69, 'release_year' => 2022,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600x.html',
 		),
 		'ryzen-7-7700x' => array(
 			'name' => 'AMD Ryzen 7 7700X', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series)',
 			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 4.5, 'boost_clock_ghz' => 5.4,
-			'tdp_w' => 105, 'max_power_w' => 142, 'socket' => 'AM5', 'score' => 74, 'release_year' => 2022,
+			'tdp_w' => 105, 'max_power_w' => 142, 'socket' => 'AM5', 'score' => 73, 'release_year' => 2022,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7700x.html',
 		),
 		// Boost clock corrected during Sep 2026 audit: was listed as 5.4GHz;
@@ -249,13 +276,13 @@ function cs_get_cpu_data() {
 		'ryzen-9-7900x' => array(
 			'name' => 'AMD Ryzen 9 7900X', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series)',
 			'cores' => 12, 'threads' => 24, 'base_clock_ghz' => 4.7, 'boost_clock_ghz' => 5.6,
-			'tdp_w' => 170, 'max_power_w' => 230, 'socket' => 'AM5', 'score' => 85, 'release_year' => 2022,
+			'tdp_w' => 170, 'max_power_w' => 230, 'socket' => 'AM5', 'score' => 72, 'release_year' => 2022,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-9-7900x.html',
 		),
 		'core-i5-12400f' => array(
 			'name' => 'Intel Core i5-12400F', 'brand' => 'Intel', 'generation' => '12th Gen (Alder Lake)',
 			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 2.5, 'boost_clock_ghz' => 4.4,
-			'tdp_w' => 65, 'max_power_w' => 117, 'socket' => 'LGA 1700', 'score' => 58, 'release_year' => 2022,
+			'tdp_w' => 65, 'max_power_w' => 117, 'socket' => 'LGA 1700', 'score' => 55, 'release_year' => 2022,
 			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html',
 		),
 		// Thread count corrected during Sep 2026 audit: was listed as 14;
@@ -266,25 +293,25 @@ function cs_get_cpu_data() {
 		'core-i5-13400f' => array(
 			'name' => 'Intel Core i5-13400F', 'brand' => 'Intel', 'generation' => '13th Gen (Raptor Lake)',
 			'cores' => 10, 'threads' => 16, 'base_clock_ghz' => 2.5, 'boost_clock_ghz' => 4.6,
-			'tdp_w' => 65, 'max_power_w' => 148, 'socket' => 'LGA 1700', 'score' => 65, 'release_year' => 2023,
+			'tdp_w' => 65, 'max_power_w' => 148, 'socket' => 'LGA 1700', 'score' => 59, 'release_year' => 2023,
 			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html',
 		),
 		'core-i5-13600k' => array(
 			'name' => 'Intel Core i5-13600K', 'brand' => 'Intel', 'generation' => '13th Gen (Raptor Lake)',
 			'cores' => 14, 'threads' => 20, 'base_clock_ghz' => 3.5, 'boost_clock_ghz' => 5.1,
-			'tdp_w' => 125, 'max_power_w' => 181, 'socket' => 'LGA 1700', 'score' => 77, 'release_year' => 2022,
+			'tdp_w' => 125, 'max_power_w' => 181, 'socket' => 'LGA 1700', 'score' => 70, 'release_year' => 2022,
 			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/230493/intel-core-i513600k-processor-24m-cache-up-to-5-10-ghz/specifications.html',
 		),
 		'core-i7-13700k' => array(
 			'name' => 'Intel Core i7-13700K', 'brand' => 'Intel', 'generation' => '13th Gen (Raptor Lake)',
 			'cores' => 16, 'threads' => 24, 'base_clock_ghz' => 3.4, 'boost_clock_ghz' => 5.4,
-			'tdp_w' => 125, 'max_power_w' => 253, 'socket' => 'LGA 1700', 'score' => 84, 'release_year' => 2022,
+			'tdp_w' => 125, 'max_power_w' => 253, 'socket' => 'LGA 1700', 'score' => 75, 'release_year' => 2022,
 			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html',
 		),
 		'core-i9-13900k' => array(
 			'name' => 'Intel Core i9-13900K', 'brand' => 'Intel', 'generation' => '13th Gen (Raptor Lake)',
 			'cores' => 24, 'threads' => 32, 'base_clock_ghz' => 3.0, 'boost_clock_ghz' => 5.8,
-			'tdp_w' => 125, 'max_power_w' => 253, 'socket' => 'LGA 1700', 'score' => 92, 'release_year' => 2022,
+			'tdp_w' => 125, 'max_power_w' => 253, 'socket' => 'LGA 1700', 'score' => 78, 'release_year' => 2022,
 			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/230496/intel-core-i913900k-processor-36m-cache-up-to-5-80-ghz/specifications.html',
 		),
 		// Added on the live site after v1.0.21 and carried over here.
@@ -296,13 +323,13 @@ function cs_get_cpu_data() {
 		'ryzen-7-9800x3d' => array(
 			'name' => 'AMD Ryzen 7 9800X3D', 'brand' => 'AMD', 'generation' => 'Zen 5 (9000 Series, 3D V-Cache)',
 			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 4.7, 'boost_clock_ghz' => 5.2,
-			'tdp_w' => 120, 'max_power_w' => 162, 'socket' => 'AM5', 'score' => 78, 'release_year' => 2024,
+			'tdp_w' => 120, 'max_power_w' => 162, 'socket' => 'AM5', 'score' => 95, 'release_year' => 2024,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-7-9800x3d.html',
 		),
 		'core-ultra-9-285k' => array(
 			'name' => 'Intel Core Ultra 9 285K', 'brand' => 'Intel', 'generation' => 'Arrow Lake (Core Ultra 200S)',
 			'cores' => 24, 'threads' => 24, 'base_clock_ghz' => 3.7, 'boost_clock_ghz' => 5.7,
-			'tdp_w' => 125, 'max_power_w' => 250, 'socket' => 'LGA 1851', 'score' => 93, 'release_year' => 2024,
+			'tdp_w' => 125, 'max_power_w' => 250, 'socket' => 'LGA 1851', 'score' => 77, 'release_year' => 2024,
 			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/241060/intel-core-ultra-9-processor-285k-36m-cache-up-to-5-70-ghz/specifications.html',
 		),
 	);

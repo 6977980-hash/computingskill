@@ -385,48 +385,56 @@
 
 	var RES_LABELS = { '1080p': '1080p (Full HD)', '1440p': '1440p (QHD)', '4k': '4K (UHD)' };
 
+	// Phase 2 audit fix (Oct 2026): per-resolution engine. Must stay identical
+	// to cs_calculate_bottleneck() in inc/bottleneck.php — see that file's
+	// header for the full method. In short: the CPU's gaming ceiling
+	// (score * BN_CPU_PARITY) barely moves with resolution, while the GPU's
+	// throughput shrinks with pixel count (score * BN_GPU_RES_FACTOR[res]).
+	// Comparing the two separately at each resolution lets a pair be
+	// CPU-bound at 1080p and GPU-bound at 4K. The old model used one score
+	// gap for all three resolutions, so the direction could never change.
+	var BN_CPU_PARITY = 0.85;
+	var BN_GPU_RES_FACTOR = { '1080p': 1.0, '1440p': 0.68, '4k': 0.42 };
+
 	function bottleneckEstimate( cpuScore, gpuScore ) {
-		var gap = gpuScore - cpuScore; // > 0: GPU relatively stronger than CPU (CPU-bound).
-
-		// Fixed during Sep 2026 audit: a single sensitivity curve was applied
-		// regardless of which part was the constraint. That curve (1.5 / 1.0 /
-		// 0.55 going 1080p -> 4K) is correct for a CPU-bound pair — CPU load is
-		// roughly resolution-independent, so a weak CPU's relative impact
-		// shrinks as resolution rises and GPU work dominates the frame time.
-		// But it was also being used, unchanged, for GPU-bound pairs, where
-		// the opposite is true: GPU workload scales up with resolution, so a
-		// weak GPU becomes a BIGGER bottleneck at 4K, not a smaller one. That
-		// made every GPU-bound result in the calculator and on all 30 static
-		// /bottleneck/ pages run backwards (e.g. Ryzen 5 5600 + RTX 4060 showed
-		// a shrinking 13% -> 8% -> 5% GPU bottleneck from 1080p to 4K; it should
-		// grow). Fix: mirror the curve for the GPU-bound direction so severity
-		// grows with resolution there, while leaving the CPU-bound direction
-		// exactly as it was (already correct, no regression).
-		var cpuBoundSensitivity = { '1080p': 1.5, '1440p': 1.0, '4k': 0.55 };
-		var gpuBoundSensitivity = { '1080p': 0.55, '1440p': 1.0, '4k': 1.5 };
-
-		var absGap = Math.abs( gap );
-		var baseComponent = gap > 0 ? 'cpu' : ( gap < 0 ? 'gpu' : 'balanced' );
-		var sensitivity = baseComponent === 'cpu' ? cpuBoundSensitivity : gpuBoundSensitivity;
-
-		// Cap raised from 40 to 60 during the Sep 2026 audit (kept in sync
-		// with the PHP mirror in inc/bottleneck.php): a flat 40% ceiling
-		// meant any sufficiently mismatched pair (e.g. a budget Ryzen 5 5600
-		// with a flagship RTX 5090) hit the cap at BOTH 1080p and 1440p,
-		// making those two resolutions show the identical 40% and erasing
-		// the differentiation this per-resolution model exists to show.
+		var cpuEff = cpuScore * BN_CPU_PARITY;
 		var out = {};
-		Object.keys( sensitivity ).forEach( function ( res ) {
-			var magnitude = absGap * sensitivity[ res ];
-			var percent = Math.min( 60, Math.round( magnitude * 0.6 ) );
-			var component = baseComponent;
-			if ( magnitude < 4 ) {
+		Object.keys( BN_GPU_RES_FACTOR ).forEach( function ( res ) {
+			var gpuEff = gpuScore * BN_GPU_RES_FACTOR[ res ];
+			var stronger = Math.max( cpuEff, gpuEff );
+			// Rounded to 4 decimals first, same as the PHP mirror, so both agree
+			// on values that land exactly on .5 after float math.
+			var share = stronger > 0 ? Number( ( Math.abs( gpuEff - cpuEff ) / stronger * 100 ).toFixed( 4 ) ) : 0;
+			var percent = Math.min( 60, Math.floor( share + 0.5 ) );
+			var component = gpuEff > cpuEff ? 'cpu' : 'gpu'; // GPU has spare capacity => CPU is the limit.
+			if ( percent < 6 ) {
 				component = 'balanced';
-				percent = Math.min( percent, 5 );
 			}
 			out[ res ] = { percent: percent, component: component };
 		} );
 		return out;
+	}
+
+	function bnLabel( r ) {
+		if ( r.component === 'balanced' ) {
+			return r.percent + '% (balanced)';
+		}
+		return r.percent + '% (' + ( r.component === 'cpu' ? 'CPU-bound' : 'GPU-bound' ) + ')';
+	}
+
+	// Plain-language note when the likely limiting part changes between
+	// resolutions; empty string when it doesn't.
+	function bnShiftNote( all ) {
+		var seen = {};
+		Object.keys( all ).forEach( function ( res ) { seen[ all[ res ].component ] = true; } );
+		if ( Object.keys( seen ).length < 2 ) {
+			return '';
+		}
+		var parts = Object.keys( all ).map( function ( res ) {
+			var r = all[ res ];
+			return ( r.component === 'balanced' ? 'balanced' : ( r.component === 'cpu' ? 'CPU-bound' : 'GPU-bound' ) ) + ' at ' + ( res === '4k' ? '4K' : res );
+		} );
+		return 'The limiting part shifts with resolution: ' + parts[ 0 ] + ', ' + parts[ 1 ] + ' and ' + parts[ 2 ] + '. Higher resolutions give the GPU more pixels to draw, so load moves onto the graphics card.';
 	}
 
 	var CS_DEFS = {};
@@ -452,12 +460,16 @@
 			} else {
 				verdict = 'The ' + gpu.name + ' is the more likely limiting factor at ' + RES_LABELS[ v.resolution ] + ' (~' + r.percent + '% estimated bottleneck).';
 			}
+			var shift = bnShiftNote( all );
+			if ( shift ) {
+				verdict += ' ' + shift;
+			}
 			var rows = [
 				[ 'Estimated bottleneck', r.percent + '%' ],
 				[ 'Likely limiting part', r.component === 'balanced' ? 'Balanced' : ( r.component === 'cpu' ? cpu.name : gpu.name ) ],
-				[ '1080p', all[ '1080p' ].percent + '% (' + all[ '1080p' ].component + ')' ],
-				[ '1440p', all[ '1440p' ].percent + '% (' + all[ '1440p' ].component + ')' ],
-				[ '4K', all[ '4k' ].percent + '% (' + all[ '4k' ].component + ')' ]
+				[ '1080p', bnLabel( all[ '1080p' ] ) ],
+				[ '1440p', bnLabel( all[ '1440p' ] ) ],
+				[ '4K', bnLabel( all[ '4k' ] ) ]
 			];
 			return resultBlock( verdict, rows, 'bottleneck estimates use relative specs-based performance scores, not per-game benchmarks.' );
 		}
@@ -597,15 +609,31 @@
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
-			var resMult = { '1080p': 1.0, '1440p': 0.68, '4k': 0.42 }[ v.resolution ];
+			// Phase 2 (Oct 2026): uses the bottleneck engine's own resolution
+			// factors and CPU parity, so at "high" settings the FPS calculator's
+			// limiting part always matches the bottleneck calculator's. The CPU
+			// ceiling no longer rises with resolution (it used to be 2.4x / 3.0x /
+			// 4.2x the CPU score, which let the GPU be the limit almost
+			// everywhere): a CPU prepares the same frames per second whatever the
+			// resolution. FPS_PER_POINT (2.5 FPS per GPU score point at 1080p
+			// high, was 1.8) re-anchors the scale to published 1080p averages,
+			// e.g. an RTX 4070 at roughly 135-140 FPS when nothing else limits it.
+			var FPS_PER_POINT = 2.5;
+			var resMult = BN_GPU_RES_FACTOR[ v.resolution ];
 			var presetMult = { low: 1.3, medium: 1.1, high: 1.0, ultra: 0.82 }[ v.preset ];
-			var gpuFps = gpu.score * 1.8 * resMult * presetMult;
-			var cpuCapMult = { '1080p': 2.4, '1440p': 3.0, '4k': 4.2 }[ v.resolution ];
-			var cpuCap = cpu.score * cpuCapMult;
+			var gpuFps = gpu.score * FPS_PER_POINT * resMult * presetMult;
+			var cpuCap = cpu.score * BN_CPU_PARITY * FPS_PER_POINT;
 			var estimate = Math.min( gpuFps, cpuCap );
-			var low = Math.round( estimate * 0.82 );
-			var high = Math.round( estimate * 1.18 );
-			var limiter = gpuFps < cpuCap ? gpu.name + ' (GPU-bound)' : cpu.name + ' (CPU-bound)';
+			// The FPS calculator page says the range is wider when CPU and GPU
+			// both matter and narrower when one part clearly dominates; it used to
+			// be a flat ±18%. Now ±22% when the two ceilings are within 15% of
+			// each other, ±15% otherwise (still "roughly ±18%" as /methodology/ says).
+			var closeness = Math.min( gpuFps, cpuCap ) / Math.max( gpuFps, cpuCap );
+			var spread = closeness >= 0.85 ? 0.22 : 0.15;
+			var low = Math.round( estimate * ( 1 - spread ) );
+			var high = Math.round( estimate * ( 1 + spread ) );
+			// Same "under 6% = balanced" rule as the bottleneck calculator.
+			var limiter = Math.round( ( 1 - closeness ) * 100 ) < 6 ? 'Balanced (CPU and GPU about even)' : ( gpuFps < cpuCap ? gpu.name + ' (GPU-bound)' : cpu.name + ' (CPU-bound)' );
 			var rows = [
 				[ 'Estimated FPS range', low + ' – ' + high + ' FPS' ],
 				[ 'Midpoint estimate', Math.round( estimate ) + ' FPS' ],
@@ -676,8 +704,14 @@
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
-			var targetGpuScore = { '1080p': 45, '1440p': 60, '4k': 80, productivity: 55 }[ v.target ];
-			var targetCpuScore = { '1080p': 60, '1440p': 55, '4k': 50, productivity: 65 }[ v.target ];
+			// Targets re-set with the Phase 2 score recalibration (Oct 2026).
+			// GPU targets = the lowest score among cards this site's own tier
+			// labels (data/hardware-data.php 'tier') call suitable for that
+			// resolution, so the advisor never calls a "1440p" card too weak for
+			// 1440p (the old 60 failed the RTX 4070, the old 80 failed the RTX
+			// 4080 at 4K). CPU targets follow the new CPU scale.
+			var targetGpuScore = { '1080p': 33, '1440p': 50, '4k': 70, productivity: 55 }[ v.target ];
+			var targetCpuScore = { '1080p': 55, '1440p': 53, '4k': 50, productivity: 59 }[ v.target ];
 			var priorities = [];
 			if ( v.storageType === 'hdd' ) {
 				priorities.push( 'Storage — moving to an NVMe SSD is the single biggest everyday speed upgrade you can make.' );
@@ -798,12 +832,19 @@
 			var rows = [
 				[ cpu.name + ' score', fmt( cpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.cpu ), 0 ) ],
 				[ gpu.name + ' score', fmt( gpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.gpu ), 0 ) ],
-				[ '1080p balance', all[ '1080p' ].component ],
-				[ '1440p balance', all[ '1440p' ].component ],
-				[ '4K balance', all[ '4k' ].component ]
+				[ '1080p balance', bnLabel( all[ '1080p' ] ) ],
+				[ '1440p balance', bnLabel( all[ '1440p' ] ) ],
+				[ '4K balance', bnLabel( all[ '4k' ] ) ]
 			];
-			var stronger = gpu.score === cpu.score ? 'evenly matched' : ( gpu.score > cpu.score ? 'the GPU is relatively stronger' : 'the CPU is relatively stronger' );
-			return resultBlock( 'For this pair, ' + stronger + ' — see the resolution breakdown below.', rows );
+			// Phase 2 (Oct 2026): CPU and GPU scores are separate scales, so the
+			// headline comes from the per-resolution engine, not from comparing
+			// the two raw scores.
+			var headline = bnShiftNote( all );
+			if ( ! headline ) {
+				var c = all[ '1080p' ].component;
+				headline = c === 'balanced' ? 'This pair is well matched at every resolution.' : ( c === 'cpu' ? 'The CPU is the more likely limit at every resolution.' : 'The GPU is the more likely limit at every resolution.' );
+			}
+			return resultBlock( 'For this pair: ' + headline + ' See the resolution breakdown below.', rows );
 		}
 	};
 
@@ -812,13 +853,14 @@
 		fields: [ { id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'CPU' } ],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ];
-			var tier = cpu.score >= 85 ? 'Flagship' : cpu.score >= 70 ? 'High-end' : cpu.score >= 55 ? 'Mid-range' : 'Entry-level';
+			// Thresholds re-set for the Phase 2 gaming-index scale (Oct 2026).
+			var tier = cpu.score >= 77 ? 'Flagship' : cpu.score >= 66 ? 'High-end' : cpu.score >= 54 ? 'Mid-range' : 'Entry-level';
 			var rows = [
 				[ 'Performance score', fmt( cpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.cpu ), 0 ) ], [ 'Tier', tier ],
 				[ 'Cores / Threads', cpu.cores + ' / ' + cpu.threads ], [ 'Base / Boost clock', cpu.base_clock_ghz + ' GHz / ' + cpu.boost_clock_ghz + ' GHz' ],
 				[ 'TDP', cpu.tdp_w + 'W' ], [ 'Socket', cpu.socket ]
 			];
-			return resultBlock( cpu.name + ' is a <strong>' + tier + '</strong> CPU.', rows );
+			return resultBlock( cpu.name + ' is a <strong>' + tier + '</strong> CPU.', rows, 'the score is a gaming-performance index; heavily multi-threaded work can rank CPUs differently.' );
 		}
 	};
 

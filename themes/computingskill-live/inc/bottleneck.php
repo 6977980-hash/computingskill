@@ -5,11 +5,36 @@
  * pages so search engines see the full estimate in the HTML, not just
  * after JS runs.
  *
- * This is a deliberately simple, transparent, labeled ESTIMATE model: it
- * compares each part's relative performance score (see data/hardware-data.php)
- * and weights that gap differently per resolution, because GPU load
- * increases and CPU load's share of the frame-time budget shrinks as
- * resolution rises. It is not a benchmark result.
+ * This is a deliberately simple, transparent, labeled ESTIMATE model. It
+ * is not a benchmark result.
+ *
+ * How it works (Phase 2 audit fix, Oct 2026 — the JS mirror
+ * bottleneckEstimate() in assets/js/calculators.js must stay identical):
+ *
+ *  1. A CPU's score is its gaming frame-rate ceiling, which barely changes
+ *     with resolution. Converted to the GPU scale it is
+ *     cpu_score * CS_BN_CPU_PARITY.
+ *  2. A GPU's score is its throughput at 1080p. Each resolution has more
+ *     pixels to shade, so the GPU's effective score is
+ *     gpu_score * CS_BN_GPU_RES_FACTOR[res] (1.00 / 0.68 / 0.42 — the same
+ *     resolution factors the FPS calculator uses).
+ *  3. The two effective scores are compared SEPARATELY at every
+ *     resolution. Whichever is lower is the likely limiting part there, so
+ *     a pair can be CPU-bound at 1080p and GPU-bound at 4K.
+ *  4. The estimated bottleneck % is the share of the stronger part's
+ *     capacity the weaker part leaves unused:
+ *     (stronger - weaker) / stronger * 100, rounded, capped at 60.
+ *     Under 6% is shown as "balanced".
+ *
+ * The previous model took ONE score gap and applied it to all three
+ * resolutions, so the CPU-vs-GPU direction could never change with
+ * resolution (e.g. Ryzen 5 5600 + RTX 4090 read ~16% CPU-bound even at 4K),
+ * which contradicted the site's own guides and FAQs.
+ *
+ * Calibration: 0.85 parity puts a Ryzen 5 5600 + RTX 4070 slightly
+ * CPU-bound at 1080p and clearly GPU-bound at 4K, and a Ryzen 7 7700X +
+ * RTX 4070 close to balanced at 1080p, in line with published review
+ * frame rates for those parts (see data/hardware-data.php's score note).
  *
  * @package ComputingSkill
  */
@@ -18,51 +43,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! defined( 'CS_BN_CPU_PARITY' ) ) {
+	define( 'CS_BN_CPU_PARITY', 0.85 );
+}
+
+function cs_bottleneck_gpu_res_factors() {
+	return array(
+		'1080p' => 1.0,
+		'1440p' => 0.68,
+		'4k'    => 0.42,
+	);
+}
+
 function cs_calculate_bottleneck( $cpu, $gpu ) {
-	$gap = $gpu['score'] - $cpu['score']; // > 0: GPU relatively stronger than CPU (CPU-bound).
+	$cpu_eff = $cpu['score'] * CS_BN_CPU_PARITY;
 
-	// Fixed during Sep 2026 audit — kept in sync with the JS mirror in
-	// assets/js/calculators.js's bottleneckEstimate(). A single sensitivity
-	// curve (1.5 / 1.0 / 0.55 going 1080p -> 4K) was being applied regardless
-	// of which part was the constraint. That's correct for a CPU-bound pair
-	// (CPU load is roughly resolution-independent, so a weak CPU matters
-	// less as resolution rises and GPU load dominates), but backwards for a
-	// GPU-bound pair, where GPU workload scales UP with resolution, so a
-	// weak GPU should look like a bigger bottleneck at 4K, not a smaller
-	// one. Every generated /bottleneck/ page for a GPU-bound pairing was
-	// showing the estimate shrinking from 1080p to 4K when it should grow.
-	$cpu_bound_sensitivity = array(
-		'1080p' => 1.5,
-		'1440p' => 1.0,
-		'4k'    => 0.55,
-	);
-	$gpu_bound_sensitivity = array(
-		'1080p' => 0.55,
-		'1440p' => 1.0,
-		'4k'    => 1.5,
-	);
-
-	$abs_gap        = abs( $gap );
-	$base_component = $gap > 0 ? 'cpu' : ( $gap < 0 ? 'gpu' : 'balanced' );
-	$sensitivity    = 'cpu' === $base_component ? $cpu_bound_sensitivity : $gpu_bound_sensitivity;
-
-	// Cap raised from 40 to 60 during the Sep 2026 audit: a flat 40% ceiling
-	// meant any sufficiently mismatched pair (e.g. a budget Ryzen 5 5600
-	// with a flagship RTX 5090) hit the cap at BOTH 1080p and 1440p, making
-	// those two resolutions show the identical 40% and erasing the very
-	// differentiation this per-resolution model exists to show. 60 still
-	// keeps the number bounded and plausible (nothing here claims a part is
-	// "100% bottlenecked"), but gives large, real score gaps enough room to
-	// differ across resolutions again.
 	$results = array();
-	foreach ( $sensitivity as $res => $multiplier ) {
-		$magnitude = $abs_gap * $multiplier;
-		$percent   = (int) min( 60, round( $magnitude * 0.6 ) );
-		$component = $base_component;
+	foreach ( cs_bottleneck_gpu_res_factors() as $res => $factor ) {
+		$gpu_eff  = $gpu['score'] * $factor;
+		$stronger = max( $cpu_eff, $gpu_eff );
+		// Round to 4 decimals first so PHP and JS agree on values that land
+		// exactly on .5 after float math.
+		$share     = $stronger > 0 ? round( abs( $gpu_eff - $cpu_eff ) / $stronger * 100, 4 ) : 0;
+		$percent   = (int) min( 60, floor( $share + 0.5 ) );
+		$component = $gpu_eff > $cpu_eff ? 'cpu' : 'gpu'; // GPU has spare capacity => CPU is the limit.
 
-		if ( $magnitude < 4 ) {
+		if ( $percent < 6 ) {
 			$component = 'balanced';
-			$percent   = min( $percent, 5 );
 		}
 
 		$results[ $res ] = array(
@@ -72,6 +79,54 @@ function cs_calculate_bottleneck( $cpu, $gpu ) {
 	}
 
 	return $results;
+}
+
+/**
+ * True when the likely limiting part differs between resolutions.
+ */
+function cs_bottleneck_has_shift( $results ) {
+	$components = array();
+	foreach ( $results as $r ) {
+		$components[ $r['component'] ] = true;
+	}
+	return count( $components ) > 1;
+}
+
+/**
+ * One-paragraph headline for a pair: describes the shift when the limiting
+ * part changes with resolution, otherwise the single most significant
+ * resolution's verdict.
+ */
+function cs_bottleneck_summary( $cpu_name, $gpu_name, $results, $labels ) {
+	if ( ! cs_bottleneck_has_shift( $results ) ) {
+		$worst_res = '1080p';
+		foreach ( $results as $res => $r ) {
+			if ( $r['percent'] > $results[ $worst_res ]['percent'] ) {
+				$worst_res = $res;
+			}
+		}
+		return cs_bottleneck_sentence( $cpu_name, $gpu_name, $labels[ $worst_res ], $results[ $worst_res ] );
+	}
+
+	$short = array( '1080p' => '1080p', '1440p' => '1440p', '4k' => '4K' );
+	$parts = array();
+	foreach ( $results as $res => $r ) {
+		if ( 'balanced' === $r['component'] ) {
+			$parts[] = sprintf( __( 'balanced at %s', 'computingskill' ), $short[ $res ] );
+		} elseif ( 'cpu' === $r['component'] ) {
+			$parts[] = sprintf( __( 'CPU-limited at %1$s (~%2$d%%)', 'computingskill' ), $short[ $res ], $r['percent'] );
+		} else {
+			$parts[] = sprintf( __( 'GPU-limited at %1$s (~%2$d%%)', 'computingskill' ), $short[ $res ], $r['percent'] );
+		}
+	}
+
+	return sprintf(
+		/* translators: 1: CPU name, 2: GPU name, 3: list of per-resolution results */
+		__( 'The limiting part shifts with resolution for the %1$s and %2$s: our estimate is %3$s. As resolution rises the GPU has more pixels to draw per frame, so more of the load lands on the graphics card.', 'computingskill' ),
+		$cpu_name,
+		$gpu_name,
+		$parts[0] . ', ' . $parts[1] . ' ' . __( 'and', 'computingskill' ) . ' ' . $parts[2]
+	);
 }
 
 /**
@@ -185,3 +240,58 @@ function cs_maybe_print_bottleneck_index() {
 	}
 	echo '</div>';
 }
+
+/**
+ * Keeps the /methodology/ (and CPU Performance Calculator) page wording true for the Phase 2 engine and
+ * score scale (Oct 2026), without hand-editing the live post content.
+ *
+ * Runs on the raw content before shortcodes (priority 8), so the FAQ answer
+ * that [cs_faq] also queues for FAQPage schema gets the corrected text too.
+ * Each rule matches a distinctive phrase of the old text and does nothing
+ * if that phrase is gone (e.g. after the page is edited by hand).
+ */
+function cs_methodology_engine_text( $content ) {
+	if ( ! is_singular( 'page' ) ) {
+		return $content;
+	}
+
+	$slug = get_post_field( 'post_name' );
+
+	// The CPU Performance Calculator's tier now comes from the gaming index.
+	if ( 'cpu-performance-calculator' === $slug ) {
+		return preg_replace(
+			'#,\s*even though this calculator returns one general-purpose tier\.#u',
+			__( ', and this calculator’s tier follows its gaming-focused score.', 'computingskill' ),
+			$content
+		);
+	}
+
+	if ( 'methodology' !== $slug ) {
+		return $content;
+	}
+
+	$bottleneck = __( 'Compares your CPU and GPU separately at 1080p, 1440p and 4K. The CPU score stands for how many frames per second the CPU can prepare, which barely changes with resolution. The GPU score is scaled for each resolution by its pixel load (1080p ×1.00, 1440p ×0.68, 4K ×0.42, the same factors the FPS Calculator uses), because every extra pixel is extra work for the graphics card. Whichever part comes out lower at a resolution is the more likely limiting one there, so the same pairing can be CPU-bound at 1080p and GPU-bound at 4K. The estimated bottleneck percentage is the share of the stronger part’s capacity that goes unused (capped at 60%); anything under 6% is shown as balanced.', 'computingskill' );
+
+	$score = __( 'We generate this as a simplified relative gaming-performance index per part. A GPU’s score stands for its average gaming throughput at high settings, with the RTX 4090 at 100 (a faster card, such as the RTX 5090, scores above 100). A CPU’s score stands for the frame rate it can sustain in games when the graphics card isn’t the limit, so it ranks gaming speed, not multi-core work. Both are built from published specs and positioned using publicly reported review averages, never as an absolute performance claim; we don’t run our own benchmarks. CPU and GPU scores are separate scales, so the calculators convert between them instead of comparing the raw numbers. This score is not a benchmark result, and we don’t present it as one. It exists purely to drive the math on this site, ranking parts against each other well enough to catch an obviously mismatched pairing or a reasonable FPS ballpark, not to stand in for a real performance review.', 'computingskill' );
+
+	// Whole block element (p or li) containing the phrase.
+	$element = '#<(p|li)\b[^>]*>(?:(?!</\1>).)*?%s(?:(?!</\1>).)*?</\1>#su';
+
+	$content = preg_replace( sprintf( $element, 'resolution-specific sensitivity curves' ), '<p>' . $bottleneck . '</p>', $content, 1 );
+	$content = preg_replace( sprintf( $element, 'relative index per part' ), '<p>' . $score . '</p>', $content, 1 );
+
+	// FAQ answers (plain text inside [cs_faq_item]).
+	$content = preg_replace(
+		'#The calculator models that shift with different sensitivity curves per resolution rather than giving one fixed number\.#u',
+		__( 'The calculator models that shift by comparing the CPU and GPU separately at each resolution, with the GPU’s workload scaled by pixel count, rather than giving one fixed number.', 'computingskill' ),
+		$content
+	);
+	$content = preg_replace(
+		'#It(?:&\#8217;|&rsquo;|\x{2019}|\')s a simplified 1(?:-|&\#8211;|&ndash;|\x{2013})100 index built from published specs#u',
+		__( 'It’s a simplified gaming-performance index built from published specs and public review averages', 'computingskill' ),
+		$content
+	);
+
+	return $content;
+}
+add_filter( 'the_content', 'cs_methodology_engine_text', 8 );
