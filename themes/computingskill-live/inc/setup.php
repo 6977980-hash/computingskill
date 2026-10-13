@@ -94,6 +94,27 @@ function cs_enqueue_calculators() {
 		}
 	}
 	wp_add_inline_script( 'computingskill-calculators', 'window.csGamesData = ' . wp_json_encode( $games ) . ';', 'before' );
+
+	// Published /bottleneck/{cpu}-{gpu}/ pages, keyed "cpu|gpu", so the
+	// bottleneck and FPS results can link to a pair's static page when one
+	// exists (Phase 5, Oct 2026). Read from the posts themselves, so a link
+	// is never shown for a page that isn't live.
+	$combos = array();
+	$posts  = get_posts( array(
+		'post_type'      => 'cs_bottleneck',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+	foreach ( $posts as $post_id ) {
+		$cpu = get_post_meta( $post_id, 'cs_cpu', true );
+		$gpu = get_post_meta( $post_id, 'cs_gpu', true );
+		if ( $cpu && $gpu ) {
+			$combos[ $cpu . '|' . $gpu ] = get_permalink( $post_id );
+		}
+	}
+	wp_add_inline_script( 'computingskill-calculators', 'window.csComboPages = ' . wp_json_encode( $combos ) . ';', 'before' );
 }
 
 /**

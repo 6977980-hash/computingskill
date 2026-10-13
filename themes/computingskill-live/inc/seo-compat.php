@@ -283,3 +283,42 @@ function cs_improve_short_descriptions( $description ) {
 	return $description;
 }
 add_filter( 'rank_math/frontend/description', 'cs_improve_short_descriptions', 20 );
+
+/**
+ * Shareable calculator links (Phase 5, Oct 2026): calculators.js writes the
+ * inputs into the address (?cpu=…&gpu=…). Those URLs show the same page, so
+ * the canonical must always be the clean page URL. Rank Math and core both
+ * use the permalink already; this strips the share parameters as a guard in
+ * case a setting or plugin update ever starts keeping the query string.
+ * Keep the list in sync with the field ids of share-enabled calculators.
+ */
+function cs_share_param_keys() {
+	return array( 'cpu', 'gpu', 'resolution', 'preset', 'game', 'cpuTdp', 'ramSticks', 'storageDrives', 'fans', 'overclock' );
+}
+
+function cs_canonical_without_share_params( $url ) {
+	if ( ! is_string( $url ) || false === strpos( $url, '?' ) ) {
+		return $url;
+	}
+	return remove_query_arg( cs_share_param_keys(), $url );
+}
+add_filter( 'rank_math/frontend/canonical', 'cs_canonical_without_share_params', 20 );
+add_filter( 'get_canonical_url', 'cs_canonical_without_share_params', 20 );
+
+/**
+ * Privacy Policy: say that share links carry calculator choices in the URL,
+ * so "inputs are used only to compute the result" stays complete and true.
+ * Matches the existing sentence; does nothing if that text is edited away.
+ */
+function cs_privacy_share_link_text( $content ) {
+	if ( ! is_page( 'privacy-policy' ) || ! in_the_loop() || ! is_main_query() ) {
+		return $content;
+	}
+	$needle = 'are used only to compute the result shown to you.';
+	if ( false === strpos( $content, $needle ) || false !== strpos( $content, 'cs-privacy-share' ) ) {
+		return $content;
+	}
+	$extra = ' <span class="cs-privacy-share">' . esc_html__( 'On the Bottleneck, FPS and PSU calculators, your selections are also added to the page address after you press Calculate, so you can copy or bookmark a link to that result. We do not save results on our side. When you or anyone you share the link with opens it, those selections reach our server as part of the address, like any web request, and can appear in the standard server logs described under Log Data.', 'computingskill' ) . '</span>';
+	return preg_replace( '/' . preg_quote( $needle, '/' ) . '/', $needle . $extra, $content, 1 );
+}
+add_filter( 'the_content', 'cs_privacy_share_link_text', 20 );

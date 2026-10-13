@@ -3,3 +3,11 @@
 /* Homepage intro paragraph (audit FIX-09, Phase 1). */
 .cs-home-intro { margin-bottom: 8px; }
 .cs-home-intro p { max-width: 780px; font-size: 1.05rem; line-height: 1.7; color: var(--cs-text-muted); }
+
+/* Shareable calculator results (audit FIX-12, Phase 5). */
+.cs-share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 14px 14px; }
+.cs-share-copy { font: inherit; font-size: 0.9rem; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--cs-border); background: transparent; color: var(--cs-primary); cursor: pointer; }
+.cs-share-copy:hover { border-color: var(--cs-primary); }
+.cs-share-status { font-size: 0.85rem; color: var(--cs-accent); }
+.cs-share-combo { margin: 0; padding: 0 14px 10px; font-size: 0.95rem; }
+

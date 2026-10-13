@@ -240,6 +240,166 @@
 	}
 
 	/* ----------------------------------------------------------------
+	 * Shareable results (Phase 5 audit fix, Oct 2026)
+	 *
+	 * A definition with `share: true` writes its inputs into the page URL
+	 * on every successful Calculate (history.replaceState, so no extra
+	 * history entries), e.g. ?cpu=ryzen-5-5600&gpu=rtx-4060. On load those
+	 * parameters pre-fill the form and the result is calculated at once, so
+	 * a copied link reproduces exactly the same result. Fields still at
+	 * their default are left out to keep links short; loading falls back to
+	 * the same default, so the result is identical. Unknown or invalid
+	 * values are ignored and removed from the address bar. Other query
+	 * parameters (utm_*, etc.) are left alone. Only the first share-enabled
+	 * calculator on a page owns the URL. The page's canonical URL stays the
+	 * clean page address (see cs_canonical_without_share_params()).
+	 * ---------------------------------------------------------------- */
+
+	var shareOwner = null;
+
+	function shareParams() {
+		try {
+			return new URLSearchParams( window.location.search );
+		} catch ( e ) {
+			return null;
+		}
+	}
+
+	function writeShareUrl( params ) {
+		if ( ! window.history || ! window.history.replaceState ) {
+			return;
+		}
+		var qs = params.toString();
+		var url = window.location.pathname + ( qs ? '?' + qs : '' ) + window.location.hash;
+		try {
+			window.history.replaceState( window.history.state, '', url );
+		} catch ( e ) {}
+	}
+
+	// Validates one URL value against its field. Returns the value to set
+	// on the input, or null when it is not a valid choice for that field.
+	function shareValueFor( field, input, raw ) {
+		if ( field.type === 'select' || field.type === 'select-hardware' ) {
+			for ( var i = 0; i < input.options.length; i++ ) {
+				if ( input.options[ i ].value === raw ) {
+					return raw;
+				}
+			}
+			return null;
+		}
+		if ( field.type === 'checkbox' ) {
+			return raw === '1' ? true : ( raw === '0' ? false : null );
+		}
+		if ( ! /^-?\d+(\.\d+)?$/.test( raw ) ) {
+			return null;
+		}
+		var num = parseFloat( raw );
+		if ( ( field.min !== undefined && num < field.min ) || ( field.max !== undefined && num > field.max ) ) {
+			return null;
+		}
+		return raw;
+	}
+
+	// Pre-fills inputs from the URL. Returns true when at least one valid
+	// value was applied and none was invalid (the caller then
+	// auto-calculates). With a bad value the form is only pre-filled, so a
+	// broken link never silently shows a result for a part nobody picked.
+	function applyShareParams( def, inputs ) {
+		var params = shareParams();
+		if ( ! params ) {
+			return false;
+		}
+		var applied = false, dirty = false;
+		def.fields.forEach( function ( field ) {
+			if ( ! params.has( field.id ) ) {
+				return;
+			}
+			var input = inputs[ field.id ];
+			var val = shareValueFor( field, input, params.get( field.id ) );
+			if ( val === null ) {
+				params.delete( field.id );
+				dirty = true;
+				return;
+			}
+			if ( field.type === 'checkbox' ) {
+				input.checked = val;
+			} else {
+				input.value = val;
+			}
+			applied = true;
+		} );
+		if ( dirty ) {
+			writeShareUrl( params );
+		}
+		return applied && ! dirty;
+	}
+
+	function updateShareUrl( def, values ) {
+		var params = shareParams();
+		if ( ! params ) {
+			return;
+		}
+		def.fields.forEach( function ( field ) {
+			var v = values[ field.id ];
+			var isDefault = field.default !== undefined && ( field.type === 'checkbox' ? !! field.default === !! v : String( field.default ) === String( v ) );
+			if ( isDefault || v === '' || v === undefined ) {
+				params.delete( field.id );
+			} else {
+				params.set( field.id, field.type === 'checkbox' ? ( v ? '1' : '0' ) : String( v ) );
+			}
+		} );
+		writeShareUrl( params );
+	}
+
+	function clearShareUrl( def ) {
+		var params = shareParams();
+		if ( ! params ) {
+			return;
+		}
+		def.fields.forEach( function ( field ) { params.delete( field.id ); } );
+		writeShareUrl( params );
+	}
+
+	// Link to the static /bottleneck/{cpu}-{gpu}/ page when that pair has
+	// one (published pages only, handed over by inc/setup.php).
+	function comboPageLink( cpuSlug, gpuSlug, hw ) {
+		var pages = window.csComboPages || {};
+		var url = pages[ cpuSlug + '|' + gpuSlug ];
+		if ( ! url || ! hw.cpu[ cpuSlug ] || ! hw.gpu[ gpuSlug ] ) {
+			return '';
+		}
+		return '<p class="cs-share-combo">Full breakdown for this pair: <a href="' + escapeHtml( url ) + '">' + escapeHtml( hw.cpu[ cpuSlug ].name + ' + ' + hw.gpu[ gpuSlug ].name + ' bottleneck page' ) + '</a></p>';
+	}
+
+	function shareBarHtml() {
+		return '<div class="cs-share"><button type="button" class="cs-share-copy" data-role="copy-link">Copy link to this result</button> <span class="cs-share-status" role="status" aria-live="polite"></span></div>';
+	}
+
+	function copyText( text, done ) {
+		if ( navigator.clipboard && window.isSecureContext ) {
+			navigator.clipboard.writeText( text ).then( function () { done( true ); }, function () { done( fallbackCopy( text ) ); } );
+			return;
+		}
+		done( fallbackCopy( text ) );
+	}
+
+	function fallbackCopy( text ) {
+		var ta = document.createElement( 'textarea' );
+		ta.value = text;
+		ta.setAttribute( 'readonly', '' );
+		ta.style.position = 'fixed';
+		ta.style.opacity = '0';
+		document.body.appendChild( ta );
+		ta.select();
+		var ok = false;
+		try {
+			ok = document.execCommand( 'copy' );
+		} catch ( e ) {}
+		document.body.removeChild( ta );
+		return ok;
+	}
+
+	/* ----------------------------------------------------------------
 	 * Generic runner
 	 * ---------------------------------------------------------------- */
 
@@ -281,6 +441,11 @@
 			} );
 		} );
 
+		var shares = !! def.share && ! shareOwner;
+		if ( shares ) {
+			shareOwner = container;
+		}
+
 		function calculate() {
 			var values = {};
 			var warnings = [];
@@ -321,6 +486,13 @@
 				} ).join( '' ) + '</div>';
 			}
 			html += outputHtml;
+			if ( def.comboLink ) {
+				html += comboPageLink( values.cpu, values.gpu, HW );
+			}
+			if ( shares ) {
+				updateShareUrl( def, values );
+				html += shareBarHtml();
+			}
 			resultRoot.innerHTML = html;
 			resultRoot.setAttribute( 'tabindex', '-1' );
 			resultRoot.focus( { preventScroll: true } );
@@ -354,7 +526,31 @@
 				} );
 				resultRoot.classList.remove( 'has-error' );
 				resultRoot.innerHTML = '';
+				if ( shares ) {
+					clearShareUrl( def );
+				}
 			} );
+		}
+
+		if ( shares ) {
+			resultRoot.addEventListener( 'click', function ( e ) {
+				var btn = e.target.closest ? e.target.closest( '[data-role="copy-link"]' ) : null;
+				if ( ! btn ) {
+					return;
+				}
+				var status = resultRoot.querySelector( '.cs-share-status' );
+				var url = window.location.href;
+				copyText( url, function ( ok ) {
+					if ( ok ) {
+						status.textContent = 'Link copied.';
+					} else {
+						window.prompt( 'Copy this link:', url );
+					}
+				} );
+			} );
+			if ( applyShareParams( def, inputs ) ) {
+				calculate();
+			}
 		}
 	}
 
@@ -441,6 +637,8 @@
 
 	/* ---- 1. PC Bottleneck Calculator ---- */
 	CS_DEFS.bottleneck = {
+		share: true,
+		comboLink: true,
 		fields: [
 			{ id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'Your CPU', icon: 'cpu' },
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'Your GPU', icon: 'gpu' },
@@ -503,6 +701,7 @@
 	}
 
 	CS_DEFS.psu = {
+		share: true,
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
 		].concat( cpuPickerFields( 'Other CPU: max turbo/boost power in watts (only used with "Other CPU")', 'Intel lists this as "Maximum Turbo Power"; for AMD Ryzen use the PPT figure (about TDP × 1.35).' ) ).concat( [
@@ -596,6 +795,8 @@
 
 	/* ---- 5. FPS Calculator ---- */
 	CS_DEFS.fps = {
+		share: true,
+		comboLink: true,
 		fields: [
 			{ id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'CPU', icon: 'cpu' },
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' },
