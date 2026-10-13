@@ -103,10 +103,12 @@ function cs_archive_intro( $post_type ) {
 
 
 /**
- * "By Computing Skill · Last updated <date>" line under each page's H1
+ * "By Ali Ahmad · Last updated <date>" line under each page's H1
  * (Sep 2026 audit: no page showed who wrote it or when it was last
- * revised). The date is the post's real last-modified date from
- * WordPress, never a hand-set "freshness" date. The name links to About
+ * revised). The name comes from cs_site_author() (inc/author.php), not
+ * the WordPress account's display name (Oct 2026 audit, FIX-15). The date
+ * is the post's real last-modified date from WordPress, never a hand-set
+ * "freshness" date. The name links to About
  * Us rather than the author archive, which 301s to the homepage (see
  * inc/redirects.php).
  */
@@ -114,17 +116,14 @@ function cs_article_meta() {
 	if ( ! is_singular() || is_front_page() ) {
 		return;
 	}
-	$author_id = (int) get_post_field( 'post_author' );
-	$name      = $author_id ? get_the_author_meta( 'display_name', $author_id ) : '';
-	if ( '' === $name ) {
-		$name = get_bloginfo( 'name' );
-	}
+	$author        = cs_site_author();
+	$name          = $author['name'];
 	$modified_iso  = get_the_modified_date( 'c' );
 	$modified_nice = get_the_modified_date( get_option( 'date_format' ) );
 	?>
 	<p class="cs-article-meta">
 		<?php esc_html_e( 'By', 'computingskill' ); ?>
-		<a href="<?php echo esc_url( home_url( '/about-us/' ) ); ?>"><?php echo esc_html( $name ); ?></a>
+		<a href="<?php echo esc_url( $author['url'] ); ?>" rel="author"><?php echo esc_html( $name ); ?></a>
 		<span aria-hidden="true">·</span>
 		<?php esc_html_e( 'Last updated', 'computingskill' ); ?>
 		<time datetime="<?php echo esc_attr( $modified_iso ); ?>"><?php echo esc_html( $modified_nice ); ?></time>

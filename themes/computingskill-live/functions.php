@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CS_THEME_VERSION', '1.0.26' );
+define( 'CS_THEME_VERSION', '1.0.27' );
 define( 'CS_THEME_DIR', get_template_directory() );
 define( 'CS_THEME_URI', get_template_directory_uri() );
 
@@ -23,6 +23,7 @@ require_once CS_THEME_DIR . '/inc/cpt.php';
 require_once CS_THEME_DIR . '/inc/breadcrumbs.php';
 require_once CS_THEME_DIR . '/inc/content-index.php';
 require_once CS_THEME_DIR . '/inc/seo-compat.php';
+require_once CS_THEME_DIR . '/inc/author.php';
 require_once CS_THEME_DIR . '/inc/schema.php';
 require_once CS_THEME_DIR . '/inc/shortcodes.php';
 require_once CS_THEME_DIR . '/inc/games-content.php';

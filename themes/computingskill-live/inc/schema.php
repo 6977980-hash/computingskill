@@ -212,11 +212,12 @@ add_filter( 'rank_math/schema/validated_data', 'cs_capture_rank_math_schema', 99
  * homepage (inc/redirects.php) and the archive itself has no content, so
  * it's the wrong identity to publish in structured data.
  *
- * The site's real public identity already exists in the same graph: Rank
- * Math's publisher node ("Computing Skill", @id …/#person, typed Person +
- * Organization). This drops the author-archive Person node and points every
- * `author` reference at that publisher node instead, so no page's schema
- * contains the email-derived slug at all.
+ * This drops the author-archive Person node and points every `author`
+ * reference (archive URL, or the "Computing Skill" publisher node) at the
+ * site's real author, Ali Ahmad: a Person node from cs_site_author()
+ * (inc/author.php) with url → /about-us/ and worksFor → the publisher
+ * Organization (Oct 2026 audit, FIX-15). Publisher stays "Computing Skill".
+ * The email-derived slug never appears in any page's schema.
  */
 function cs_schema_unify_author( $graphs ) {
 	$author_urls = array();
@@ -259,15 +260,18 @@ function cs_schema_unify_author( $graphs ) {
 		$clean[] = $node;
 	}
 
-	$rewrite = function ( $value ) use ( &$rewrite, $is_author_url, $publisher_id ) {
+	$person_id   = cs_site_author()['id'];
+	$used_person = false;
+	$rewrite     = function ( $value ) use ( &$rewrite, &$used_person, $is_author_url, $publisher_id, $person_id ) {
 		if ( ! is_array( $value ) ) {
 			return $value;
 		}
 		foreach ( $value as $key => $child ) {
 			if ( 'author' === $key && is_array( $child ) ) {
 				$ref = isset( $child['@id'] ) ? $child['@id'] : ( isset( $child['url'] ) ? $child['url'] : '' );
-				if ( $is_author_url( $ref ) ) {
-					$value[ $key ] = array( '@id' => $publisher_id );
+				if ( $is_author_url( $ref ) || $publisher_id === $ref || $person_id === $ref ) {
+					$value[ $key ] = array( '@id' => $person_id );
+					$used_person   = true;
 					continue;
 				}
 			}
@@ -276,7 +280,21 @@ function cs_schema_unify_author( $graphs ) {
 		return $value;
 	};
 
-	return array_values( $rewrite( $clean ) );
+	$clean = array_values( $rewrite( $clean ) );
+
+	// Add the author Person node wherever something references it, and on
+	// About Us (the author's profile page).
+	$has_person = false;
+	foreach ( $clean as $node ) {
+		if ( is_array( $node ) && isset( $node['@id'] ) && $person_id === $node['@id'] ) {
+			$has_person = true;
+		}
+	}
+	if ( ! $has_person && ( $used_person || ( is_singular( 'page' ) && 'about-us' === get_post_field( 'post_name' ) ) ) ) {
+		$clean[] = cs_site_author_schema_node( $publisher_id );
+	}
+
+	return $clean;
 }
 
 /**
