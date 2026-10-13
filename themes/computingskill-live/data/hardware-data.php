@@ -202,6 +202,42 @@ function cs_get_gpu_data() {
 			'tier' => 'High-end / 1440p-4K', 'score' => 78, 'release_year' => 2025,
 			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html',
 		),
+		// Phase 7 (Oct 2026): three current cards added for new combo pages.
+		// Spec fields copied from each maker's own page, checked 13 Oct 2026:
+		// NVIDIA RTX 5060 family page — RTX 5060: 3840 CUDA cores, 2.50 GHz
+		// boost, 8GB GDDR7, 128-bit, 145W TGP, 550W required system power.
+		// NVIDIA RTX 5070 family page — RTX 5070 Ti: 8960 CUDA cores, 2.45 GHz
+		// boost, 16GB GDDR7, 256-bit, 300W TGP, 750W required system power.
+		// AMD RX 9060 XT page (16GB model) — 32 CUs, up to 3130 MHz, 16GB
+		// GDDR6, 128-bit, 160W typical board power, 450W minimum PSU.
+		// Scores are this site's own gaming index (see the file header),
+		// placed from public review averages: RTX 5060 a little above the
+		// RTX 4060 and below the RX 9060 XT 16GB, which sits a few percent
+		// behind the RTX 5060 Ti 16GB; RTX 5070 Ti slightly ahead of the
+		// RX 9070 XT and slightly behind the RTX 4080. The two sub-50 cards
+		// are labeled 1080p because the PC Upgrade Calculator's 1440p GPU
+		// target is 50 (assets/js/calculators.js CS_DEFS.upgrade).
+		'rtx-5060' => array(
+			'name' => 'GeForce RTX 5060', 'brand' => 'NVIDIA', 'architecture' => 'Blackwell',
+			'vram_gb' => 8, 'memory_type' => 'GDDR7', 'memory_bus' => 128, 'boost_clock_mhz' => 2500,
+			'tdp_w' => 145, 'cores' => 3840, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 550,
+			'tier' => 'Mainstream / 1080p', 'score' => 45, 'release_year' => 2025,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5060-family/',
+		),
+		'rx-9060-xt' => array(
+			'name' => 'Radeon RX 9060 XT (16GB)', 'brand' => 'AMD', 'architecture' => 'RDNA 4',
+			'vram_gb' => 16, 'memory_type' => 'GDDR6', 'memory_bus' => 128, 'boost_clock_mhz' => 3130,
+			'tdp_w' => 160, 'cores' => 32, 'core_label' => 'Compute Units', 'recommended_psu_w' => 450,
+			'tier' => 'Mainstream / 1080p', 'score' => 47, 'release_year' => 2025,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9060xt.html',
+		),
+		'rtx-5070-ti' => array(
+			'name' => 'GeForce RTX 5070 Ti', 'brand' => 'NVIDIA', 'architecture' => 'Blackwell',
+			'vram_gb' => 16, 'memory_type' => 'GDDR7', 'memory_bus' => 256, 'boost_clock_mhz' => 2450,
+			'tdp_w' => 300, 'cores' => 8960, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 750,
+			'tier' => 'High-end / 4K', 'score' => 79, 'release_year' => 2025,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5070-family/',
+		),
 	);
 
 	return $gpus;
@@ -332,6 +368,52 @@ function cs_get_cpu_data() {
 			'tdp_w' => 125, 'max_power_w' => 250, 'socket' => 'LGA 1851', 'score' => 77, 'release_year' => 2024,
 			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/241060/intel-core-ultra-9-processor-285k-36m-cache-up-to-5-70-ghz/specifications.html',
 		),
+		// Phase 7 (Oct 2026): five CPUs added for new combo pages. Spec fields
+		// copied from each maker's own page, checked 13 Oct 2026:
+		// Intel i3-12100F — 4C/8T, 3.3 GHz base, 4.3 GHz max turbo, 58W base,
+		// 89W max turbo, FCLGA1700. Intel i5-14600K — 14C/20T, 3.5 GHz P-core
+		// base, 5.3 GHz max turbo, 125W base, 181W max turbo, FCLGA1700.
+		// Intel i7-14700K — 20C/28T, 3.4 GHz P-core base, 5.6 GHz max turbo,
+		// 125W base, 253W max turbo, FCLGA1700. Intel Core Ultra 5 245K —
+		// 14C/14T, 4.2 GHz P-core base, 5.2 GHz max turbo, 125W base, 159W max
+		// turbo, FCLGA1851. AMD Ryzen 7 9700X — 8C/16T, 3.8 GHz base, up to
+		// 5.5 GHz, 65W default TDP (max_power_w 88 = AMD's TDP x 1.35 rule),
+		// AM5. Scores placed from public review averages on the same gaming
+		// index: i3-12100F below the i5-12400F (4 cores), i5-14600K a step above
+		// the i5-13600K, i7-14700K level with the i9-13900K, Ultra 5 245K below
+		// the i5-13600K, Ryzen 7 9700X a little above the Ryzen 7 7700X.
+		// The Ryzen 5 5500 was considered but left out: AMD only publishes it
+		// on a driver/support page, and source_url must be a product page.
+		'core-i3-12100f' => array(
+			'name' => 'Intel Core i3-12100F', 'brand' => 'Intel', 'generation' => '12th Gen (Alder Lake)',
+			'cores' => 4, 'threads' => 8, 'base_clock_ghz' => 3.3, 'boost_clock_ghz' => 4.3,
+			'tdp_w' => 58, 'max_power_w' => 89, 'socket' => 'LGA 1700', 'score' => 48, 'release_year' => 2022,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html',
+		),
+		'core-i5-14600k' => array(
+			'name' => 'Intel Core i5-14600K', 'brand' => 'Intel', 'generation' => '14th Gen (Raptor Lake Refresh)',
+			'cores' => 14, 'threads' => 20, 'base_clock_ghz' => 3.5, 'boost_clock_ghz' => 5.3,
+			'tdp_w' => 125, 'max_power_w' => 181, 'socket' => 'LGA 1700', 'score' => 72, 'release_year' => 2023,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html',
+		),
+		'core-i7-14700k' => array(
+			'name' => 'Intel Core i7-14700K', 'brand' => 'Intel', 'generation' => '14th Gen (Raptor Lake Refresh)',
+			'cores' => 20, 'threads' => 28, 'base_clock_ghz' => 3.4, 'boost_clock_ghz' => 5.6,
+			'tdp_w' => 125, 'max_power_w' => 253, 'socket' => 'LGA 1700', 'score' => 78, 'release_year' => 2023,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html',
+		),
+		'core-ultra-5-245k' => array(
+			'name' => 'Intel Core Ultra 5 245K', 'brand' => 'Intel', 'generation' => 'Arrow Lake (Core Ultra 200S)',
+			'cores' => 14, 'threads' => 14, 'base_clock_ghz' => 4.2, 'boost_clock_ghz' => 5.2,
+			'tdp_w' => 125, 'max_power_w' => 159, 'socket' => 'LGA 1851', 'score' => 68, 'release_year' => 2024,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/241067/intel-core-ultra-5-processor-245k-24m-cache-up-to-5-20-ghz/specifications.html',
+		),
+		'ryzen-7-9700x' => array(
+			'name' => 'AMD Ryzen 7 9700X', 'brand' => 'AMD', 'generation' => 'Zen 5 (9000 Series)',
+			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 3.8, 'boost_clock_ghz' => 5.5,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM5', 'score' => 75, 'release_year' => 2024,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-7-9700x.html',
+		),
 	);
 
 	return $cpus;
@@ -378,5 +460,51 @@ function cs_get_bottleneck_pairs() {
 		array( 'cpu' => 'core-i9-13900k', 'gpu' => 'rx-7900-xtx' ),
 		array( 'cpu' => 'ryzen-7-5700x', 'gpu' => 'rtx-4060' ),
 		array( 'cpu' => 'core-i5-13400f', 'gpu' => 'rtx-4070-super' ),
+		// Batch 3 (Phase 7, Oct 2026): budget and mid-range builds first,
+		// mostly with the newly added parts (RTX 5060 / 5070 Ti, RX 9060 XT,
+		// i3-12100F, i5-14600K, i7-14700K, Core Ultra 5 245K, Ryzen 7 9700X).
+		// inc/combo-pages.php creates the missing cs_bottleneck posts from
+		// this list; every page's text comes from the engine and
+		// inc/bottleneck-content.php, so no pair gets hand-written copy.
+		array( 'cpu' => 'core-i3-12100f', 'gpu' => 'rtx-3060' ),
+		array( 'cpu' => 'core-i3-12100f', 'gpu' => 'rx-6600' ),
+		array( 'cpu' => 'core-i3-12100f', 'gpu' => 'rtx-4060' ),
+		array( 'cpu' => 'core-i3-12100f', 'gpu' => 'rtx-5060' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rx-6600' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rtx-5060' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rx-9060-xt' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'rtx-5060' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'rx-9060-xt' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'rtx-4070' ),
+		array( 'cpu' => 'core-i5-13400f', 'gpu' => 'rtx-4060' ),
+		array( 'cpu' => 'core-i5-13400f', 'gpu' => 'rtx-5060' ),
+		array( 'cpu' => 'core-i5-13400f', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'core-i5-13400f', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rtx-5060' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rx-9060-xt' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rx-9070-xt' ),
+		array( 'cpu' => 'ryzen-7-5700x', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'core-i5-14600k', 'gpu' => 'rtx-4070-super' ),
+		array( 'cpu' => 'core-i5-14600k', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'core-i5-14600k', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'core-i5-14600k', 'gpu' => 'rx-9070-xt' ),
+		array( 'cpu' => 'core-ultra-5-245k', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'core-ultra-5-245k', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'ryzen-7-9700x', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-7-9700x', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'ryzen-7-9700x', 'gpu' => 'rx-9070-xt' ),
+		array( 'cpu' => 'ryzen-7-7700x', 'gpu' => 'rx-9070-xt' ),
+		array( 'cpu' => 'core-i7-14700k', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'core-i7-14700k', 'gpu' => 'rtx-5080' ),
+		array( 'cpu' => 'core-i7-14700k', 'gpu' => 'rtx-4090' ),
+		array( 'cpu' => 'ryzen-7-9800x3d', 'gpu' => 'rx-9070-xt' ),
+		array( 'cpu' => 'ryzen-7-9800x3d', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'ryzen-7-9800x3d', 'gpu' => 'rtx-5080' ),
+		array( 'cpu' => 'ryzen-7-9800x3d', 'gpu' => 'rtx-5090' ),
 	);
 }
