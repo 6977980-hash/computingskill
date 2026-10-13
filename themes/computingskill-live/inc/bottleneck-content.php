@@ -245,7 +245,7 @@ function cs_bottleneck_verdict( $cpu_slug, $cpu, $gpu, $results ) {
 	$flags = cs_bn_cpu_flags( $cpu );
 	if ( $flags ) {
 		$p1 .= ' ' . sprintf(
-			__( 'Our PC Upgrade Calculator would also flag the %1$s as a possible limit in CPU-heavy games at %2$s.', 'computingskill' ),
+			__( 'Our PC Upgrade Calculator, which checks the CPU against a fixed target per resolution rather than against this card, would also flag the %1$s as a possible limit in CPU-heavy games at %2$s.', 'computingskill' ),
 			$cpu['name'], cs_bn_join( $flags )
 		);
 	}
@@ -339,7 +339,7 @@ function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 	}
 	$flags = cs_bn_cpu_flags( $cpu );
 	if ( $flags ) {
-		$a .= ' ' . sprintf( __( 'Our PC Upgrade Calculator still flags it as a possible limit in CPU-heavy games at %s.', 'computingskill' ), cs_bn_join( $flags ) );
+		$a .= ' ' . sprintf( __( 'Separately, our PC Upgrade Calculator, which checks the CPU against a fixed target per resolution rather than against this card, flags it as a possible limit in CPU-heavy games at %s.', 'computingskill' ), cs_bn_join( $flags ) );
 	}
 	$items[] = array(
 		'q' => sprintf( __( 'Is the %1$s fast enough for the %2$s?', 'computingskill' ), $cpu['name'], $gpu['name'] ),
