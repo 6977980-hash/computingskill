@@ -315,6 +315,14 @@ function cs_methodology_engine_text( $content ) {
 		$content
 	);
 
+	// PC Power Consumption Calculator (Oct 2026): separate idle and load
+	// figures instead of one 65% average (calculators.js).
+	$content = preg_replace(
+		'#Power consumption estimates an average wattage draw at roughly 65% typical load \(CPU TDP \+ GPU TDP \+ a fixed allowance for the rest of the system\), then multiplies by your stated daily usage hours and electricity rate\.#u',
+		__( 'Power consumption estimates two figures: load draw (CPU TDP + GPU TDP + the PSU Calculator’s allowance for RAM, drives, fans and motherboard) and idle draw (CPU and GPU at about 15% of TDP, the rest of the system at about 30% of its allowance). It multiplies each by your gaming and idle hours per day, then by your electricity rate.', 'computingskill' ),
+		$content
+	);
+
 	// PSU Calculator: it counts the CPU at its maximum turbo/boost power
 	// (calculators.js CS_DEFS.psu), not its base TDP, as the PSU page says.
 	$content = preg_replace(

@@ -778,26 +778,44 @@
 	CS_DEFS['power-consumption'] = {
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
-		].concat( cpuPickerFields( 'Other CPU: rated TDP in watts (only used with "Other CPU")', 'Average draw while gaming tracks the rated TDP, not the brief turbo peak.' ) ).concat( [
-			{ id: 'hoursPerDay', type: 'number', label: 'Hours used per day', default: 4, min: 0, max: 24 },
+		].concat( cpuPickerFields( 'Other CPU: rated TDP in watts (only used with "Other CPU")', 'Sustained gaming draw tracks the rated TDP, not the brief turbo peak.' ) ).concat( [
+			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8 },
+			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8 },
+			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12 },
+			{ id: 'hoursPerDay', type: 'number', label: 'Gaming / heavy-load hours per day', default: 3, min: 0, max: 24 },
+			{ id: 'idleHours', type: 'number', label: 'Idle / light-use hours per day (desktop, browsing, video)', default: 3, min: 0, max: 24, required: false, blankValue: 0 },
 			{ id: 'rate', type: 'number', label: 'Electricity price ($ per kWh)', default: 0.15, min: 0.01, max: 1, step: 0.01, help: 'Check a recent utility bill for your actual rate.' }
 		] ),
 		compute: function ( v, hw ) {
 			var gpu = hw.gpu[ v.gpu ];
 			var cpu = resolveCpuPower( v, hw );
-			// Average draw over a session, so the rated TDP (sustained) is the
-			// right basis here — the turbo peak is short-lived.
-			var avgWatts = ( cpu.tdp + gpu.tdp_w + 50 ) * 0.65; // ~65% average load while actively used.
-			var dailyKwh = ( avgWatts * v.hoursPerDay ) / 1000;
-			var monthlyCost = dailyKwh * 30 * v.rate;
-			var yearlyCost = dailyKwh * 365 * v.rate;
+			if ( v.hoursPerDay + v.idleHours > 24 ) {
+				throw { msg: 'Gaming hours and idle hours together cannot be more than 24 per day.' };
+			}
+			// Oct 2026: separate idle and load figures, as the page describes.
+			// Rest of system = the PSU Calculator's own allowance (5W per RAM
+			// stick, 6W per drive, 3W per fan, 50W motherboard and misc.).
+			// Load: CPU and GPU at their rated TDP (sustained gaming draw; the
+			// PSU Calculator uses the CPU's higher turbo peak because a PSU
+			// must carry the peak). Idle: CPU and GPU at ~15% of TDP, the same
+			// idle factor as the CPU/GPU Power Consumption calculators, and the
+			// rest of the system at ~30% of its load allowance.
+			var rest = ( v.ramSticks * 5 ) + ( v.storageDrives * 6 ) + ( v.fans * 3 ) + 50;
+			var loadW = cpu.tdp + gpu.tdp_w + rest;
+			var idleW = ( cpu.tdp + gpu.tdp_w ) * 0.15 + rest * 0.3;
+			var dailyKwh = ( loadW * v.hoursPerDay + idleW * v.idleHours ) / 1000;
+			var dailyCost = dailyKwh * v.rate;
+			var monthlyCost = dailyCost * 30;
+			var yearlyCost = dailyCost * 365;
 			var rows = [
-				[ 'Estimated average draw while in use', fmt( avgWatts, 0 ) + 'W' ],
+				[ 'Estimated draw while gaming / under load', fmt( loadW, 0 ) + 'W' ],
+				[ 'Estimated draw at idle / light use', fmt( idleW, 0 ) + 'W' ],
 				[ 'Daily energy use', fmt( dailyKwh, 2 ) + ' kWh' ],
-				[ 'Estimated monthly cost', '$' + fmt( monthlyCost, 2 ) ],
-				[ 'Estimated yearly cost', '$' + fmt( yearlyCost, 2 ) ]
+				[ 'Estimated daily cost', '$' + fmt( dailyCost, 2 ) ],
+				[ 'Estimated monthly cost (30 days)', '$' + fmt( monthlyCost, 2 ) ],
+				[ 'Estimated yearly cost (365 days)', '$' + fmt( yearlyCost, 2 ) ]
 			];
-			return resultBlock( 'At ' + v.hoursPerDay + ' hours/day, this build costs roughly <strong>$' + fmt( monthlyCost, 2 ) + '/month</strong> to run.', rows );
+			return resultBlock( 'About <strong>' + fmt( loadW, 0 ) + 'W</strong> while gaming and <strong>' + fmt( idleW, 0 ) + 'W</strong> at idle — roughly <strong>$' + fmt( monthlyCost, 2 ) + '/month</strong> at your hours and rate.', rows, 'real draw from the wall is a little higher because of PSU efficiency loss, and it varies by game, settings and power-saving options.' );
 		}
 	};
 
