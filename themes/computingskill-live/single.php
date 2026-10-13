@@ -26,8 +26,10 @@ $cs_is_blog_post = ( 'post' === get_post_type() );
 				<header class="cs-article-header">
 					<h1 class="cs-article-title"><?php the_title(); ?></h1>
 					<?php if ( $cs_is_blog_post ) : ?>
+						<?php cs_article_meta(); ?>
 						<p class="cs-article-meta">
-							<?php echo esc_html( get_the_date() ); ?>
+							<?php esc_html_e( 'Published', 'computingskill' ); ?>
+							<time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date() ); ?></time>
 							<?php
 							$categories = get_the_category_list( ', ' );
 							if ( $categories ) {
@@ -45,6 +47,15 @@ $cs_is_blog_post = ( 'post' === get_post_type() );
 				<div class="cs-article-content">
 					<?php the_content(); ?>
 				</div>
+
+				<?php
+				if ( $cs_is_blog_post ) {
+					echo cs_related_shortcode( array(
+						'title' => __( 'Tools for This Article', 'computingskill' ),
+						'links' => implode( ',', cs_post_tool_links( get_the_ID() ) ),
+					) ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped sub-output only, see cs_related_shortcode().
+				}
+				?>
 			</article>
 
 			<?php if ( $cs_is_blog_post && ( comments_open() || get_comments_number() ) ) : ?>

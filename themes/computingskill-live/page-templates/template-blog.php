@@ -69,6 +69,8 @@ while ( have_posts() ) :
 
 		<div class="cs-container">
 
+			<?php echo cs_latest_posts_section( 12 ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
+
 			<?php if ( ! empty( $featured ) ) : ?>
 			<section class="cs-blog-featured" aria-labelledby="cs-blog-featured-heading">
 				<h2 id="cs-blog-featured-heading"><?php esc_html_e( 'Featured Articles', 'computingskill' ); ?></h2>

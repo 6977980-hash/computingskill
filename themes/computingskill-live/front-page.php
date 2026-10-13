@@ -155,6 +155,8 @@ get_header();
 			<p class="cs-lb-legend"><span class="cs-lb-key cs-lb-cpu"><?php esc_html_e( 'CPU-bound', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-gpu"><?php esc_html_e( 'GPU-bound', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-balanced"><?php esc_html_e( 'Balanced (under 6%)', 'computingskill' ); ?></span></p>
 		</section>
 
+		<?php echo cs_latest_posts_section( 4 ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
+
 		<?php
 		$latest_guides = new WP_Query( array(
 			'post_type'      => 'cs_guide',
