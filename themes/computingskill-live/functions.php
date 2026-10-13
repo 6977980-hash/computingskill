@@ -32,6 +32,7 @@ require_once CS_THEME_DIR . '/inc/bottleneck.php';
 require_once CS_THEME_DIR . '/inc/contact-form.php';
 require_once CS_THEME_DIR . '/inc/redirects.php';
 require_once CS_THEME_DIR . '/inc/analytics.php';
+require_once CS_THEME_DIR . '/inc/fixes-loader.php';
 
 /**
  * Security hardening basics (per project spec section 37).

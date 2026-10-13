@@ -4,6 +4,8 @@
  * named NNN-short-description.php. Prefix a file with "_" to disable it.
  *
  * This file does nothing; it only documents the pattern.
+ *
+ * @package ComputingSkill
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
