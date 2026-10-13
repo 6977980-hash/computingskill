@@ -42,7 +42,9 @@
 			return '—';
 		}
 		var d = decimals === undefined ? 1 : decimals;
-		return Number( num.toFixed( d ) ).toLocaleString();
+		// toLocaleString() alone stops at 3 decimals, so a 4-decimal result
+		// lost its last digit (and tiny values showed as 0).
+		return Number( num.toFixed( d ) ).toLocaleString( undefined, { maximumFractionDigits: d } );
 	}
 
 	function clamp( n, min, max ) {
@@ -72,6 +74,9 @@
 		if ( totalSeconds < 1 ) {
 			return '< 1 second';
 		}
+		// Round once up front: rounding only the seconds part turned 119.7s
+		// into "1m 60s".
+		totalSeconds = Math.round( totalSeconds );
 		var days = Math.floor( totalSeconds / 86400 );
 		var hours = Math.floor( ( totalSeconds % 86400 ) / 3600 );
 		var minutes = Math.floor( ( totalSeconds % 3600 ) / 60 );
@@ -1270,17 +1275,36 @@
 
 	/* ---- 18. Data Storage Converter ---- */
 	var STORAGE_UNITS = { bit: 1 / 8, byte: 1, KB: 1e3, MB: 1e6, GB: 1e9, TB: 1e12, PB: 1e15 };
+	// Binary (1,024-based) sizes, which the converter page offers alongside
+	// decimal: shown with the IEC names (KiB, MiB...) so the two never mix.
+	var STORAGE_UNITS_BIN = { bit: 1 / 8, byte: 1, KB: 1024, MB: Math.pow( 1024, 2 ), GB: Math.pow( 1024, 3 ), TB: Math.pow( 1024, 4 ), PB: Math.pow( 1024, 5 ) };
+	var STORAGE_BIN_NAMES = { KB: 'KiB', MB: 'MiB', GB: 'GiB', TB: 'TiB', PB: 'PiB' };
+	// Very small or very large results keep 4 significant digits instead of
+	// rounding to 0 (e.g. 1 KB in TB).
+	function fmtStorage( n ) {
+		if ( n !== 0 && ( Math.abs( n ) < 0.001 || Math.abs( n ) >= 1e15 ) ) {
+			return Number( n.toPrecision( 4 ) ).toExponential().replace( 'e', ' × 10^' ).replace( '^+', '^' );
+		}
+		return fmt( n, 4 );
+	}
 	CS_DEFS['storage-converter'] = {
 		fields: [
 			{ id: 'amount', type: 'number', label: 'Amount', default: 1, min: 0, max: 1e15 },
 			{ id: 'from', type: 'select', label: 'From unit', default: 'GB', options: Object.keys( STORAGE_UNITS ).map( function ( u ) { return { value: u, label: u }; } ) },
-			{ id: 'to', type: 'select', label: 'To unit', default: 'MB', options: Object.keys( STORAGE_UNITS ).map( function ( u ) { return { value: u, label: u }; } ) }
+			{ id: 'to', type: 'select', label: 'To unit', default: 'MB', options: Object.keys( STORAGE_UNITS ).map( function ( u ) { return { value: u, label: u }; } ) },
+			{ id: 'standard', type: 'select', label: 'Counting system', default: 'decimal', options: [
+				{ value: 'decimal', label: 'Decimal (1,000-based, drive makers)' },
+				{ value: 'binary', label: 'Binary (1,024-based, KiB/MiB/GiB, Windows)' }
+			] }
 		],
 		compute: function ( v ) {
-			var bytes = v.amount * STORAGE_UNITS[ v.from ];
-			var result = bytes / STORAGE_UNITS[ v.to ];
-			var rows = Object.keys( STORAGE_UNITS ).map( function ( u ) { return [ u, fmt( bytes / STORAGE_UNITS[ u ], 4 ) ]; } );
-			return resultBlock( v.amount + ' ' + v.from + ' = <strong>' + fmt( result, 4 ) + ' ' + v.to + '</strong>', rows, false );
+			var binary = 'binary' === v.standard;
+			var units = binary ? STORAGE_UNITS_BIN : STORAGE_UNITS;
+			var name = function ( u ) { return binary && STORAGE_BIN_NAMES[ u ] ? STORAGE_BIN_NAMES[ u ] : u; };
+			var bytes = v.amount * units[ v.from ];
+			var result = bytes / units[ v.to ];
+			var rows = Object.keys( units ).map( function ( u ) { return [ name( u ), fmtStorage( bytes / units[ u ] ) ]; } );
+			return resultBlock( v.amount + ' ' + name( v.from ) + ' = <strong>' + fmtStorage( result ) + ' ' + name( v.to ) + '</strong>', rows, false );
 		}
 	};
 

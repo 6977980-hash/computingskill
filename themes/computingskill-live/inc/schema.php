@@ -170,7 +170,14 @@ function cs_print_schema() {
 		'@graph'   => $graphs,
 	);
 
-	echo "\n<script type=\"application/ld+json\" class=\"cs-schema\">" . wp_json_encode( wp_kses_post_deep( $output ), JSON_UNESCAPED_SLASHES ) . "</script>\n";
+	// wp_kses turns "&" into "&amp;", and JSON-LD is not HTML-decoded, so
+	// names like "Calculators & Tools" reached Google as "&amp;". Decode the
+	// entities back to plain text; JSON_HEX_TAG keeps any "<" escaped.
+	$output = map_deep( wp_kses_post_deep( $output ), function ( $value ) {
+		return is_string( $value ) ? html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) : $value;
+	} );
+
+	echo "\n<script type=\"application/ld+json\" class=\"cs-schema\">" . wp_json_encode( $output, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG ) . "</script>\n";
 }
 // Priority 20: after the_content() has run for the main query (needed so
 // the FAQ schema queue is populated) but still inside wp_footer.

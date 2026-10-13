@@ -266,13 +266,25 @@ function cs_methodology_engine_text( $content ) {
 		);
 	}
 
+	// GPU VRAM Calculator worked example: the calculator itself returns 8GB
+	// (1440p, high textures) + 2GB (ray tracing) = 10GB, not "8-9GB".
+	if ( 'gpu-vram-calculator' === $slug ) {
+		return preg_replace(
+			'#The calculator starts from a 1440p rasterization baseline[^<]*?for the same settings\.#u',
+			__( 'The calculator starts from its 1440p high-texture baseline of 8GB (frame buffers, high-resolution textures and typical open-world asset streaming), then adds 2GB for ray tracing (BVH structures and denoising buffers), so it recommends at least 10GB of VRAM. That is why the GeForce RTX 4060’s 8GB of GDDR6 falls short for ray-traced 1440p gaming, while the GeForce RTX 4070’s 12GB of GDDR6X has headroom for the same settings.', 'computingskill' ),
+			$content
+		);
+	}
+
 	if ( 'methodology' !== $slug ) {
 		return $content;
 	}
 
 	$bottleneck = __( 'Compares your CPU and GPU separately at 1080p, 1440p and 4K. The CPU score stands for how many frames per second the CPU can prepare, which barely changes with resolution. The GPU score is scaled for each resolution by its pixel load (1080p ×1.00, 1440p ×0.68, 4K ×0.42, the same factors the FPS Calculator uses), because every extra pixel is extra work for the graphics card. Whichever part comes out lower at a resolution is the more likely limiting one there, so the same pairing can be CPU-bound at 1080p and GPU-bound at 4K. The estimated bottleneck percentage is the share of the stronger part’s capacity that goes unused (capped at 60%); anything under 6% is shown as balanced.', 'computingskill' );
 
-	$score = __( 'We generate this as a simplified relative gaming-performance index per part. A GPU’s score stands for its average gaming throughput at high settings, with the RTX 4090 at 100 (a faster card, such as the RTX 5090, scores above 100). A CPU’s score stands for the frame rate it can sustain in games when the graphics card isn’t the limit, so it ranks gaming speed, not multi-core work. Both are built from published specs and positioned using publicly reported review averages, never as an absolute performance claim; we don’t run our own benchmarks. CPU and GPU scores are separate scales, so the calculators convert between them instead of comparing the raw numbers. This score is not a benchmark result, and we don’t present it as one. It exists purely to drive the math on this site, ranking parts against each other well enough to catch an obviously mismatched pairing or a reasonable FPS ballpark, not to stand in for a real performance review.', 'computingskill' );
+	$score = __( 'We generate this as a simplified relative gaming-performance index per part. A GPU’s score stands for its average gaming throughput at high settings, with the RTX 4090 at 100 (a faster card, such as the RTX 5090, scores above 100). A CPU’s score stands for the frame rate it can sustain in games when the graphics card isn’t the limit, so it ranks gaming speed, not multi-core work. Both are built from published specs and positioned using publicly reported review averages, never as an absolute performance claim; we don’t run our own benchmarks. CPU and GPU scores are separate scales, so the calculators convert between them instead of comparing the raw numbers.', 'computingskill' );
+	// (The page's own next paragraph already says the score is not a
+	// benchmark result; repeating it here printed it twice.)
 
 	// Whole block element (p or li) containing the phrase.
 	$element = '#<(p|li)\b[^>]*>(?:(?!</\1>).)*?%s(?:(?!</\1>).)*?</\1>#su';
@@ -289,6 +301,14 @@ function cs_methodology_engine_text( $content ) {
 	$content = preg_replace(
 		'#It(?:&\#8217;|&rsquo;|\x{2019}|\')s a simplified 1(?:-|&\#8211;|&ndash;|\x{2013})100 index built from published specs#u',
 		__( 'It’s a simplified gaming-performance index built from published specs and public review averages', 'computingskill' ),
+		$content
+	);
+
+	// PSU Calculator: it counts the CPU at its maximum turbo/boost power
+	// (calculators.js CS_DEFS.psu), not its base TDP, as the PSU page says.
+	$content = preg_replace(
+		'#from your CPU(?:&\#8217;|&rsquo;|\x{2019}|\')s TDP, your GPU#u',
+		__( 'from your CPU’s maximum turbo/boost power (Intel’s “Maximum Turbo Power”, AMD’s PPT, not its lower base TDP), your GPU', 'computingskill' ),
 		$content
 	);
 
