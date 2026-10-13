@@ -69,7 +69,7 @@ function cs_site_author_schema_node( $publisher_id = '' ) {
 
 /**
  * Adds a "Who runs Computing Skill" section to About Us, just above its
- * "Related Pages" heading (or at the end if that heading is ever renamed).
+ * "Related Pages" heading (falling back to above the FAQ, then the end).
  * The page body lives in the database, so this is done as a content filter,
  * the same way inc/bottleneck.php corrects the Methodology page.
  */
@@ -112,13 +112,18 @@ function cs_about_author_section( $content ) {
 		'<a href="' . esc_url( home_url( '/contact/' ) ) . '">' . esc_html__( 'Contact', 'computingskill' ) . '</a>'
 	) . '</p>';
 
-	$replaced = preg_replace(
-		'#<h([2-3])\b[^>]*>\s*Related Pages\s*</h\1>#i',
-		$html . '$0',
-		$content,
-		1,
-		$count
+	// Before the "Related Pages" heading (any inner markup), else before the
+	// FAQ shortcode, else at the end.
+	$patterns = array(
+		'#<h([2-3])\b[^>]*>(?:(?!</h\1>).)*?Related\s+Pages(?:(?!</h\1>).)*?</h\1>#is',
+		'#(?:<!-- wp:heading[^>]*-->\s*)?<h([2-3])\b[^>]*>(?:(?!</h\1>).)*?Frequently\s+Asked\s+Questions(?:(?!</h\1>).)*?</h\1>#is',
+		'#\[cs_faq\b#',
 	);
-	return $count ? $replaced : $content . $html;
+	foreach ( $patterns as $pattern ) {
+		if ( preg_match( $pattern, $content, $m, PREG_OFFSET_CAPTURE ) ) {
+			return substr_replace( $content, $html, $m[0][1], 0 );
+		}
+	}
+	return $content . $html;
 }
 add_filter( 'the_content', 'cs_about_author_section', 9 );
