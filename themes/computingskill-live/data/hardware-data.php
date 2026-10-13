@@ -210,7 +210,7 @@ function cs_get_cpu_data() {
 			'name' => 'AMD Ryzen 5 5600', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series)',
 			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 3.5, 'boost_clock_ghz' => 4.4,
 			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM4', 'score' => 52, 'release_year' => 2022,
-			'source_url' => 'https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html',
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600.html',
 		),
 		'ryzen-5-5600x' => array(
 			'name' => 'AMD Ryzen 5 5600X', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series)',
@@ -222,7 +222,7 @@ function cs_get_cpu_data() {
 			'name' => 'AMD Ryzen 7 5700X', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series)',
 			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 3.4, 'boost_clock_ghz' => 4.6,
 			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM4', 'score' => 61, 'release_year' => 2022,
-			'source_url' => 'https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-7-5700x.html',
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-7-5700x.html',
 		),
 		'ryzen-5-7600' => array(
 			'name' => 'AMD Ryzen 5 7600', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series)',

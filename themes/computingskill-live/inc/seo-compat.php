@@ -255,7 +255,7 @@ function cs_page_description_overrides() {
 
 function cs_improve_short_descriptions( $description ) {
 	if ( is_front_page() ) {
-		return __( 'Free PC hardware calculators and tools: check CPU/GPU bottlenecks, PSU wattage, FPS, RAM and VRAM needs, and game requirements before you buy, build or upgrade.', 'computingskill' );
+		return __( 'Free PC hardware calculators and tools: estimate CPU/GPU bottlenecks, PSU wattage, FPS, RAM and VRAM needs, and game requirements before you buy, build or upgrade.', 'computingskill' );
 	}
 	if ( is_page() ) {
 		$map  = cs_page_description_overrides();

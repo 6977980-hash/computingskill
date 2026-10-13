@@ -23,6 +23,18 @@ get_header();
 
 	<div class="cs-container">
 
+		<section class="cs-home-section cs-home-intro">
+			<p>
+				<?php
+				printf(
+					/* translators: %s: link to the Methodology page. */
+					esc_html__( 'ComputingSkill is a free collection of PC hardware calculators and computer tools for anyone planning a new build, an upgrade or their first gaming PC. Choose your parts and the calculators estimate how well a CPU and GPU pairing is balanced at 1080p, 1440p and 4K, roughly what FPS to expect, how much power supply wattage the build needs, and how much RAM, VRAM and storage you are likely to use. Every tool runs in your browser with no account and no sign-up. Results are specs-based estimates, not lab benchmarks, and each calculator explains its formula and its limits so you can see how a number was reached. Hardware specs come from manufacturer pages, and our %s describes the full approach.', 'computingskill' ),
+					'<a href="' . esc_url( home_url( '/methodology/' ) ) . '">' . esc_html__( 'methodology page', 'computingskill' ) . '</a>'
+				);
+				?>
+			</p>
+		</section>
+
 		<section class="cs-home-section">
 			<h2><?php esc_html_e( 'Featured Calculators', 'computingskill' ); ?></h2>
 			<?php
@@ -138,7 +150,7 @@ get_header();
 			<div class="cs-why-grid">
 				<div><h3><?php esc_html_e( 'Free, no sign-up', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every calculator and tool works instantly in your browser — no account, no email wall.', 'computingskill' ); ?></p></div>
 				<div><h3><?php esc_html_e( 'Transparent methodology', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every result explains its formula and its limitations. We never dress up an estimate as a lab measurement.', 'computingskill' ); ?></p></div>
-				<div><h3><?php esc_html_e( 'Verified specifications', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Hardware specs used in our calculators come from manufacturer data, not guesswork.', 'computingskill' ); ?></p></div>
+				<div><h3><?php esc_html_e( 'Manufacturer-sourced specifications', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Hardware specs used in our calculators come from manufacturer data, not guesswork.', 'computingskill' ); ?></p></div>
 				<div><h3><?php esc_html_e( 'Built for mobile too', 'computingskill' ); ?></h3><p><?php esc_html_e( 'Every tool is designed to work as well on a phone as it does on a desktop.', 'computingskill' ); ?></p></div>
 			</div>
 		</section>

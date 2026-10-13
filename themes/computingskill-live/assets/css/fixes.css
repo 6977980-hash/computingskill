@@ -1,1 +1,5 @@
 /* ComputingSkill CSS fixes. One commented block per fix. */
+
+/* Homepage intro paragraph (audit FIX-09, Phase 1). */
+.cs-home-intro { margin-bottom: 8px; }
+.cs-home-intro p { max-width: 780px; font-size: 1.05rem; line-height: 1.7; color: var(--cs-text-muted); }
