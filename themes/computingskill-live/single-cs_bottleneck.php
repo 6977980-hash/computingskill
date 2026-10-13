@@ -1,0 +1,178 @@
+<?php
+/**
+ * Template for programmatic /bottleneck/{cpu}/{gpu}/ combination pages.
+ *
+ * Content is generated from the verified hardware dataset + the estimate
+ * engine in inc/bottleneck.php, so every page has genuinely different
+ * numbers, specs and recommendations — not just a swapped product name.
+ * Post meta 'cs_cpu' / 'cs_gpu' (set by the WXR import) select which pair.
+ *
+ * @package ComputingSkill
+ */
+
+get_header();
+
+while ( have_posts() ) :
+	the_post();
+
+	$cpu_slug = get_post_meta( get_the_ID(), 'cs_cpu', true );
+	$gpu_slug = get_post_meta( get_the_ID(), 'cs_gpu', true );
+	$cpus     = cs_get_cpu_data();
+	$gpus     = cs_get_gpu_data();
+
+	if ( ! isset( $cpus[ $cpu_slug ] ) || ! isset( $gpus[ $gpu_slug ] ) ) {
+		?>
+		<main id="cs-main" class="cs-main cs-narrow cs-container">
+			<h1><?php esc_html_e( 'Combination not found', 'computingskill' ); ?></h1>
+			<p><?php esc_html_e( 'This CPU/GPU pairing is not in our database yet.', 'computingskill' ); ?> <a href="<?php echo esc_url( home_url( '/pc-bottleneck-calculator/' ) ); ?>"><?php esc_html_e( 'Try the full bottleneck calculator instead.', 'computingskill' ); ?></a></p>
+		</main>
+		<?php
+		get_footer();
+		return;
+	}
+
+	$cpu     = $cpus[ $cpu_slug ];
+	$gpu     = $gpus[ $gpu_slug ];
+	$results = cs_calculate_bottleneck( $cpu, $gpu );
+	$labels  = array( '1080p' => '1080p (Full HD)', '1440p' => '1440p (QHD)', '4k' => '4K (UHD)' );
+
+	// Find the resolution with the largest estimated bottleneck for the headline verdict.
+	$worst_res = '1080p';
+	foreach ( $results as $res => $r ) {
+		if ( $r['percent'] > $results[ $worst_res ]['percent'] ) {
+			$worst_res = $res;
+		}
+	}
+	?>
+	<main id="cs-main" class="cs-main cs-single-page">
+		<div class="cs-container cs-narrow">
+			<?php cs_breadcrumbs(); ?>
+
+			<article class="cs-article cs-bottleneck-page">
+				<header class="cs-article-header">
+					<h1><?php echo esc_html( $cpu['name'] . ' + ' . $gpu['name'] . ' Bottleneck Calculator' ); ?></h1>
+					<?php cs_article_meta(); ?>
+					<p class="cs-lede">
+						<?php
+						printf(
+							/* translators: 1: CPU name, 2: GPU name */
+							esc_html__( 'A specs-based bottleneck estimate for pairing the %1$s with the %2$s, broken down by resolution — plus what it means for your build.', 'computingskill' ),
+							esc_html( $cpu['name'] ),
+							esc_html( $gpu['name'] )
+						);
+						?>
+					</p>
+				</header>
+
+				<section class="cs-bn-summary">
+					<h2><?php esc_html_e( 'Quick Summary', 'computingskill' ); ?></h2>
+					<p><?php echo wp_kses_post( cs_bottleneck_sentence( $cpu['name'], $gpu['name'], $labels[ $worst_res ], $results[ $worst_res ] ) ); ?></p>
+					<?php cs_estimate_disclaimer( 'bottleneck estimate' ); ?>
+				</section>
+
+				<section class="cs-bn-specs">
+					<h2><?php esc_html_e( 'CPU & GPU Specifications', 'computingskill' ); ?></h2>
+					<div class="cs-spec-columns">
+						<div>
+							<h3><?php echo esc_html( $cpu['name'] ); ?></h3>
+							<ul class="cs-spec-list">
+								<li><?php printf( esc_html__( 'Cores / Threads: %s', 'computingskill' ), esc_html( $cpu['cores'] . ' / ' . $cpu['threads'] ) ); ?></li>
+								<li><?php printf( esc_html__( 'Base / Boost Clock: %s', 'computingskill' ), esc_html( $cpu['base_clock_ghz'] . ' GHz / ' . $cpu['boost_clock_ghz'] . ' GHz' ) ); ?></li>
+								<li><?php printf( esc_html__( 'TDP: %s', 'computingskill' ), esc_html( $cpu['tdp_w'] . 'W' ) ); ?></li>
+								<li><?php printf( esc_html__( 'Socket: %s', 'computingskill' ), esc_html( $cpu['socket'] ) ); ?></li>
+								<li><?php printf( esc_html__( 'Generation: %s', 'computingskill' ), esc_html( $cpu['generation'] ) ); ?></li>
+							</ul>
+						</div>
+						<div>
+							<h3><?php echo esc_html( $gpu['name'] ); ?></h3>
+							<ul class="cs-spec-list">
+								<li><?php printf( esc_html__( 'VRAM: %s', 'computingskill' ), esc_html( $gpu['vram_gb'] . ' GB ' . $gpu['memory_type'] ) ); ?></li>
+								<li><?php printf( esc_html__( 'Memory Bus: %s', 'computingskill' ), esc_html( $gpu['memory_bus'] . '-bit' ) ); ?></li>
+								<li><?php printf( esc_html__( 'Boost Clock: %s', 'computingskill' ), esc_html( $gpu['boost_clock_mhz'] . ' MHz' ) ); ?></li>
+								<li><?php printf( esc_html__( 'TDP: %s', 'computingskill' ), esc_html( $gpu['tdp_w'] . 'W' ) ); ?></li>
+								<li><?php printf( esc_html__( 'Recommended PSU: %s', 'computingskill' ), esc_html( $gpu['recommended_psu_w'] . 'W+' ) ); ?></li>
+							</ul>
+						</div>
+					</div>
+					<?php
+					cs_hardware_source_line( array(
+						array( 'name' => $cpu['name'], 'source_url' => isset( $cpu['source_url'] ) ? $cpu['source_url'] : null ),
+						array( 'name' => $gpu['name'], 'source_url' => isset( $gpu['source_url'] ) ? $gpu['source_url'] : null ),
+					) );
+					?>
+				</section>
+
+				<section class="cs-bn-breakdown">
+					<h2><?php esc_html_e( 'Bottleneck Estimate by Resolution', 'computingskill' ); ?></h2>
+					<div class="cs-table-wrap">
+						<table class="cs-hardware-table cs-bn-table">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Resolution', 'computingskill' ); ?></th>
+									<th><?php esc_html_e( 'Estimated Bottleneck', 'computingskill' ); ?></th>
+									<th><?php esc_html_e( 'Likely Limiting Part', 'computingskill' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( $results as $res => $r ) : ?>
+									<tr>
+										<td><?php echo esc_html( $labels[ $res ] ); ?></td>
+										<td><?php echo esc_html( $r['percent'] . '%' ); ?></td>
+										<td>
+											<?php
+											if ( 'balanced' === $r['component'] ) {
+												esc_html_e( 'Balanced', 'computingskill' );
+											} elseif ( 'cpu' === $r['component'] ) {
+												echo esc_html( $cpu['name'] ) . ' (' . esc_html__( 'CPU', 'computingskill' ) . ')';
+											} else {
+												echo esc_html( $gpu['name'] ) . ' (' . esc_html__( 'GPU', 'computingskill' ) . ')';
+											}
+											?>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+
+					<?php foreach ( $results as $res => $r ) : ?>
+						<p><strong><?php echo esc_html( $labels[ $res ] ); ?>:</strong> <?php echo wp_kses_post( cs_bottleneck_sentence( $cpu['name'], $gpu['name'], $labels[ $res ], $r ) ); ?></p>
+					<?php endforeach; ?>
+				</section>
+
+				<section class="cs-bn-recommend">
+					<h2><?php esc_html_e( 'Recommended Settings & Upgrade Path', 'computingskill' ); ?></h2>
+					<?php if ( 'gpu' === $results['1440p']['component'] && $results['1440p']['percent'] >= 15 ) : ?>
+						<p><?php printf( esc_html__( 'The %2$s is the more limiting part of this pairing. If you want more FPS before considering a GPU upgrade, lowering shadow quality, ambient occlusion and render resolution scale typically helps more than any other settings on a GPU-bound system.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<?php elseif ( 'cpu' === $results['1080p']['component'] && $results['1080p']['percent'] >= 15 ) : ?>
+						<p><?php printf( esc_html__( 'The %1$s is the more limiting part of this pairing, especially at 1080p and in CPU-heavy games (large open worlds, simulation and strategy titles, competitive shooters running uncapped framerates). A CPU upgrade — or simply raising the resolution/settings to shift load back onto the GPU — will get more out of the %2$s.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<?php else : ?>
+						<p><?php printf( esc_html__( 'This is a well-balanced pairing. Neither the %1$s nor the %2$s is likely to hold the other back significantly across common resolutions, so upgrade decisions should be driven by which resolution and framerate target you actually want, not by rebalancing this pair.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<?php endif; ?>
+					<p><?php esc_html_e( 'Also worth checking before you upgrade anything:', 'computingskill' ); ?></p>
+					<ul>
+						<li><a href="<?php echo esc_url( home_url( '/ram-calculator/' ) ); ?>"><?php esc_html_e( 'Is 16GB or 32GB of RAM enough for this build?', 'computingskill' ); ?></a></li>
+						<li><a href="<?php echo esc_url( home_url( '/psu-calculator/' ) ); ?>"><?php esc_html_e( 'Does your power supply have enough headroom?', 'computingskill' ); ?></a></li>
+						<li><a href="<?php echo esc_url( home_url( '/gpu-vram-calculator/' ) ); ?>"><?php esc_html_e( 'Is ' . $gpu['vram_gb'] . 'GB of VRAM enough at your target resolution?', 'computingskill' ); ?></a></li>
+					</ul>
+				</section>
+
+				<?php echo do_shortcode( '[cs_faq]
+[cs_faq_item q="Is this bottleneck calculator 100% accurate?"]No. Real bottleneck behavior depends on the specific game engine, driver version, RAM speed, background load and settings used — this page gives a specs-based estimate to help you spot an obviously mismatched pairing, not a lab-measured figure.[/cs_faq_item]
+[cs_faq_item q="Should I avoid this CPU and GPU combination?"]Not necessarily. Even a pairing with a double-digit estimated bottleneck can still deliver strong, playable framerates — a bottleneck simply means one part has spare capacity the other cannot fully use, not that the system performs badly.[/cs_faq_item]
+[cs_faq_item q="Does resolution really change which part bottlenecks?"]Yes. Higher resolutions shift more of the workload onto the GPU (more pixels to shade), which is why the same pairing can be GPU-bound at 4K and closer to CPU-bound at 1080p.[/cs_faq_item]
+[/cs_faq]' ); ?>
+
+				<?php
+				echo cs_related_shortcode( array(
+					'title' => __( 'Related Combinations & Calculators', 'computingskill' ),
+					'links' => 'pc-bottleneck-calculator,fps-calculator,gpu-vram-calculator,pc-upgrade-calculator,cpu-vs-gpu-calculator,cpu-bottleneck-explained,gpu-bottleneck-explained',
+				) ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped sub-output only, see cs_related_shortcode().
+				?>
+			</article>
+		</div>
+	</main>
+	<?php
+endwhile;
+
+get_footer();
