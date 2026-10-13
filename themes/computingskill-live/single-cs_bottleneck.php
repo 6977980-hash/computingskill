@@ -180,6 +180,12 @@ while ( have_posts() ) :
 				</section>
 
 				<?php
+				// Oct 2026: same-CPU / same-GPU comparison tables from the
+				// other live combo pages (inc/bottleneck-content.php).
+				echo cs_bn_neighbours_html( $cpu_slug, $gpu_slug, $cpu, $gpu ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+				?>
+
+				<?php
 				// Phase 3 (Oct 2026): pair-specific questions built from this
 				// page's own data and results (inc/bottleneck-content.php),
 				// replacing three answers every combo page used to share.

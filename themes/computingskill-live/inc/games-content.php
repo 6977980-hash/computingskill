@@ -57,7 +57,7 @@ function cs_game_genre_insight( $genre ) {
 function cs_game_ram_storage_note( $g ) {
 	$min_ram = (int) $g['min']['ram'];
 	$rec_ram = (int) $g['rec']['ram'];
-	$storage = (int) $g['rec']['storage_gb'];
+	$storage = cs_game_storage_gb( $g );
 
 	if ( $rec_ram > $min_ram ) {
 		$ram_sentence = sprintf(
@@ -83,7 +83,160 @@ function cs_game_ram_storage_note( $g ) {
 		$g['name']
 	);
 
-	return $ram_sentence . ' ' . $storage_sentence;
+	$note = cs_game_storage_mismatch_note( $g );
+
+	return $ram_sentence . ' ' . $storage_sentence . ( $note ? ' ' . $note : '' );
+}
+
+/**
+ * False when the publisher lists no recommended tier and the 'rec' row is
+ * our own suggestion (Counter-Strike 2).
+ */
+function cs_game_rec_official( $g ) {
+	return ! isset( $g['rec_official'] ) || false !== $g['rec_official'];
+}
+
+function cs_game_rec_gpu_label( $g ) {
+	return cs_game_rec_official( $g ) ? $g['rec']['gpu'] : $g['rec']['gpu'] . ' ' . __( '(our suggestion)', 'computingskill' );
+}
+
+/**
+ * Space to plan for: the larger of the two listed figures. Helldivers 2's
+ * Steam listing (checked 13 Oct 2026) gives 135GB at minimum but 40GB at
+ * recommended, and a PC that meets the recommended spec still installs the
+ * same game, so the smaller number alone would under-plan.
+ */
+function cs_game_storage_gb( $g ) {
+	return max( (int) $g['min']['storage_gb'], (int) $g['rec']['storage_gb'] );
+}
+
+/**
+ * One sentence when the publisher's two storage figures differ.
+ */
+function cs_game_storage_mismatch_note( $g ) {
+	$min = (int) $g['min']['storage_gb'];
+	$rec = (int) $g['rec']['storage_gb'];
+	if ( $min > $rec ) {
+		return sprintf(
+			/* translators: 1: game, 2: minimum GB, 3: recommended GB */
+			__( 'The official listing for %1$s gives %2$dGB at the minimum tier but only %3$dGB at the recommended tier; the larger figure is the safe one to plan around, which is why this page uses %2$dGB.', 'computingskill' ),
+			$g['name'], $min, $rec
+		);
+	}
+	if ( $rec > $min ) {
+		return sprintf(
+			/* translators: 1: game, 2: minimum GB, 3: recommended GB */
+			__( 'The publisher lists %2$dGB at the minimum tier and %3$dGB at the recommended tier for %1$s, so this page plans around %3$dGB.', 'computingskill' ),
+			$g['name'], $min, $rec
+		);
+	}
+	return '';
+}
+
+/**
+ * Ranking-readiness fix (Oct 2026): where this game sits among every title
+ * in data/games-data.php, and the titles with the closest requirements.
+ * Built only from the published specs, so it changes per game and stays
+ * true when games are added.
+ */
+function cs_game_compare_section( $slug, $g ) {
+	$games = cs_get_games_data();
+	$total = count( $games );
+	if ( $total < 3 ) {
+		return '';
+	}
+
+	$rec_ram  = (int) $g['rec']['ram'];
+	$storage  = cs_game_storage_gb( $g );
+	$more_ram = 0;
+	$same_ram = 0;
+	$bigger   = 0;
+	$dist     = array();
+	foreach ( $games as $other_slug => $o ) {
+		if ( $other_slug === $slug ) {
+			continue;
+		}
+		$o_ram = (int) $o['rec']['ram'];
+		$o_sto = cs_game_storage_gb( $o );
+		if ( $o_ram > $rec_ram ) {
+			$more_ram++;
+		} elseif ( $o_ram === $rec_ram ) {
+			$same_ram++;
+		}
+		if ( $o_sto > $storage ) {
+			$bigger++;
+		}
+		// RAM steps count more than storage: 4GB of RAM ~ 25GB of disk.
+		$dist[ $other_slug ] = abs( $o_ram - $rec_ram ) * 6 + abs( $o_sto - $storage ) / 4 + abs( (int) $o['min']['ram'] - (int) $g['min']['ram'] ) * 3;
+	}
+	asort( $dist );
+	$closest = array_slice( array_keys( $dist ), 0, 3 );
+
+	if ( ! cs_game_rec_official( $g ) ) {
+		$ram_line = $more_ram
+			/* translators: 1: game, 2: RAM GB, 3: count with more, 4: total other games */
+			? sprintf( __( '%1$s has no official recommended tier; against our suggested %2$dGB of RAM, %3$d of the other %4$d games we cover recommend more.', 'computingskill' ), $g['name'], $rec_ram, $more_ram, $total - 1 )
+			/* translators: 1: game, 2: RAM GB, 3: total other games */
+			: sprintf( __( '%1$s has no official recommended tier; our suggested %2$dGB of RAM matches the highest recommended figure among the other %3$d games we cover.', 'computingskill' ), $g['name'], $rec_ram, $total - 1 );
+	} elseif ( $more_ram ) {
+		$ram_line = sprintf(
+			/* translators: 1: game, 2: RAM GB, 3: count with more, 4: total other games */
+			__( '%1$s recommends %2$dGB of RAM; %3$d of the other %4$d games we cover recommend more.', 'computingskill' ),
+			$g['name'], $rec_ram, $more_ram, $total - 1
+		);
+	} else {
+		$ram_line = sprintf(
+			/* translators: 1: game, 2: RAM GB, 3: total other games */
+			__( 'At %2$dGB, %1$s asks for as much recommended RAM as any of the other %3$d games we cover.', 'computingskill' ),
+			$g['name'], $rec_ram, $total - 1
+		);
+	}
+	if ( $same_ram ) {
+		$ram_line .= ' ' . sprintf( _n( '%d other game asks for the same amount.', '%d others ask for the same amount.', $same_ram, 'computingskill' ), $same_ram );
+	}
+
+	$rank       = $bigger + 1;
+	$storage_ln = 1 === $rank
+		? sprintf( __( 'Its %1$dGB install is the largest in our list.', 'computingskill' ), $storage )
+		: sprintf( __( 'Its %1$dGB install ranks #%2$d of %3$d by size, so %4$d of the games we cover need more free space.', 'computingskill' ), $storage, $rank, $total, $bigger );
+
+	ob_start();
+	?>
+	<section class="cs-game-compare">
+		<h2><?php echo esc_html( sprintf( __( 'How %s Compares', 'computingskill' ), $g['name'] ) ); ?></h2>
+		<p><?php echo esc_html( $ram_line . ' ' . $storage_ln ); ?></p>
+		<p><?php esc_html_e( 'Games with the closest published requirements (recommended RAM, install size and minimum RAM):', 'computingskill' ); ?></p>
+		<div class="cs-table-wrap">
+			<table class="cs-hardware-table cs-game-compare-table">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Game', 'computingskill' ); ?></th>
+						<th><?php esc_html_e( 'Recommended RAM', 'computingskill' ); ?></th>
+						<th><?php esc_html_e( 'Install size', 'computingskill' ); ?></th>
+						<th><?php esc_html_e( 'Recommended GPU', 'computingskill' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><strong><?php echo esc_html( $g['name'] ); ?></strong> (<?php esc_html_e( 'this page', 'computingskill' ); ?>)</td>
+						<td><?php echo esc_html( $rec_ram . ' GB' ); ?></td>
+						<td><?php echo esc_html( $storage . ' GB' ); ?></td>
+						<td><?php echo esc_html( cs_game_rec_gpu_label( $g ) ); ?></td>
+					</tr>
+					<?php foreach ( $closest as $other_slug ) : $o = $games[ $other_slug ]; ?>
+						<tr>
+							<td><a href="<?php echo esc_url( home_url( '/games/' . $other_slug . '/' ) ); ?>"><?php echo esc_html( $o['name'] ); ?></a></td>
+							<td><?php echo esc_html( (int) $o['rec']['ram'] . ' GB' ); ?></td>
+							<td><?php echo esc_html( cs_game_storage_gb( $o ) . ' GB' ); ?></td>
+							<td><?php echo esc_html( cs_game_rec_gpu_label( $o ) ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+	</section>
+	<?php
+	return ob_get_clean();
 }
 
 /**
@@ -117,7 +270,7 @@ function cs_game_faq_section( $g ) {
 	$name       = $g['name'];
 	$min_ram    = (int) $g['min']['ram'];
 	$rec_ram    = (int) $g['rec']['ram'];
-	$storage    = (int) $g['rec']['storage_gb'];
+	$storage    = cs_game_storage_gb( $g );
 	$genre      = $g['genre'];
 	$cpu_bound_genres = array( 'Open-World Action', 'Battle Royale', 'Sandbox / Survival', 'Open-World RPG' );
 	$is_cpu_leaning   = in_array( $genre, $cpu_bound_genres, true );
@@ -125,11 +278,12 @@ function cs_game_faq_section( $g ) {
 	$q1 = sprintf( __( 'Is %1$dGB of RAM enough to run %2$s?', 'computingskill' ), $min_ram, $name );
 	if ( $rec_ram > $min_ram ) {
 		$a1 = sprintf(
-			__( "%1\$dGB is the publisher's stated minimum, meaning %2\$s will start and run, but %3\$dGB (the recommended figure) avoids the stuttering that comes from paging assets off your storage drive mid-session. Use our %4\$s to check your exact total against everything else you run alongside it.", 'computingskill' ),
+			__( "%1\$dGB is the publisher's stated minimum, meaning %2\$s will start and run, but %3\$dGB (%5\$s) avoids the stuttering that comes from paging assets off your storage drive mid-session. Use our %4\$s to check your exact total against everything else you run alongside it.", 'computingskill' ),
 			$min_ram,
 			$name,
 			$rec_ram,
-			'<a href="' . esc_url( home_url( '/ram-calculator/' ) ) . '">' . esc_html__( 'RAM calculator', 'computingskill' ) . '</a>'
+			'<a href="' . esc_url( home_url( '/ram-calculator/' ) ) . '">' . esc_html__( 'RAM calculator', 'computingskill' ) . '</a>',
+			cs_game_rec_official( $g ) ? __( 'the recommended figure', 'computingskill' ) : __( 'our suggested figure; the publisher lists no recommended tier', 'computingskill' )
 		);
 	} else {
 		$a1 = sprintf(
@@ -162,6 +316,29 @@ function cs_game_faq_section( $g ) {
 		'<a href="' . esc_url( home_url( '/storage-calculator/' ) ) . '">' . esc_html__( 'Storage Calculator', 'computingskill' ) . '</a>'
 	);
 
+	$q4    = sprintf( __( 'What graphics card do I need for %s?', 'computingskill' ), $name );
+	$tools = sprintf(
+		/* translators: 1: FPS calculator link, 2: VRAM calculator link */
+		__( 'To see how your own card is likely to perform at your resolution, try our %1$s, and check memory needs with the %2$s.', 'computingskill' ),
+		'<a href="' . esc_url( home_url( '/fps-calculator/' ) ) . '">' . esc_html__( 'FPS Calculator', 'computingskill' ) . '</a>',
+		'<a href="' . esc_url( home_url( '/gpu-vram-calculator/' ) ) . '">' . esc_html__( 'GPU VRAM Calculator', 'computingskill' ) . '</a>'
+	);
+	if ( cs_game_rec_official( $g ) ) {
+		$a4 = sprintf( __( 'The publisher lists %1$s as the minimum and %2$s as the recommended graphics card for %3$s.', 'computingskill' ), $g['min']['gpu'], $g['rec']['gpu'], $name );
+	} else {
+		$a4 = sprintf( __( 'The publisher lists %1$s as the minimum for %3$s and publishes no recommended tier; %2$s is our own suggestion for smoother play.', 'computingskill' ), $g['min']['gpu'], $g['rec']['gpu'], $name );
+	}
+	$a4 .= ' ' . $tools;
+
+	$q5 = sprintf( __( 'Which version of Windows does %s need?', 'computingskill' ), $name );
+	if ( ! cs_game_rec_official( $g ) ) {
+		$a5 = sprintf( __( 'The publisher lists %1$s for %2$s.', 'computingskill' ), $g['min']['os'], $name );
+	} elseif ( $g['min']['os'] === $g['rec']['os'] ) {
+		$a5 = sprintf( __( 'The publisher lists %1$s for both the minimum and recommended specs of %2$s.', 'computingskill' ), $g['min']['os'], $name );
+	} else {
+		$a5 = sprintf( __( 'The publisher lists %1$s for the minimum spec and %2$s for the recommended spec of %3$s.', 'computingskill' ), $g['min']['os'], $g['rec']['os'], $name );
+	}
+
 	ob_start();
 	?>
 	<div class="cs-faq">
@@ -177,6 +354,14 @@ function cs_game_faq_section( $g ) {
 		<div class="cs-faq-item">
 			<h3 class="cs-faq-question"><?php echo esc_html( $q3 ); ?></h3>
 			<div class="cs-faq-answer"><p><?php echo wp_kses_post( $a3 ); ?></p></div>
+		</div>
+		<div class="cs-faq-item">
+			<h3 class="cs-faq-question"><?php echo esc_html( $q4 ); ?></h3>
+			<div class="cs-faq-answer"><p><?php echo wp_kses_post( $a4 ); ?></p></div>
+		</div>
+		<div class="cs-faq-item">
+			<h3 class="cs-faq-question"><?php echo esc_html( $q5 ); ?></h3>
+			<div class="cs-faq-answer"><p><?php echo esc_html( $a5 ); ?></p></div>
 		</div>
 	</div>
 	<?php
@@ -196,9 +381,96 @@ function cs_game_faq_section( $g ) {
 				array( 'question' => wp_strip_all_tags( $q1 ), 'answer' => wp_strip_all_tags( $a1 ) ),
 				array( 'question' => wp_strip_all_tags( $q2 ), 'answer' => wp_strip_all_tags( $a2 ) ),
 				array( 'question' => wp_strip_all_tags( $q3 ), 'answer' => wp_strip_all_tags( $a3 ) ),
+				array( 'question' => wp_strip_all_tags( $q4 ), 'answer' => wp_strip_all_tags( $a4 ) ),
+				array( 'question' => $q5, 'answer' => $a5 ),
 			)
 		);
 	}
 
 	return $html;
+}
+
+/**
+ * Ranking-readiness fix (Oct 2026): the /games/ hub was a card grid with
+ * one intro line (~175 words). This adds a guide to reading the specs and
+ * a table of every game's published figures, all from data/games-data.php.
+ */
+function cs_games_hub_overview( $games ) {
+	if ( empty( $games ) ) {
+		return '';
+	}
+	uasort( $games, function ( $a, $b ) {
+		return strcasecmp( $a['name'], $b['name'] );
+	} );
+
+	$total     = count( $games );
+	$ram16     = 0;
+	$largest   = null;
+	$smallest  = null;
+	$genres    = array();
+	foreach ( $games as $slug => $g ) {
+		if ( cs_game_rec_official( $g ) && (int) $g['rec']['ram'] >= 16 ) {
+			$ram16++;
+		}
+		$size = cs_game_storage_gb( $g );
+		if ( null === $largest || $size > cs_game_storage_gb( $games[ $largest ] ) ) {
+			$largest = $slug;
+		}
+		if ( null === $smallest || $size < cs_game_storage_gb( $games[ $smallest ] ) ) {
+			$smallest = $slug;
+		}
+		$genres[ $g['genre'] ] = true;
+	}
+
+	ob_start();
+	?>
+	<section class="cs-games-overview cs-narrow">
+		<h2><?php esc_html_e( 'How to Read PC Game System Requirements', 'computingskill' ); ?></h2>
+		<p><?php esc_html_e( 'The minimum spec is the weakest hardware the publisher says will start and run the game, usually at low settings. The recommended spec is what the publisher suggests for a smoother experience at higher settings; some publishers state a target frame rate or resolution for each tier, many do not. Neither tier promises a frame rate on your PC, because drivers, background apps, resolution and in-game settings all change the result.', 'computingskill' ); ?></p>
+		<p><?php esc_html_e( 'Clearing the recommended spec on paper also does not tell you whether your CPU and graphics card are well matched. A fast GPU paired with an older CPU can still stutter in busy scenes. That is why every game page here links to our PC Bottleneck Calculator and FPS Calculator, which estimate how your exact parts pair up at 1080p, 1440p and 4K.', 'computingskill' ); ?></p>
+		<p>
+			<?php
+			echo esc_html( sprintf(
+				/* translators: 1: total games, 2: genre count, 3: games recommending 16GB+, 4: largest game, 5: its GB, 6: smallest game, 7: its GB */
+				__( 'Across the %1$d games covered in %2$d genres, the publishers of %3$d recommend 16GB of RAM or more. The largest install is %4$s at %5$dGB and the smallest is %6$s at %7$dGB, so free storage matters as much as RAM when you plan a build.', 'computingskill' ),
+				$total,
+				count( $genres ),
+				$ram16,
+				$games[ $largest ]['name'],
+				cs_game_storage_gb( $games[ $largest ] ),
+				$games[ $smallest ]['name'],
+				cs_game_storage_gb( $games[ $smallest ] )
+			) );
+			?>
+		</p>
+
+		<h2><?php esc_html_e( 'All Games at a Glance', 'computingskill' ); ?></h2>
+		<div class="cs-table-wrap">
+			<table class="cs-hardware-table cs-games-overview-table">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Game', 'computingskill' ); ?></th>
+						<th><?php esc_html_e( 'Genre', 'computingskill' ); ?></th>
+						<th><?php esc_html_e( 'RAM (min / rec)', 'computingskill' ); ?></th>
+						<th><?php esc_html_e( 'Install size', 'computingskill' ); ?></th>
+						<th><?php esc_html_e( 'Recommended GPU', 'computingskill' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $games as $slug => $g ) : ?>
+						<tr>
+							<td><a href="<?php echo esc_url( home_url( '/games/' . $slug . '/' ) ); ?>"><?php echo esc_html( $g['name'] ); ?></a></td>
+							<td><?php echo esc_html( $g['genre'] ); ?></td>
+							<td><?php echo esc_html( (int) $g['min']['ram'] . ' / ' . (int) $g['rec']['ram'] . ' GB' ); ?></td>
+							<td><?php echo esc_html( cs_game_storage_gb( $g ) . ' GB' ); ?></td>
+							<td><?php echo esc_html( cs_game_rec_gpu_label( $g ) ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<p class="cs-disclaimer"><?php esc_html_e( 'Figures come from each publisher\'s own listing, linked on every game page. Install size is the larger of the minimum and recommended storage figures.', 'computingskill' ); ?></p>
+	</section>
+	<?php
+	return ob_get_clean();
 }

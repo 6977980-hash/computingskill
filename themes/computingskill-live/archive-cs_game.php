@@ -51,11 +51,13 @@ $total_games = count( $games_data );
 						<span class="cs-card-title"><?php the_title(); ?></span>
 						<?php if ( $g ) : ?>
 							<span class="cs-card-desc"><?php echo esc_html( $g['developer'] . ' · ' . $g['release_year'] ); ?></span>
+							<span class="cs-card-desc"><?php echo esc_html( sprintf( __( '%1$dGB RAM recommended · %2$dGB install', 'computingskill' ), (int) $g['rec']['ram'], cs_game_storage_gb( $g ) ) ); ?></span>
 						<?php endif; ?>
 					</a>
 				<?php endwhile; ?>
 			</div>
 			<?php the_posts_pagination(); ?>
+			<?php echo cs_games_hub_overview( $games_data ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 		<?php else : ?>
 			<p><?php esc_html_e( 'No games found yet — check back soon.', 'computingskill' ); ?></p>
 		<?php endif; ?>

@@ -97,3 +97,65 @@ function cs_combo_pages_sync() {
 	delete_option( 'cs_combo_pages_lock' );
 }
 add_action( 'init', 'cs_combo_pages_sync', 30 );
+
+/**
+ * "Last updated" for pages whose text the theme builds (Oct 2026).
+ *
+ * Combo and game pages store almost nothing in the post: their text comes
+ * from data/*.php and inc/*-content.php. WordPress's modified date (shown in
+ * the byline, schema and Rank Math's sitemap lastmod) therefore never moved
+ * when that text was rewritten, and 30 combo pages still said September
+ * after the October rewrites. When CS_GENERATED_CONTENT_REV changes, every
+ * published cs_bottleneck and cs_game post gets its modified date set to
+ * the moment the new code first runs, once.
+ *
+ * Bump the revision only in a push that really changes the text of those
+ * pages, so the date stays honest.
+ */
+if ( ! defined( 'CS_GENERATED_CONTENT_REV' ) ) {
+	define( 'CS_GENERATED_CONTENT_REV', '2026-10-13-compare-tables' );
+}
+
+function cs_generated_pages_touch() {
+	if ( wp_installing() || get_option( 'cs_generated_content_rev' ) === CS_GENERATED_CONTENT_REV ) {
+		return;
+	}
+	if ( ! add_option( 'cs_generated_content_lock', time(), '', 'no' ) ) {
+		if ( time() - (int) get_option( 'cs_generated_content_lock' ) > 300 ) {
+			delete_option( 'cs_generated_content_lock' );
+		}
+		return;
+	}
+
+	global $wpdb;
+	$ids = get_posts( array(
+		'post_type'      => array( 'cs_bottleneck', 'cs_game' ),
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+	$local = current_time( 'mysql' );
+	$gmt   = current_time( 'mysql', true );
+	foreach ( $ids as $id ) {
+		// Direct update: wp_update_post() would add revisions and run every
+		// save_post hook for a change that is only the date.
+		$wpdb->update(
+			$wpdb->posts,
+			array( 'post_modified' => $local, 'post_modified_gmt' => $gmt ),
+			array( 'ID' => $id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+		clean_post_cache( $id );
+	}
+
+	// Rank Math caches sitemap XML; drop it so lastmod picks up the change.
+	if ( class_exists( '\RankMath\Sitemap\Cache' ) && method_exists( '\RankMath\Sitemap\Cache', 'invalidate_storage' ) ) {
+		\RankMath\Sitemap\Cache::invalidate_storage();
+	}
+
+	update_option( 'cs_generated_content_rev', CS_GENERATED_CONTENT_REV, false );
+	delete_option( 'cs_generated_content_lock' );
+}
+add_action( 'init', 'cs_generated_pages_touch', 31 );

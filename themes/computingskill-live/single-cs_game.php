@@ -58,6 +58,9 @@ while ( have_posts() ) :
 							</tbody>
 						</table>
 					</div>
+					<?php if ( ! cs_game_rec_official( $g ) ) : ?>
+						<p class="cs-disclaimer"><?php echo esc_html( sprintf( __( '%s\'s publisher lists a minimum spec only. The Recommended column is our own suggestion for smoother play, not an official figure.', 'computingskill' ), $g['name'] ) ); ?></p>
+					<?php endif; ?>
 					<p class="cs-disclaimer">
 						<strong><?php esc_html_e( 'Source:', 'computingskill' ); ?></strong>
 						<?php if ( ! empty( $g['source_url'] ) ) : ?>
@@ -81,6 +84,8 @@ while ( have_posts() ) :
 				</section>
 
 				<?php echo cs_game_why_specs_matter_section( $g ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped sub-output only, see cs_game_why_specs_matter_section(). ?>
+
+				<?php echo cs_game_compare_section( $slug, $g ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 
 				<?php echo cs_game_faq_section( $g ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped sub-output only, see cs_game_faq_section(). ?>
 				<?php endif; ?>

@@ -922,3 +922,8 @@ h2, h3 { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
 	.cs-gauge-arc { transition: none; }
 }
+
+/* v1.0.35: games hub overview + combo/game comparison tables */
+.cs-games-overview { margin: 40px auto 56px; }
+.cs-bn-compare, .cs-game-compare { margin-top: 32px; }
+.cs-bn-compare-table td:not(:first-child), .cs-bn-compare-table th:not(:first-child) { font-family: var(--cs-font-mono, inherit); white-space: nowrap; }

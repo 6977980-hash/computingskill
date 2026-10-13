@@ -82,6 +82,9 @@ function cs_get_games_data() {
 			'genre' => 'Tactical Shooter',
 			'min'  => array( 'cpu' => 'Intel Core i5-750 / AMD equivalent', 'gpu' => 'NVIDIA GTX 660 / AMD equivalent, 1GB VRAM', 'ram' => 8, 'storage_gb' => 85, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-9600K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA GTX 1650 / AMD RX 570', 'ram' => 16, 'storage_gb' => 85, 'os' => 'Windows 11 64-bit' ),
+			// Oct 2026: shown as our suggestion, not Valve's (Steam API checked
+			// 13 Oct 2026 still lists a minimum tier only). See cs_game_rec_official().
+			'rec_official' => false,
 			'source_url' => 'https://store.steampowered.com/app/730/CounterStrike_2/',
 		),
 		// Corrected during Sep 2026 audit: minimum OS narrowed to match Epic's

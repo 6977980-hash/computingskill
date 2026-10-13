@@ -158,6 +158,39 @@ function cs_print_schema() {
 		$graphs = array_merge( array_values( $cs_rank_math_schema ), $graphs );
 	}
 
+	// WebPage with author and dates for combo and game pages (Oct 2026).
+	// Rank Math outputs no WebPage/Article node for these two post types
+	// (checked live 13 Oct 2026), so this cannot duplicate one; the guard
+	// below skips it if a future Rank Math setting adds its own.
+	if ( is_singular( array( 'cs_bottleneck', 'cs_game' ) ) ) {
+		$has_page = false;
+		foreach ( $graphs as $node ) {
+			$types = is_array( $node ) && isset( $node['@type'] ) ? (array) $node['@type'] : array();
+			if ( array_intersect( $types, array( 'WebPage', 'Article', 'BlogPosting', 'CollectionPage' ) ) ) {
+				$has_page = true;
+				break;
+			}
+		}
+		if ( ! $has_page ) {
+			$graphs[] = array(
+				'@type'         => 'WebPage',
+				'@id'           => get_permalink() . '#webpage',
+				'url'           => get_permalink(),
+				'name'          => wp_strip_all_tags( get_the_title() ),
+				'datePublished' => get_the_date( 'c' ),
+				'dateModified'  => get_the_modified_date( 'c' ),
+				'inLanguage'    => get_bloginfo( 'language' ),
+				'author'        => array( '@id' => cs_site_author()['id'] ),
+				'publisher'     => array(
+					'@type' => 'Organization',
+					'@id'   => home_url( '/#person' ),
+					'name'  => get_bloginfo( 'name' ),
+					'url'   => home_url( '/' ),
+				),
+			);
+		}
+	}
+
 	if ( empty( $graphs ) ) {
 		return;
 	}

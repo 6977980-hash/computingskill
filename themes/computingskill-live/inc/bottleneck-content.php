@@ -469,3 +469,172 @@ function cs_bottleneck_faq_html( $items ) {
 	$sc .= '[/cs_faq]';
 	return do_shortcode( $sc );
 }
+
+/**
+ * Published combo pages keyed "cpu|gpu" => URL. Read from the posts, so a
+ * row only links to a page that is live (same source as window.csComboPages
+ * in inc/setup.php).
+ */
+function cs_bn_published_pairs() {
+	static $pairs = null;
+	if ( null !== $pairs ) {
+		return $pairs;
+	}
+	$pairs = array();
+	$ids   = get_posts( array(
+		'post_type'      => 'cs_bottleneck',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+	foreach ( $ids as $id ) {
+		$c = get_post_meta( $id, 'cs_cpu', true );
+		$g = get_post_meta( $id, 'cs_gpu', true );
+		if ( $c && $g ) {
+			$pairs[ $c . '|' . $g ] = get_permalink( $id );
+		}
+	}
+	return $pairs;
+}
+
+/**
+ * "CPU ~20%" / "GPU ~12%" / "Balanced" for a table cell.
+ */
+function cs_bn_cell( $r ) {
+	if ( 'balanced' === $r['component'] ) {
+		return __( 'Balanced', 'computingskill' );
+	}
+	$part = 'cpu' === $r['component'] ? __( 'CPU', 'computingskill' ) : __( 'GPU', 'computingskill' );
+	return sprintf( '%1$s ~%2$d%%', $part, $r['percent'] );
+}
+
+/**
+ * Ranking-readiness fix (Oct 2026): two comparison tables built from the
+ * other live combo pages that share this page's CPU or GPU, with the
+ * engine's result for each. Every number comes from cs_calculate_bottleneck(),
+ * so it matches those pages exactly, and the rows differ on every page.
+ */
+function cs_bn_neighbours_html( $cpu_slug, $gpu_slug, $cpu, $gpu ) {
+	$cpus      = cs_get_cpu_data();
+	$gpus      = cs_get_gpu_data();
+	$published = cs_bn_published_pairs();
+	$short     = cs_bn_res_short();
+
+	$same_cpu = array();
+	$same_gpu = array();
+	foreach ( $published as $key => $url ) {
+		list( $c, $g ) = explode( '|', $key );
+		if ( $c === $cpu_slug && isset( $gpus[ $g ] ) ) {
+			$same_cpu[ $g ] = array( 'part' => $gpus[ $g ], 'url' => $url, 'results' => cs_calculate_bottleneck( $cpu, $gpus[ $g ] ) );
+		}
+		if ( $g === $gpu_slug && isset( $cpus[ $c ] ) ) {
+			$same_gpu[ $c ] = array( 'part' => $cpus[ $c ], 'url' => $url, 'results' => cs_calculate_bottleneck( $cpus[ $c ], $gpu ) );
+		}
+	}
+	$by_score = function ( $a, $b ) {
+		return $a['part']['score'] - $b['part']['score'];
+	};
+	uasort( $same_cpu, $by_score );
+	uasort( $same_gpu, $by_score );
+
+	$table = function ( $rows, $current, $head ) use ( $short ) {
+		ob_start();
+		?>
+		<div class="cs-table-wrap">
+			<table class="cs-hardware-table cs-bn-compare-table">
+				<thead>
+					<tr>
+						<th><?php echo esc_html( $head ); ?></th>
+						<?php foreach ( $short as $label ) : ?>
+							<th><?php echo esc_html( $label ); ?></th>
+						<?php endforeach; ?>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $rows as $slug => $row ) : ?>
+						<tr>
+							<td>
+								<?php if ( $slug === $current ) : ?>
+									<strong><?php echo esc_html( $row['part']['name'] ); ?></strong> (<?php esc_html_e( 'this page', 'computingskill' ); ?>)
+								<?php else : ?>
+									<a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['part']['name'] ); ?></a>
+								<?php endif; ?>
+							</td>
+							<?php foreach ( $row['results'] as $r ) : ?>
+								<td><?php echo esc_html( cs_bn_cell( $r ) ); ?></td>
+							<?php endforeach; ?>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+		return ob_get_clean();
+	};
+
+	$html = '';
+
+	if ( count( $same_cpu ) > 1 ) {
+		// Closest match at 1440p: lowest estimate; on a tie, the cheaper
+		// (lower-scoring) card, since it gets the same balance for less.
+		$best = null;
+		foreach ( $same_cpu as $slug => $row ) {
+			if ( null === $best || $row['results']['1440p']['percent'] < $same_cpu[ $best ]['results']['1440p']['percent'] ) {
+				$best = $slug;
+			}
+		}
+		$note = sprintf(
+			/* translators: 1: CPU, 2: GPU, 3: 1440p phrase */
+			__( 'Of the graphics cards we pair with the %1$s, the %2$s gives the lowest 1440p estimate (%3$s).', 'computingskill' ),
+			$cpu['name'], $same_cpu[ $best ]['part']['name'], cs_bn_phrase( '1440p', $same_cpu[ $best ]['results']['1440p'] )
+		);
+		if ( $best !== $gpu_slug ) {
+			$note .= ' ' . sprintf(
+				/* translators: 1: GPU, 2: 1440p phrase */
+				__( 'This page’s %1$s is %2$s.', 'computingskill' ),
+				$gpu['name'], cs_bn_phrase( '1440p', $same_cpu[ $gpu_slug ]['results']['1440p'] )
+			);
+		}
+		$html .= '<section class="cs-bn-compare"><h2>' . esc_html( sprintf( __( 'Other Graphics Cards with the %s', 'computingskill' ), $cpu['name'] ) ) . '</h2>';
+		$html .= '<p>' . esc_html( sprintf( __( 'Every %1$s pairing we have a page for, weakest card first, with the same estimate engine as above.', 'computingskill' ), $cpu['name'] ) . ' ' . $note ) . '</p>';
+		$html .= $table( $same_cpu, $gpu_slug, __( 'Graphics card', 'computingskill' ) );
+		$html .= '</section>';
+	}
+
+	if ( count( $same_gpu ) > 1 ) {
+		// Smallest CPU in the list that keeps 1080p below the 15% line the
+		// verdict uses for "holds the card back".
+		$enough = null;
+		foreach ( $same_gpu as $slug => $row ) {
+			$r = $row['results']['1080p'];
+			if ( 'cpu' !== $r['component'] || $r['percent'] < 15 ) {
+				$enough = $slug;
+				break;
+			}
+		}
+		if ( null === $enough ) {
+			$note = sprintf(
+				/* translators: 1: GPU */
+				__( 'Every CPU in this list is estimated to hold the %1$s back by 15%% or more at 1080p, which is common for a card this fast; higher resolutions move the load back onto the GPU.', 'computingskill' ),
+				$gpu['name']
+			);
+		} else {
+			$first = array_keys( $same_gpu )[0] === $enough;
+			$note  = sprintf(
+				$first
+					/* translators: 1: CPU, 2: GPU, 3: 1080p phrase */
+					? __( 'Even the least powerful CPU here, the %1$s, does not hold the %2$s back by 15%% or more at 1080p; our engine rates that pair as %3$s.', 'computingskill' )
+					/* translators: 1: CPU, 2: GPU, 3: 1080p phrase */
+					: __( 'The least powerful CPU here that does not hold the %2$s back by 15%% or more at 1080p is the %1$s; our engine rates that pair as %3$s.', 'computingskill' ),
+				$same_gpu[ $enough ]['part']['name'], $gpu['name'], cs_bn_phrase( '1080p', $same_gpu[ $enough ]['results']['1080p'] )
+			);
+		}
+		$html .= '<section class="cs-bn-compare"><h2>' . esc_html( sprintf( __( 'Other CPUs with the %s', 'computingskill' ), $gpu['name'] ) ) . '</h2>';
+		$html .= '<p>' . esc_html( sprintf( __( 'Every %1$s pairing we have a page for, weakest CPU first.', 'computingskill' ), $gpu['name'] ) . ' ' . $note ) . '</p>';
+		$html .= $table( $same_gpu, $cpu_slug, __( 'Processor', 'computingskill' ) );
+		$html .= '</section>';
+	}
+
+	return $html;
+}
