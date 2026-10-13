@@ -11,3 +11,7 @@
 .cs-share-status { font-size: 0.85rem; color: var(--cs-accent); }
 .cs-share-combo { margin: 0; padding: 0 14px 10px; font-size: 0.95rem; }
 
+
+/* White text on the accent green (#0e9f6e) is only 3.4:1, below WCAG AA
+   4.5:1 for small text (PageSpeed, Phase 6). A darker green gives 5.5:1. */
+.cs-quick-answer-label, .cs-blog-search-form button, .cs-games-search-form button { background: #047857; }
