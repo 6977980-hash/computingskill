@@ -8,9 +8,9 @@
  * instead of depending on a wp-admin profile setting. "Computing Skill"
  * stays the publisher (Organization) in schema and in the footer.
  *
- * Only facts Ali Ahmad has given go in here. cs_site_author()['bio'] stays
- * empty until he supplies his own lines; never fill it with invented
- * background, credentials or experience.
+ * Only facts Ali Ahmad has given go in here: the bio lines are his own,
+ * and nothing may be added to them from guesswork (no invented
+ * background, credentials or experience).
  *
  * @package ComputingSkill
  */
@@ -30,7 +30,11 @@ function cs_site_author() {
 		'role'     => __( 'Founder and writer', 'computingskill' ),
 		'url'      => home_url( '/about-us/' ),
 		'id'       => home_url( '/about-us/#ali-ahmad' ),
-		'bio'      => array(),
+		// Ali Ahmad's own words (13 Oct 2026), translated from Roman Urdu.
+		'bio'      => array(
+			__( 'Ali Ahmad has been upgrading PCs and working with computer hardware for 14 years.', 'computingskill' ),
+			__( 'Computing Skill was built so people can check specifications and estimated hardware scores from home, and work out how powerful a machine they really need for a given game or task, so they don’t waste money on an upgrade they’ll have to redo.', 'computingskill' ),
+		),
 		// Profiles Ali Ahmad gave as his own; used for schema sameAs and the About Us link.
 		'profiles' => array(
 			'LinkedIn' => 'https://www.linkedin.com/in/ali-ahmad-chaudhry-12777486/',
