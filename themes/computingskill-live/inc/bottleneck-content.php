@@ -375,6 +375,23 @@ function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 	} else {
 		$a .= ' ' . sprintf( __( 'The %1$s’s %2$dGB is below that guideline for high textures, so medium textures are the safer setting.', 'computingskill' ), $gpu['name'], $vram );
 	}
+	// Oct 2026: the calculator's figures are minimums; its "comfortable"
+	// figure follows the site's VRAM guides (calculators.js CS_DEFS.vram).
+	$comfy    = array( '1080p' => 8, '1440p' => 12, '4k' => 16 );
+	$comfy_ok = array();
+	foreach ( $comfy as $res => $gb ) {
+		if ( $vram >= $gb ) {
+			$comfy_ok[] = $short[ $res ];
+		}
+	}
+	$a .= ' ' . __( 'Those are minimums; for comfortable headroom in newer games our VRAM guide suggests about 8GB at 1080p, 12GB at 1440p and 16GB at 4K.', 'computingskill' );
+	if ( count( $comfy_ok ) === 3 ) {
+		$a .= ' ' . __( 'This card meets that comfortable figure at every resolution.', 'computingskill' );
+	} elseif ( $comfy_ok ) {
+		$a .= ' ' . sprintf( __( 'This card meets it at %s.', 'computingskill' ), cs_bn_join( $comfy_ok ) );
+	} else {
+		$a .= ' ' . __( 'This card is below it at every resolution, so expect to lower texture quality in some newer games.', 'computingskill' );
+	}
 	$fit = cs_bn_fit( $cpu, $gpu, $results );
 	if ( $fit['suits'] ) {
 		$top = end( $fit['suits'] );

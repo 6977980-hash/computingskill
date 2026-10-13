@@ -267,11 +267,22 @@ function cs_methodology_engine_text( $content ) {
 	}
 
 	// GPU VRAM Calculator worked example: the calculator itself returns 8GB
-	// (1440p, high textures) + 2GB (ray tracing) = 10GB, not "8-9GB".
+	// (1440p, high textures) + 2GB (ray tracing) = 10GB minimum, not "8-9GB",
+	// with 12GB as its comfortable figure.
 	if ( 'gpu-vram-calculator' === $slug ) {
 		return preg_replace(
 			'#The calculator starts from a 1440p rasterization baseline[^<]*?for the same settings\.#u',
-			__( 'The calculator starts from its 1440p high-texture baseline of 8GB (frame buffers, high-resolution textures and typical open-world asset streaming), then adds 2GB for ray tracing (BVH structures and denoising buffers), so it recommends at least 10GB of VRAM. That is why the GeForce RTX 4060’s 8GB of GDDR6 falls short for ray-traced 1440p gaming, while the GeForce RTX 4070’s 12GB of GDDR6X has headroom for the same settings.', 'computingskill' ),
+			__( 'The calculator starts from its 1440p high-texture baseline of 8GB (frame buffers, high-resolution textures and typical open-world asset streaming), then adds 2GB for ray tracing (BVH structures and denoising buffers), so it recommends at least 10GB of VRAM, with 12GB as the comfortable figure. That is why the GeForce RTX 4060’s 8GB of GDDR6 falls short for ray-traced 1440p gaming, while the GeForce RTX 4070’s 12GB of GDDR6X has comfortable headroom for the same settings.', 'computingskill' ),
+			$content
+		);
+	}
+
+	// Internet Data Usage Calculator: SD streaming is up to ~1GB/h (Netflix's
+	// own figure, the rate the calculator now uses), not "1-3GB".
+	if ( 'internet-data-usage-calculator' === $slug ) {
+		return preg_replace(
+			'#roughly 1(?:-|&\#8211;|\x{2013})3GB per hour at standard definition, and considerably more at HD or 4K#u',
+			__( 'up to about 1GB per hour at standard definition and about 3GB at HD, per Netflix’s own figures, and considerably more at 4K', 'computingskill' ),
 			$content
 		);
 	}

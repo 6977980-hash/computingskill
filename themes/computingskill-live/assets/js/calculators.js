@@ -987,20 +987,39 @@
 	var SOCKET_OPTIONS = [
 		{ value: 'AM4', label: 'AMD AM4' }, { value: 'AM5', label: 'AMD AM5' }, { value: 'LGA1851', label: 'Intel LGA 1851 (Core Ultra 200S)' }, { value: 'LGA1700', label: 'Intel LGA 1700' }, { value: 'LGA1200', label: 'Intel LGA 1200' }
 	];
+	/*
+	 * Oct 2026: CPU and GPU pickers from data/hardware-data.php, so the
+	 * checker reads the CPU's socket and checks the PSU the same way the PSU
+	 * Calculator does (CPU max turbo/boost power + GPU board power + the PSU
+	 * Calculator's default RAM/drives/fans/motherboard allowance, +30%,
+	 * rounded up to 50W, never below the GPU maker's own recommended PSU).
+	 * "Other" keeps the manual socket / power boxes for parts not listed.
+	 */
+	function pickerWithOther( source, otherLabel ) {
+		var opts = hardwareOptions( source ).slice();
+		opts.push( { value: 'custom', label: otherLabel } );
+		return opts;
+	}
 	CS_DEFS.compatibility = {
 		fields: [
-			{ id: 'cpuSocket', type: 'select', label: 'CPU socket', default: 'AM5', options: SOCKET_OPTIONS },
+			{ id: 'cpu', type: 'select', label: 'CPU', icon: 'cpu', default: HW.cpu && HW.cpu[ 'ryzen-5-7600' ] ? 'ryzen-5-7600' : 'custom', options: pickerWithOther( 'cpu', 'Other CPU — pick its socket below' ) },
+			{ id: 'cpuSocket', type: 'select', label: 'Other CPU: socket (only used with "Other CPU")', default: 'AM5', options: SOCKET_OPTIONS },
 			{ id: 'moboSocket', type: 'select', label: 'Motherboard socket', default: 'AM5', options: SOCKET_OPTIONS },
 			{ id: 'ramType', type: 'select', label: 'RAM type you have/want', default: 'DDR5', options: [ { value: 'DDR4', label: 'DDR4' }, { value: 'DDR5', label: 'DDR5' } ] },
 			{ id: 'moboRam', type: 'select', label: 'Motherboard supported RAM', default: 'DDR5', options: [ { value: 'DDR4', label: 'DDR4' }, { value: 'DDR5', label: 'DDR5' } ] },
-			{ id: 'gpuLength', type: 'number', label: 'GPU length (mm)', default: 320, min: 100, max: 450 },
+			{ id: 'gpu', type: 'select', label: 'GPU', icon: 'gpu', default: HW.gpu && HW.gpu[ 'rtx-4070' ] ? 'rtx-4070' : 'custom', options: pickerWithOther( 'gpu', 'Other GPU — enter system power below' ) },
+			{ id: 'gpuLength', type: 'number', label: 'GPU length (mm, check your exact model)', default: 320, min: 100, max: 450, help: 'Length differs between brands of the same GPU, so take it from your card\'s spec page.' },
 			{ id: 'caseMaxLength', type: 'number', label: 'Case max GPU length (mm)', default: 380, min: 100, max: 600 },
 			{ id: 'psuWattage', type: 'number', label: 'PSU wattage', default: 650, min: 150, max: 1600 },
-			{ id: 'systemNeed', type: 'number', label: 'Estimated system power need (watts)', default: 450, min: 50, max: 1500 }
+			{ id: 'systemNeed', type: 'number', label: 'Other CPU/GPU: estimated system power need in watts (only used if either is "Other")', default: 450, min: 50, max: 1500 }
 		],
-		compute: function ( v ) {
+		compute: function ( v, hw ) {
+			var cpu = v.cpu !== 'custom' && hw.cpu ? hw.cpu[ v.cpu ] : null;
+			var gpu = v.gpu !== 'custom' && hw.gpu ? hw.gpu[ v.gpu ] : null;
+			var cpuSocket = cpu ? String( cpu.socket ).replace( /\s+/g, '' ) : v.cpuSocket;
+			var cpuLabel = cpu ? cpu.name + ' (' + cpuSocket + ')' : cpuSocket + ' CPU';
 			var checks = [];
-			checks.push( [ 'CPU socket vs motherboard socket', v.cpuSocket === v.moboSocket, v.cpuSocket === v.moboSocket ? 'Match' : 'Mismatch — ' + v.cpuSocket + ' CPU will not fit a ' + v.moboSocket + ' motherboard.' ] );
+			checks.push( [ 'CPU socket vs motherboard socket', cpuSocket === v.moboSocket, cpuSocket === v.moboSocket ? 'Match (' + cpuSocket + ')' : 'Mismatch — the ' + cpuLabel + ' will not fit ' + ( /^A/.test( v.moboSocket ) ? 'an ' : 'a ' ) + v.moboSocket + ' motherboard.' ] );
 			var socketMem = SOCKET_MEMORY[ v.moboSocket ] || [ 'DDR4', 'DDR5' ];
 			var boardRamPossible = socketMem.indexOf( v.moboRam ) !== -1;
 			checks.push( [ 'Motherboard socket vs its listed RAM type', boardRamPossible, boardRamPossible ? 'Valid' : 'Not possible — no ' + v.moboSocket + ' motherboard supports ' + v.moboRam + ' (' + v.moboSocket + ' boards are ' + socketMem.join( ' / ' ) + ' only). Double-check the board\'s spec page.' ] );
@@ -1016,7 +1035,16 @@
 			}
 			checks.push( [ 'RAM type vs motherboard support', ramOk, ramMsg ] );
 			checks.push( [ 'GPU length vs case clearance', v.gpuLength <= v.caseMaxLength, v.gpuLength <= v.caseMaxLength ? 'Fits (' + ( v.caseMaxLength - v.gpuLength ) + 'mm clearance)' : 'Too long by ' + ( v.gpuLength - v.caseMaxLength ) + 'mm.' ] );
-			checks.push( [ 'PSU headroom', v.psuWattage >= v.systemNeed * 1.2, v.psuWattage >= v.systemNeed * 1.2 ? 'Sufficient headroom' : 'Tight — aim for at least ' + Math.ceil( ( v.systemNeed * 1.3 ) / 50 ) * 50 + 'W.' ] );
+
+			// Same sum as the PSU Calculator with its default extras
+			// (2 RAM sticks, 2 drives, 3 fans, 50W board), no overclock.
+			var need = cpu && gpu ? ( cpu.max_power_w || cpu.tdp_w ) + gpu.tdp_w + 10 + 12 + 9 + 50 : v.systemNeed;
+			var tally = Math.ceil( ( need * 1.3 ) / 50 ) * 50;
+			var vendor = gpu && gpu.recommended_psu_w ? gpu.recommended_psu_w : 0;
+			var recommended = Math.max( tally, vendor );
+			var psuOk = v.psuWattage >= recommended;
+			var basis = ( cpu && gpu ? 'about ' + Math.round( need ) + 'W estimated load' : v.systemNeed + 'W system need you entered' ) + ' + 30% headroom' + ( vendor ? ', and ' + ( gpu.brand === 'AMD' ? 'AMD' : 'NVIDIA' ) + '’s own ' + vendor + 'W recommendation for the ' + gpu.name : '' );
+			checks.push( [ 'PSU wattage vs recommended', psuOk, ( psuOk ? 'Sufficient — ' + v.psuWattage + 'W meets the ' + recommended + 'W recommended' : 'Too low — get at least ' + recommended + 'W' ) + ' (' + basis + ').' ] );
 
 			var allPass = checks.every( function ( c ) { return c[ 1 ]; } );
 			var rows = checks.map( function ( c ) { return [ c[ 0 ], c[ 2 ] ]; } );
@@ -1039,17 +1067,32 @@
 		compute: function ( v, hw ) {
 			var base = { '1080p': { medium: 4, high: 6, ultra: 8 }, '1440p': { medium: 6, high: 8, ultra: 10 }, '4k': { medium: 8, high: 12, ultra: 14 } };
 			var needed = base[ v.resolution ][ v.quality ];
-			if ( v.rayTracing ) needed += 2;
-			if ( v.futureProof ) needed += 2;
-			var matches = Object.keys( hw.gpu ).filter( function ( k ) { return hw.gpu[ k ].vram_gb >= needed; } )
-				.sort( function ( a, b ) { return hw.gpu[ a ].vram_gb - hw.gpu[ b ].vram_gb; } )
-				.slice( 0, 5 )
-				.map( function ( k ) { return hw.gpu[ k ].name + ' (' + hw.gpu[ k ].vram_gb + 'GB)'; } );
-			var rows = [ [ 'Recommended minimum VRAM', needed + ' GB' ] ];
+			var extra = ( v.rayTracing ? 2 : 0 ) + ( v.futureProof ? 2 : 0 );
+			needed += extra;
+			// Oct 2026: "needed" is the minimum. The comfortable figure follows
+			// the site's VRAM guides (about 8GB at 1080p, 12GB at 1440p, 16GB
+			// at 4K, the guides' ray-tracing ranges included), never below the
+			// minimum and rounded up to a VRAM size cards actually ship with. inc/bottleneck-content.php uses the same
+			// numbers for the combo-page VRAM FAQ.
+			var comfyBase = { '1080p': 8, '1440p': 12, '4k': 16 }[ v.resolution ];
+			var comfy = Math.max( needed, comfyBase );
+			comfy = [ 8, 10, 12, 16, 20, 24, 32 ].find( function ( g ) { return g >= comfy; } ) || comfy;
+			var gpusWith = function ( gb ) {
+				return Object.keys( hw.gpu ).filter( function ( k ) { return hw.gpu[ k ].vram_gb >= gb; } )
+					.sort( function ( a, b ) { return hw.gpu[ a ].vram_gb - hw.gpu[ b ].vram_gb; } )
+					.slice( 0, 5 )
+					.map( function ( k ) { return hw.gpu[ k ].name + ' (' + hw.gpu[ k ].vram_gb + 'GB)'; } );
+			};
+			var rows = [ [ 'Minimum VRAM', needed + ' GB' ], [ 'Comfortable VRAM (headroom for newer games)', comfy + ' GB' ] ];
+			var matches = gpusWith( needed );
 			if ( matches.length ) {
-				rows.push( [ 'GPUs that meet this', matches.join( ', ' ) ] );
+				rows.push( [ 'GPUs that meet the minimum', matches.join( ', ' ) ] );
 			}
-			return resultBlock( 'We recommend at least <strong>' + needed + 'GB</strong> of VRAM for this scenario.', rows );
+			var comfyMatches = gpusWith( comfy );
+			if ( comfy > needed && comfyMatches.length && comfyMatches.join() !== matches.join() ) {
+				rows.push( [ 'GPUs with comfortable headroom', comfyMatches.join( ', ' ) ] );
+			}
+			return resultBlock( 'You need at least <strong>' + needed + 'GB</strong> of VRAM for this scenario' + ( comfy > needed ? ', and <strong>' + comfy + 'GB</strong> gives comfortable headroom.' : ', which also gives comfortable headroom.' ), rows );
 		}
 	};
 
@@ -1447,8 +1490,13 @@
 			// testing (SD 0.2-0.35, HD 2.8-3.3, 4K 6.5-11.5 GB/hr) — verified
 			// during the Sep 2026 audit against the old figures (0.3/1.0/2.5),
 			// which understated HD and 4K usage by roughly 3x.
-			var streamRate = { sd: 0.3, hd: 3.0, '4k': 7.0 }[ v.streamingQuality ];
-			var dailyGb = ( v.streamingHours * streamRate ) + ( v.browsingHours * 0.06 ) + ( v.gamingHours * 0.1 ) + ( v.callHours * 0.6 );
+			// Oct 2026: SD was 0.3 (Netflix's "Low" data-saver tier, not SD).
+			// Netflix's help page (help.netflix.com/en/node/87, checked Oct
+			// 2026) lists up to 1GB/h SD, 3GB/h HD, 7GB/h 4K. Video calls use
+			// 1GB/h: a 720p HD call at Zoom's published ~1.2 Mbps each way is
+			// about 1.1GB/h, matching the page's worked example.
+			var streamRate = { sd: 1.0, hd: 3.0, '4k': 7.0 }[ v.streamingQuality ];
+			var dailyGb = ( v.streamingHours * streamRate ) + ( v.browsingHours * 0.06 ) + ( v.gamingHours * 0.1 ) + ( v.callHours * 1.0 );
 			var monthlyGb = dailyGb * 30;
 			var rows = [ [ 'Estimated daily usage', fmt( dailyGb, 2 ) + ' GB' ], [ 'Estimated monthly usage', fmt( monthlyGb, 1 ) + ' GB' ] ];
 			return resultBlock( 'Estimated monthly data usage: <strong>' + fmt( monthlyGb, 1 ) + ' GB</strong>', rows, 'based on typical published per-hour data rates for each activity — your actual usage depends on the specific apps and settings you use.' );
