@@ -164,21 +164,77 @@ function cs_calculator_page_fixes() {
 		'cpu-power-consumption-calculator' => array(
 			array(
 				'by scaling from its rated TDP', 'slightly above it.',
-				__( 'using its rated TDP for idle (about 15%) and gaming or everyday use (about 70%), and the manufacturer’s maximum turbo/boost power for full load, since unlocked chips can draw far more than their TDP in sustained heavy work (the Core i9-13900K: 125W TDP, 253W maximum turbo power).', 'computingskill' ),
+				// D5 (audit 1.19): gaming is now a share of max turbo/boost power.
+				__( 'using its rated TDP for idle (about 15%), about 55% of the manufacturer’s maximum turbo/boost power for gaming or everyday use (45% for AMD X3D chips), and that maximum power for full load, since unlocked chips can draw far more than their TDP in sustained heavy work (the Core i9-13900K: 125W TDP, 253W maximum turbo power).', 'computingskill' ),
 			),
 			array(
 				'The calculator starts from the CPU', 'power limit settings.',
-				__( 'The calculator uses two manufacturer figures. Idle and typical load are scaled from the CPU’s rated TDP: about 15% of TDP at idle, because most cores drop to low-power states, and about 70% for gaming or everyday use. Full load uses the manufacturer’s maximum turbo/boost power instead (Intel’s Maximum Turbo Power, or AMD’s package power limit, PPT), because many boards let a CPU hold that limit through long all-core work, well above its TDP.', 'computingskill' ),
+				__( 'The calculator uses two manufacturer figures. Idle is scaled from the CPU’s rated TDP: about 15%, because most cores drop to low-power states. Gaming and everyday use take about 55% of the manufacturer’s maximum turbo/boost power (Intel’s Maximum Turbo Power, or AMD’s package power limit, PPT), or 45% for AMD X3D chips, whose extra cache keeps clocks and power lower; that tracks review measurements better than the TDP, which over-states X3D chips and under-states unlocked Intel K chips. Full load uses the maximum turbo/boost power itself, because many boards let a CPU hold that limit through long all-core work, well above its TDP.', 'computingskill' ),
 			),
 			array(
 				'As a worked example, take the Intel Core i5-13600K', 'above the base power limit.',
-				__( 'As a worked example, take the Intel Core i5-13600K, rated at 125W TDP with 14 cores and 20 threads. The calculator puts it at about 19W at idle (15% of 125W) and about 88W in gaming or everyday use (70%). Under sustained full multi-core load, such as a long video export, it uses Intel’s 181W Maximum Turbo Power, well above the 125W TDP, because most boards let the chip hold that limit.', 'computingskill' ),
+				__( 'As a worked example, take the Intel Core i5-13600K, rated at 125W TDP with 14 cores and 20 threads. The calculator puts it at about 19W at idle (15% of 125W) and about 100W in gaming or everyday use (55% of its 181W Maximum Turbo Power). Under sustained full multi-core load, such as a long video export, it uses Intel’s 181W Maximum Turbo Power, well above the 125W TDP, because most boards let the chip hold that limit.', 'computingskill' ),
 			),
 			array(
 				'Compare that to a lower-TDP chip like the AMD Ryzen 5 7600', 'flat number for every chip.',
-				__( 'Compare that to the AMD Ryzen 5 7600 (65W TDP): about 10W at idle, 46W in gaming and 88W at full load (its PPT), roughly half the i5-13600K’s full-load figure. That is why the calculator reads each CPU’s own figures rather than using one flat number for every chip.', 'computingskill' ),
+				__( 'Compare that to the AMD Ryzen 5 7600 (65W TDP): about 10W at idle, 48W in gaming and 88W at full load (its PPT), roughly half the i5-13600K’s full-load figure. That is why the calculator reads each CPU’s own figures rather than using one flat number for every chip.', 'computingskill' ),
 			),
 			array( 'These figures are estimates derived from rated TDP', 'typical scaling behavior', __( 'These figures are estimates derived from rated TDP, maximum turbo/boost power and typical scaling behavior', 'computingskill' ) ),
+		),
+
+		// D5 (Oct 2026, audit 1.16): the checker now also covers BIOS
+		// support, board size, cooler height and the 16-pin GPU cable.
+		'pc-compatibility-checker' => array(
+			array(
+				'and flags the classic compatibility problems', 'without enough headroom.',
+				__( 'and flags the classic compatibility problems: wrong socket, a motherboard that needs a BIOS update for your CPU, wrong RAM type, a motherboard, cooler or GPU too big for the case, a PSU without enough headroom, or a 16-pin graphics card without the right PSU cable.', 'computingskill' ),
+			),
+			array(
+				'This checker compares your chosen CPU, motherboard', 'every part will fit.',
+				__( 'This checker compares your chosen CPU, motherboard, RAM, GPU, case and PSU on specific compatibility points: CPU-to-motherboard socket match, whether the board’s chipset needs a BIOS update for your CPU, RAM type (DDR4 vs DDR5), motherboard size, cooler height and GPU length against the case, PSU wattage headroom, and whether the PSU has the 16-pin 12V-2x6 cable newer NVIDIA cards use. It flags a pass, a step to check, or a specific mismatch for each. Checks you leave on “Not sure” are skipped. A pass means those particular checks found no conflict, not a full guarantee every part will fit.', 'computingskill' ),
+			),
+			array(
+				'For PSU, it checks the GPU', 'falls short of it.',
+				__( 'For PSU, it checks the GPU’s TDP and the rest of your component list against the PSU’s rated wattage, using the same headroom logic as the PSU Calculator, and never asks for less than the GPU manufacturer’s recommended PSU wattage. If you pick the motherboard’s chipset, it also says whether that board needs a BIOS update for your CPU, following AMD’s and Intel’s support lists: Ryzen 5000 on 300- and 400-series AM4 boards, Ryzen 9000 on 600-series AM5 boards, and 13th or 14th Gen Intel on 600-series LGA 1700 boards all need one. Optional inputs check the motherboard size (ATX, Micro-ATX, Mini-ITX, E-ATX) against the largest board the case takes, an air cooler’s height against the case’s cooler limit, and the GPU’s power plug against the PSU’s cables. Every RTX 4080, 4090, 5080 and 5090 uses the 16-pin 12V-2x6 plug, so for those cards the checker raises the cable question even if you leave it blank.', 'computingskill' ),
+			),
+			array(
+				'It also can', 'this tool does not check.',
+				__( 'It also can’t check every physical constraint that matters in a real build: radiator mounting space for liquid coolers, RAM height under a large air cooler, front-panel connector compatibility and cable routing space are real concerns this tool does not check, and its BIOS note says which board series need an update, not the exact BIOS version for your model.', 'computingskill' ),
+			),
+			array( 'Why isn', 'compatibility here?', __( 'Does this checker check my CPU cooler?', 'computingskill' ) ),
+			array(
+				'Cooler compatibility depends on case height clearance', 'spec sheet separately.',
+				__( 'Partly. Enter your air cooler’s height and the case’s maximum cooler height, and it checks that the cooler fits. It can’t check radiator mounting space for an AIO liquid cooler, or RAM clearance under a large air cooler, because those depend on the exact case and cooler model, so check them against both spec sheets.', 'computingskill' ),
+			),
+		),
+
+		// D5 (audit 1.19): CPU gaming draw from max turbo/boost power, and
+		// PSU efficiency loss included in the wall figures.
+		'pc-power-consumption-calculator' => array(
+			array(
+				'combining baseline draw from the motherboard', 'near-TDP draw under load',
+				__( 'combining baseline draw from the motherboard, RAM, storage, and fans with the CPU’s typical gaming draw and the GPU’s rated board power, then adding the power supply’s own efficiency loss', 'computingskill' ),
+			),
+			array(
+				'Load power is estimated by taking the CPU and GPU close to their rated TDP figures', 'baseline system draw on top.',
+				__( 'Load power takes the GPU at its rated board power and the CPU at its typical gaming draw: about 55% of the manufacturer’s maximum turbo/boost power, or 45% for AMD X3D chips, which run cooler in games. That is closer to review measurements than the rated TDP, which over-states X3D chips and under-states unlocked Intel K chips. The same baseline system draw is added on top. Both figures are then divided by the power supply’s efficiency (about 88% under gaming load and 80% at idle), because the wall socket, and your bill, pays for the PSU’s losses too.', 'computingskill' ),
+			),
+			array(
+				'Consider a system idling around', 'higher-power build.',
+				__( 'Take a Ryzen 5 7600 and an RTX 4070 with the default two RAM sticks, two drives and three fans. While gaming, the parts draw about 329W (the 7600 at about 48W, 55% of its 88W PPT; the RTX 4070 at 200W; 81W for the rest), which is about 374W from the wall. At idle the parts draw about 64W, or 80W from the wall. If you game for 3 hours a day and leave the PC idling for another 3 hours of light use, that is (374W × 3h) + (80W × 3h) ≈ 1.36 kWh per day. At an electricity price of $0.15 per kWh, that is about $0.20 per day, or roughly $6.13 a month: small on its own, but a useful number when comparing it against a higher-power build.', 'computingskill' ),
+			),
+			array(
+				'PSU efficiency also means', 'actually receive.',
+				__( 'PSU efficiency is included as a typical figure (about 88% under gaming load, 80% at idle); a high-efficiency 80+ Gold or Platinum unit wastes a little less, and an older or budget unit a little more.', 'computingskill' ),
+			),
+		),
+
+		// D5 (audit 1.20): case fans follow the combined heat load.
+		'pc-cooling-calculator' => array(
+			array(
+				'It then compares the result against typical cooling capacities', 'case airflow configurations.',
+				__( 'It then compares the result against typical cooling capacities for different cooler classes, and sizes the case fans to the same combined heat load: under about 350W, 350–549W, or 550W and above, each step adding intake and exhaust fans (in a mid tower, 3 fans, then 4–5, then 5–6 with a mesh front panel). In a compact case it warns when the heat load is high enough that a mid tower would be easier to cool.', 'computingskill' ),
+			),
 		),
 
 		// Audit 1.14 / 1.15: the tool now has the breakdown and budget field.
@@ -229,15 +285,15 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-17-d3' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-17-d5' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// D3 text or result changes (D2's list ran with CS_CALC_PAGES_REV
-		// 2026-10-17-d2 and is already done).
-		'pc-bottleneck-calculator', 'fps-calculator', 'pc-upgrade-calculator', 'cpu-vs-gpu-calculator',
-		'cpu-bottleneck-explained', 'gpu-bottleneck-explained', 'methodology',
+		// D5 text or result changes (D2 ran with CS_CALC_PAGES_REV
+		// 2026-10-17-d2, D3 with 2026-10-17-d3; both are done).
+		'pc-compatibility-checker', 'psu-calculator', 'pc-power-consumption-calculator', 'cpu-power-consumption-calculator',
+		'pc-cooling-calculator', 'gpu-vram-calculator', 'methodology',
 	);
 }
 

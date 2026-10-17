@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CS_THEME_VERSION', '1.0.41' );
+define( 'CS_THEME_VERSION', '1.0.42' );
 define( 'CS_THEME_DIR', get_template_directory() );
 define( 'CS_THEME_URI', get_template_directory_uri() );
 

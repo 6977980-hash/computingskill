@@ -360,8 +360,11 @@ function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 		$a .= ' ' . sprintf( __( 'The %1$s’s %2$dGB covers high textures at %3$s and ultra at %4$s.', 'computingskill' ), $gpu['name'], $vram, cs_bn_join( $high ), cs_bn_join( $ultra ) );
 	} elseif ( $high ) {
 		$a .= ' ' . sprintf( __( 'The %1$s’s %2$dGB covers high textures at %3$s, but ultra textures call for more at every resolution.', 'computingskill' ), $gpu['name'], $vram, cs_bn_join( $high ) );
-	} else {
+	} elseif ( $vram >= 6 ) {
 		$a .= ' ' . sprintf( __( 'The %1$s’s %2$dGB is below that guideline for high textures, so medium textures are the safer setting.', 'computingskill' ), $gpu['name'], $vram );
+	} else {
+		// D5 (audit 1.21): the calculator's floor is 6GB even at 1080p medium.
+		$a .= ' ' . sprintf( __( 'The %1$s’s %2$dGB is below the calculator’s 6GB floor even for medium textures at 1080p, so expect low textures, and some newer games may not run well at all.', 'computingskill' ), $gpu['name'], $vram );
 	}
 	// Oct 2026: the calculator's figures are minimums; its "comfortable"
 	// figure follows the site's VRAM guides (calculators.js CS_DEFS.vram).
@@ -387,8 +390,10 @@ function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 			$verdict = __( 'enough even with ultra textures', 'computingskill' );
 		} elseif ( $vram >= $need[ $top ]['high'] ) {
 			$verdict = __( 'enough at high textures, while ultra may need lowering', 'computingskill' );
-		} else {
+		} elseif ( $vram >= 6 ) {
 			$verdict = __( 'tight, so medium textures are the safer choice', 'computingskill' );
+		} else {
+			$verdict = __( 'short, so low textures are the safer choice', 'computingskill' );
 		}
 		$a .= ' ' . sprintf( __( 'At %1$s, the highest resolution this pairing suits, that is %2$s.', 'computingskill' ), $short[ $top ], $verdict );
 	}
@@ -434,6 +439,26 @@ function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 		__( 'That counts the %1$s at its %2$dW maximum boost power (%3$dW TDP) and the %4$s at %5$dW; %6$s’s own recommendation for the card is %7$dW.', 'computingskill' ),
 		$cpu['name'], $cpu_max, (int) $cpu['tdp_w'], $gpu['name'], (int) $gpu['tdp_w'], $gpu['brand'], $vendor
 	);
+	// D5 (audit 1.17): same grade and cable rule as the PSU Calculator
+	// (calculators.js psuGrade() / gpuPlug()).
+	$grade = $rec >= 850 ? '80+ Gold' : '80+ Bronze';
+	$plug  = '';
+	if ( 'NVIDIA' === $gpu['brand'] ) {
+		if ( preg_match( '/RTX (4080|4090|5080|5090)/', $gpu['name'] ) ) {
+			$plug = '16pin';
+		} elseif ( preg_match( '/RTX [45]070/', $gpu['name'] ) ) {
+			$plug = 'maybe';
+		}
+	}
+	if ( '16pin' === $plug ) {
+		$a .= ' ' . sprintf( __( 'Pick %1$s or better, ideally an ATX 3.1 unit with a native 12V-2x6 (16-pin) cable, since every %2$s uses that plug.', 'computingskill' ), $grade, $gpu['name'] );
+	} elseif ( 'maybe' === $plug ) {
+		$a .= ' ' . sprintf( __( 'Pick %1$s or better; many %2$s models use the 16-pin 12V-2x6 plug, so an ATX 3.1 unit with a native cable is the safe choice.', 'computingskill' ), $grade, $gpu['name'] );
+	} elseif ( (int) $gpu['tdp_w'] <= 75 ) {
+		$a .= ' ' . sprintf( __( 'Pick %s or better; many cards at this power level need no PSU cable at all, as they draw everything from the motherboard slot.', 'computingskill' ), $grade );
+	} else {
+		$a .= ' ' . sprintf( __( 'Pick %s or better, with a separate PCIe cable for each power plug on the card.', 'computingskill' ), $grade );
+	}
 	$items[] = array(
 		'q' => sprintf( __( 'What power supply does the %1$s + %2$s need?', 'computingskill' ), $cpu['name'], $gpu['name'] ),
 		'a' => $a,

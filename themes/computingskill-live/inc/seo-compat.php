@@ -242,7 +242,7 @@ function cs_page_description_overrides() {
 		'ssd' => __( 'How SSDs work, NVMe vs SATA, and the specs that matter — interface, NAND type, DRAM cache, TBW endurance — plus how to choose the right SSD for your PC.', 'computingskill' ),
 		'storage-calculator' => __( 'Estimate how much space your files, games or media library need, and check whether they\'ll fit on your drive with sensible headroom left over.', 'computingskill' ),
 		'storage-tools' => __( 'Free storage calculators: SSD lifespan and TBW/DWPD endurance, drive space planning, and storage unit conversions, plus SSD, HDD and NVMe background guides.', 'computingskill' ),
-		'pc-compatibility-checker' => __( 'Check CPU and motherboard socket match, RAM type (DDR4 vs DDR5 per socket), GPU length vs case clearance and PSU headroom before you buy or build a PC.', 'computingskill' ),
+		'pc-compatibility-checker' => __( 'Check socket and BIOS support, DDR4 vs DDR5, board size, cooler height and GPU length vs your case, PSU headroom and the 16-pin GPU cable before you build a PC.', 'computingskill' ),
 		'ssd-lifespan-calculator' => __( 'Estimate how many years your SSD should last from its TBW endurance rating and your daily write volume — and why TBW is a warranty limit, not a failure date.', 'computingskill' ),
 		'ssd-tbw-calculator' => __( 'Convert an SSD\'s DWPD rating to TBW (or TBW to DWPD) from capacity and warranty length, and compare drives fairly with a TBW-per-terabyte figure.', 'computingskill' ),
 		'cpu-performance-calculator' => __( 'See a CPU\'s gaming-performance score and tier, from Entry-level to Flagship, placed from published review averages, with its cores, clocks, TDP and socket.', 'computingskill' ),

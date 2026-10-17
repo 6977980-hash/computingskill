@@ -709,7 +709,7 @@
 	};
 	// The GPU VRAM Calculator's minimums (CS_DEFS.vram "base"; low = medium).
 	var BN_VRAM_NEED = {
-		'1080p': { low: 4, medium: 4, high: 6, ultra: 8 },
+		'1080p': { low: 6, medium: 6, high: 6, ultra: 8 },
 		'1440p': { low: 6, medium: 6, high: 8, ultra: 10 },
 		'4k': { low: 8, medium: 8, high: 12, ultra: 14 }
 	};
@@ -898,12 +898,24 @@
 			{ id: 'cpuTdp', type: 'number', label: wattsLabel, default: 125, min: 15, max: 400, help: wattsHelp }
 		];
 	}
+	// D5 (Oct 2026, audit 1.19): gaming draw as a share of the max
+	// turbo/boost power instead of the rated TDP, which over-stated X3D chips
+	// (7800X3D: 120W TDP, about 55-75W in games) and under-stated Intel K
+	// chips (13900K: 125W TDP, about 140W+ in games). 55% of max power, 45%
+	// for X3D chips (their cache keeps clocks and power lower), lands within
+	// public review averages for the listed CPUs. Shared by the PC and CPU
+	// Power Consumption calculators.
+	var CPU_GAMING_SHARE = 0.55;
+	var CPU_GAMING_SHARE_X3D = 0.45;
+	function cpuGamingWatts( c ) {
+		return ( c.max_power_w || c.tdp_w ) * ( /X3D/.test( c.name ) ? CPU_GAMING_SHARE_X3D : CPU_GAMING_SHARE );
+	}
 	function resolveCpuPower( v, hw ) {
 		var c = v.cpu && v.cpu !== 'custom' && hw.cpu ? hw.cpu[ v.cpu ] : null;
 		if ( ! c ) {
-			return { name: 'Your CPU', tdp: v.cpuTdp, max: v.cpuTdp, custom: true };
+			return { name: 'Your CPU', tdp: v.cpuTdp, max: v.cpuTdp, gaming: v.cpuTdp, custom: true };
 		}
-		return { name: c.name, tdp: c.tdp_w, max: c.max_power_w || c.tdp_w, custom: false };
+		return { name: c.name, tdp: c.tdp_w, max: c.max_power_w || c.tdp_w, gaming: cpuGamingWatts( c ), custom: false };
 	}
 
 	CS_DEFS.psu = {
@@ -942,17 +954,23 @@
 				[ 'Recommended PSU wattage (with headroom)', recommended + 'W' ],
 				[ 'GPU (' + gpu.name + ')', gpu.tdp_w + 'W' ],
 				[ 'GPU vendor’s own recommended PSU', manufacturerRec ? manufacturerRec + 'W' : '—' ],
-				[ 'CPU (' + cpu.name + ', max turbo/boost power)', cpu.max + 'W' ]
+				[ 'CPU (' + cpu.name + ', max turbo/boost power)', cpu.max + 'W' ],
+				// D5 (Oct 2026, audit 1.17): the efficiency grade and the
+				// ATX 3.x / 12V-2x6 advice scale with the build.
+				[ 'Efficiency rating', psuGrade( recommended ) + ' or better' + ( recommended >= 850 ? ' (at this size it runs cooler and quieter, and saves more power)' : ' (Gold runs a little cooler and quieter)' ) ],
+				[ 'PSU standard and GPU cable', psuCableAdvice( gpu ) ]
 			];
-			return resultBlock( 'Get at least a <strong>' + recommended + 'W</strong> power supply from a reputable brand with 80+ Bronze certification or better.', rows, 'the load is a tally of rated TDP, the CPU’s max turbo/boost power and fixed allowances for the rest of the system, not a wall-meter reading. Also check that the PSU has the power connectors your graphics card needs.' );
+			return resultBlock( 'Get at least ' + ( /^(8|11|18)/.test( String( recommended ) ) ? 'an' : 'a' ) + ' <strong>' + recommended + 'W</strong> power supply from a reputable brand, <strong>' + psuGrade( recommended ) + '</strong> or better' + ( gpuPlug( gpu ) ? ', ideally <strong>ATX 3.1 with a native 12V-2x6 cable</strong>' : '' ) + '.', rows, 'the load is a tally of rated TDP, the CPU’s max turbo/boost power and fixed allowances for the rest of the system, not a wall-meter reading.' );
 		}
 	};
 
 	/* ---- 3. PC Power Consumption Calculator ---- */
+	var PSU_EFF_LOAD = 0.88;
+	var PSU_EFF_IDLE = 0.8;
 	CS_DEFS['power-consumption'] = {
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
-		].concat( cpuPickerFields( 'Other CPU: rated TDP in watts (only used with "Other CPU")', 'Sustained gaming draw tracks the rated TDP, not the brief turbo peak.' ) ).concat( [
+		].concat( cpuPickerFields( 'Other CPU: rated TDP in watts (only used with "Other CPU")', 'Used as its gaming draw, a rough stand-in: X3D chips usually draw less in games, unlocked Intel K chips more.' ) ).concat( [
 			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8 },
 			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8 },
 			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12 },
@@ -969,27 +987,34 @@
 			// Oct 2026: separate idle and load figures, as the page describes.
 			// Rest of system = the PSU Calculator's own allowance (5W per RAM
 			// stick, 6W per drive, 3W per fan, 50W motherboard and misc.).
-			// Load: CPU and GPU at their rated TDP (sustained gaming draw; the
-			// PSU Calculator uses the CPU's higher turbo peak because a PSU
-			// must carry the peak). Idle: CPU and GPU at ~15% of TDP, the same
-			// idle factor as the CPU/GPU Power Consumption calculators, and the
-			// rest of the system at ~30% of its load allowance.
+			// Load: the CPU's gaming draw (cpuGamingWatts(), D5) and the GPU at
+			// its rated board power; the PSU Calculator uses the CPU's full
+			// turbo peak because a PSU must carry the peak. Idle: CPU and GPU
+			// at ~15% of TDP, the same idle factor as the CPU/GPU Power
+			// Consumption calculators, and the rest at ~30% of its allowance.
+			// D5 (audit 1.19): the parts' draw is then divided by the PSU's
+			// efficiency to get the draw from the wall, which is what the bill
+			// counts: ~88% under gaming load (between 80+ Bronze and Gold at
+			// 40-60% load) and ~80% at idle, where PSUs are least efficient.
 			var rest = ( v.ramSticks * 5 ) + ( v.storageDrives * 6 ) + ( v.fans * 3 ) + 50;
-			var loadW = cpu.tdp + gpu.tdp_w + rest;
-			var idleW = ( cpu.tdp + gpu.tdp_w ) * 0.15 + rest * 0.3;
+			var loadDc = cpu.gaming + gpu.tdp_w + rest;
+			var idleDc = ( cpu.tdp + gpu.tdp_w ) * 0.15 + rest * 0.3;
+			var loadW = loadDc / PSU_EFF_LOAD;
+			var idleW = idleDc / PSU_EFF_IDLE;
 			var dailyKwh = ( loadW * v.hoursPerDay + idleW * v.idleHours ) / 1000;
 			var dailyCost = dailyKwh * v.rate;
 			var monthlyCost = dailyCost * 30;
 			var yearlyCost = dailyCost * 365;
 			var rows = [
-				[ 'Estimated draw while gaming / under load', fmt( loadW, 0 ) + 'W' ],
-				[ 'Estimated draw at idle / light use', fmt( idleW, 0 ) + 'W' ],
+				[ 'Estimated draw from the wall while gaming', fmt( loadW, 0 ) + 'W' ],
+				[ 'Estimated draw from the wall at idle / light use', fmt( idleW, 0 ) + 'W' ],
+				[ 'Parts’ own draw while gaming (before PSU loss)', fmt( loadDc, 0 ) + 'W, incl. ' + ( cpu.custom ? 'your CPU' : 'the ' + cpu.name ) + ' at about ' + fmt( cpu.gaming, 0 ) + 'W and the ' + gpu.name + ' at ' + gpu.tdp_w + 'W' ],
 				[ 'Daily energy use', fmt( dailyKwh, 2 ) + ' kWh' ],
 				[ 'Estimated daily cost', '$' + fmt( dailyCost, 2 ) ],
 				[ 'Estimated monthly cost (30 days)', '$' + fmt( monthlyCost, 2 ) ],
 				[ 'Estimated yearly cost (365 days)', '$' + fmt( yearlyCost, 2 ) ]
 			];
-			return resultBlock( 'About <strong>' + fmt( loadW, 0 ) + 'W</strong> while gaming and <strong>' + fmt( idleW, 0 ) + 'W</strong> at idle — roughly <strong>$' + fmt( monthlyCost, 2 ) + '/month</strong> at your hours and rate.', rows, 'real draw from the wall is a little higher because of PSU efficiency loss, and it varies by game, settings and power-saving options.' );
+			return resultBlock( 'About <strong>' + fmt( loadW, 0 ) + 'W</strong> from the wall while gaming and <strong>' + fmt( idleW, 0 ) + 'W</strong> at idle — roughly <strong>$' + fmt( monthlyCost, 2 ) + '/month</strong> at your hours and rate.', rows, 'wall figures include typical PSU efficiency loss (about 88% efficient while gaming, 80% at idle). Real draw varies by game, settings, frame-rate caps and power-saving options.' );
 		}
 	};
 
@@ -1267,6 +1292,131 @@
 		opts.push( { value: 'custom', label: otherLabel } );
 		return opts;
 	}
+
+	/*
+	 * D5 (Oct 2026, audit 1.16): the checker also covers the common catches
+	 * a socket match misses. Each extra check is skipped when its inputs are
+	 * left on "Not sure" / blank, so the old four checks still work alone.
+	 *  - BIOS: which chipset generations need an update for which CPUs
+	 *    (AMD and Intel CPU support lists: Ryzen 5000 on 300/400-series AM4,
+	 *    Ryzen 9000 on 600-series AM5, 13th/14th Gen on 600-series LGA 1700).
+	 *  - Board size vs case, cooler height vs case, and the GPU's power plug
+	 *    vs the PSU's cables (12V-2x6, see psuCableAdvice()).
+	 */
+	var CHIPSET_OPTIONS = [
+		{ value: 'skip', label: 'Not sure / skip this check' },
+		{ value: 'AM4-300', label: 'AMD A320 / B350 / X370 (AM4, 300-series)' },
+		{ value: 'AM4-400', label: 'AMD B450 / X470 (AM4, 400-series)' },
+		{ value: 'AM4-500', label: 'AMD A520 / B550 / X570 (AM4, 500-series)' },
+		{ value: 'AM5-600', label: 'AMD A620 / B650 / X670 (AM5, 600-series)' },
+		{ value: 'AM5-800', label: 'AMD B840 / B850 / X870 (AM5, 800-series)' },
+		{ value: 'LGA1851-800', label: 'Intel H810 / B860 / Z890 (LGA 1851, 800-series)' },
+		{ value: 'LGA1700-600', label: 'Intel H610 / B660 / H670 / Z690 (LGA 1700, 600-series)' },
+		{ value: 'LGA1700-700', label: 'Intel B760 / H770 / Z790 (LGA 1700, 700-series)' },
+		{ value: 'LGA1200-400', label: 'Intel H410 / B460 / H470 / Z490 (LGA 1200, 400-series)' },
+		{ value: 'LGA1200-500', label: 'Intel H510 / B560 / H570 / Z590 (LGA 1200, 500-series)' }
+	];
+	var FORM_RANK = { itx: 1, matx: 2, atx: 3, eatx: 4 };
+	var FORM_NAMES = { itx: 'Mini-ITX', matx: 'Micro-ATX', atx: 'ATX', eatx: 'E-ATX' };
+
+	// CPU family from the model name: { maker, gen }. AMD gen = the series
+	// digit (3 = Ryzen 3000, 5, 7, 9); Intel gen = 12/13/14, or 'ultra'.
+	function cpuFamily( cpu ) {
+		var n = cpu ? cpu.name : '';
+		var m = /Ryzen \d (\d)\d{3}/.exec( n );
+		if ( m ) {
+			return { maker: 'AMD', gen: +m[ 1 ] };
+		}
+		m = /i\d-(1[2-4])\d{3}/.exec( n );
+		if ( m ) {
+			return { maker: 'Intel', gen: +m[ 1 ] };
+		}
+		return /Core Ultra/.test( n ) ? { maker: 'Intel', gen: 'ultra' } : null;
+	}
+
+	// Returns [ status, text ]: true = fine, 'warn' = works but needs a step,
+	// false = will not work. null when there is nothing to say.
+	function biosCheck( cpu, socket, chipset ) {
+		var fam = cpuFamily( cpu );
+		if ( ! fam ) {
+			return null;
+		}
+		var series = chipset === 'skip' ? '' : chipset.split( '-' )[ 1 ];
+		var flashback = ' Many boards can update the BIOS without a CPU installed (BIOS Flashback); otherwise it needs an older supported CPU first.';
+		if ( 'AM4' === socket ) {
+			var name = 5 === fam.gen ? 'Ryzen 5000' : 'Ryzen ' + fam.gen + '000';
+			if ( '300' === series ) {
+				return [ 'warn', 'Needs a BIOS update, and not every 300-series board got ' + name + ' support (many A320 boards didn’t). Find this CPU on the board’s CPU support list before buying.' + flashback ];
+			}
+			if ( '400' === series ) {
+				return [ 'warn', 'Needs a BIOS update that adds ' + name + ' support; check the board’s CPU support list for the version.' + flashback ];
+			}
+			if ( '500' === series ) {
+				return 5 === fam.gen ? [ 'warn', 'Supported, but a board made before this CPU launched needs a BIOS update first; check the board’s CPU support list.' + flashback ] : [ true, 'Supported.' ];
+			}
+			return [ 'warn', 'Works on AM4 boards, but a 300- or 400-series board (A320, B350, X370, B450, X470) needs a BIOS update for ' + name + ', and an older 500-series board may too. Pick the chipset above for a specific answer.' ];
+		}
+		if ( 'AM5' === socket ) {
+			if ( 9 === fam.gen ) {
+				if ( '600' === series ) {
+					return [ 'warn', 'Needs a BIOS from mid-2024 or later (Ryzen 9000 support); a board built before that needs an update first.' + flashback ];
+				}
+				return '800' === series ? [ true, 'Supported out of the box.' ] : [ 'warn', '800-series boards (B850, X870) support it out of the box; a 600-series board (A620, B650, X670) needs a BIOS from mid-2024 or later. Pick the chipset above for a specific answer.' ];
+			}
+			return [ true, 'Supported on every AM5 board. Update to the latest BIOS anyway for memory and stability fixes.' ];
+		}
+		if ( 'LGA1700' === socket ) {
+			var micro = ' Intel recommends a BIOS with the 0x12B microcode or newer for 13th and 14th Gen desktop CPUs (the fix for the instability issue).';
+			if ( 12 === fam.gen ) {
+				return [ true, 'Supported on 600- and 700-series boards.' ];
+			}
+			if ( '600' === series ) {
+				return [ 'warn', 'Needs a BIOS update for ' + fam.gen + 'th Gen; without it the board won’t start with this CPU.' + flashback + micro ];
+			}
+			if ( '700' === series ) {
+				return 14 === fam.gen ? [ 'warn', 'Supported, but a board made before 14th Gen launched (October 2023) needs a BIOS update first.' + micro ] : [ 'warn', 'Supported.' + micro ];
+			}
+			return [ 'warn', 'A 700-series board (B760, Z790) supports it; a 600-series board (H610, B660, Z690) needs a BIOS update first. Pick the chipset above for a specific answer.' + micro ];
+		}
+		if ( 'LGA1851' === socket ) {
+			return [ true, 'Supported on every LGA 1851 (800-series) board.' ];
+		}
+		return null;
+	}
+
+	// D5 (audit 1.17): one rule for the PSU Calculator and this checker.
+	// Every RTX 4080/4090/5080/5090 uses the 16-pin 12V-2x6 plug (12VHPWR on
+	// early RTX 40 cards); RTX 4070/5070-class cards vary by model (the
+	// Founders Editions and many partner cards use it), and the rest mostly
+	// use 8-pin PCIe.
+	function gpuPlug( gpu ) {
+		if ( ! gpu || gpu.brand !== 'NVIDIA' ) {
+			return '';
+		}
+		if ( /RTX (4080|4090|5080|5090)/.test( gpu.name ) ) {
+			return '16pin';
+		}
+		return /RTX [45]070/.test( gpu.name ) ? 'maybe' : '';
+	}
+	function psuCableAdvice( gpu ) {
+		var plug = gpuPlug( gpu );
+		if ( '16pin' === plug ) {
+			return 'An ATX 3.1 PSU with a native 12V-2x6 (16-pin) cable: every ' + gpu.name + ' uses that plug. A native cable avoids the bulky adapter, and ATX 3.x units are built to ride out the card’s brief power spikes. Push the plug in fully until it clicks.';
+		}
+		if ( 'maybe' === plug ) {
+			return 'An ATX 3.1 PSU with a native 12V-2x6 (16-pin) cable is the safe pick: many ' + gpu.name + ' models use that plug, while others use 8-pin PCIe. Check your exact card’s spec page.';
+		}
+		if ( gpu && gpu.tdp_w <= 75 ) {
+			return 'Many cards at this power level draw everything from the motherboard slot and need no PSU cable; if yours has a 6- or 8-pin plug, make sure the PSU has a cable for it.';
+		}
+		if ( gpu && gpu.tdp_w >= 300 ) {
+			return 'An ATX 3.x PSU is worth it for a card this power-hungry, since it is built for brief GPU power spikes. Most of these cards use 8-pin PCIe plugs (some use the 16-pin 12V-2x6): count them on your card’s spec page and make sure the PSU has a separate cable for each.';
+		}
+		return 'Most of these cards use 8-pin PCIe plugs: count them on your card’s spec page and make sure the PSU has a separate cable for each. ATX 3.x is fine but not required.';
+	}
+	function psuGrade( watts ) {
+		return watts >= 850 ? '80+ Gold' : '80+ Bronze';
+	}
 	CS_DEFS.compatibility = {
 		fields: [
 			{ id: 'cpu', type: 'select', label: 'CPU', icon: 'cpu', default: HW.cpu && HW.cpu[ 'ryzen-5-7600' ] ? 'ryzen-5-7600' : 'custom', options: pickerWithOther( 'cpu', 'Other CPU — pick its socket below' ) },
@@ -1274,10 +1424,17 @@
 			{ id: 'moboSocket', type: 'select', label: 'Motherboard socket', default: 'AM5', options: SOCKET_OPTIONS },
 			{ id: 'ramType', type: 'select', label: 'RAM type you have/want', default: 'DDR5', options: [ { value: 'DDR4', label: 'DDR4' }, { value: 'DDR5', label: 'DDR5' } ] },
 			{ id: 'moboRam', type: 'select', label: 'Motherboard supported RAM', default: 'DDR5', options: [ { value: 'DDR4', label: 'DDR4' }, { value: 'DDR5', label: 'DDR5' } ] },
+			{ id: 'chipset', type: 'select', label: 'Motherboard chipset (for the BIOS check)', default: 'skip', options: CHIPSET_OPTIONS, help: 'The chipset is in the board\'s name, e.g. "B650" in "B650 Tomahawk".' },
+			{ id: 'moboForm', type: 'select', label: 'Motherboard size', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: 'atx', label: 'ATX' }, { value: 'matx', label: 'Micro-ATX' }, { value: 'itx', label: 'Mini-ITX' }, { value: 'eatx', label: 'E-ATX' } ] },
+			{ id: 'caseForm', type: 'select', label: 'Largest motherboard the case takes', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: 'atx', label: 'ATX (most mid towers)' }, { value: 'matx', label: 'Micro-ATX' }, { value: 'itx', label: 'Mini-ITX only' }, { value: 'eatx', label: 'E-ATX (most full towers)' } ] },
+			{ id: 'coolerHeight', type: 'number', label: 'CPU air cooler height (mm, optional)', min: 20, max: 250, required: false, blankValue: 0, placeholder: 'e.g. 155', help: 'Leave blank for an AIO liquid cooler or to skip this check.' },
+			{ id: 'caseCoolerMax', type: 'number', label: 'Case max CPU cooler height (mm, optional)', min: 20, max: 250, required: false, blankValue: 0, placeholder: 'e.g. 165' },
 			{ id: 'gpu', type: 'select', label: 'GPU', icon: 'gpu', default: HW.gpu && HW.gpu[ 'rtx-4070' ] ? 'rtx-4070' : 'custom', options: pickerWithOther( 'gpu', 'Other GPU — enter system power below' ) },
 			{ id: 'gpuLength', type: 'number', label: 'GPU length (mm, check your exact model)', default: 320, min: 100, max: 450, help: 'Length differs between brands of the same GPU, so take it from your card\'s spec page.' },
 			{ id: 'caseMaxLength', type: 'number', label: 'Case max GPU length (mm)', default: 380, min: 100, max: 600 },
+			{ id: 'gpuPlug', type: 'select', label: 'GPU power plug', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: '8pin', label: '8-pin PCIe' }, { value: '16pin', label: '16-pin 12V-2x6 / 12VHPWR' } ], help: 'Every RTX 4080, 4090, 5080 and 5090 uses the 16-pin plug, and many RTX 4070- and 5070-class cards do; most other cards use 8-pin. Check your exact model.' },
 			{ id: 'psuWattage', type: 'number', label: 'PSU wattage', default: 650, min: 150, max: 1600 },
+			{ id: 'psuCable', type: 'select', label: 'PSU has a native 12V-2x6 (16-pin) cable', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: 'yes', label: 'Yes (ATX 3.0 / 3.1 PSU)' }, { value: 'no', label: 'No, 8-pin PCIe cables only' } ] },
 			{ id: 'systemNeed', type: 'number', label: 'Other CPU/GPU: estimated system power need in watts (only used if either is "Other")', default: 450, min: 50, max: 1500 }
 		],
 		compute: function ( v, hw ) {
@@ -1301,6 +1458,22 @@
 				ramMsg = 'Match';
 			}
 			checks.push( [ 'RAM type vs motherboard support', ramOk, ramMsg ] );
+			if ( v.chipset !== 'skip' && v.chipset.split( '-' )[ 0 ] !== v.moboSocket ) {
+				checks.push( [ 'Motherboard chipset vs socket', false, 'Mismatch — that chipset is for ' + v.chipset.split( '-' )[ 0 ] + ' boards, not ' + v.moboSocket + '. Check the board\'s spec page.' ] );
+			} else if ( cpuSocket === v.moboSocket ) {
+				var bios = biosCheck( cpu, cpuSocket, v.chipset );
+				if ( bios ) {
+					checks.push( [ 'CPU support / BIOS version', bios[ 0 ], bios[ 1 ] ] );
+				}
+			}
+			if ( v.moboForm !== 'skip' && v.caseForm !== 'skip' ) {
+				var formOk = FORM_RANK[ v.moboForm ] <= FORM_RANK[ v.caseForm ];
+				checks.push( [ 'Motherboard size vs case', formOk, formOk ? 'Fits (' + FORM_NAMES[ v.moboForm ] + ' board in a case that takes up to ' + FORM_NAMES[ v.caseForm ] + ')' : 'Mismatch — ' + ( /^[AE]/.test( FORM_NAMES[ v.moboForm ] ) ? 'an ' : 'a ' ) + FORM_NAMES[ v.moboForm ] + ' board is too big for a case that takes up to ' + FORM_NAMES[ v.caseForm ] + '.' ] );
+			}
+			if ( v.coolerHeight > 0 && v.caseCoolerMax > 0 ) {
+				var coolerOk = v.coolerHeight <= v.caseCoolerMax;
+				checks.push( [ 'CPU cooler height vs case', coolerOk, coolerOk ? 'Fits (' + ( v.caseCoolerMax - v.coolerHeight ) + 'mm to spare)' : 'Too tall by ' + ( v.coolerHeight - v.caseCoolerMax ) + 'mm — pick a lower cooler or an AIO liquid cooler.' ] );
+			}
 			checks.push( [ 'GPU length vs case clearance', v.gpuLength <= v.caseMaxLength, v.gpuLength <= v.caseMaxLength ? 'Fits (' + ( v.caseMaxLength - v.gpuLength ) + 'mm clearance)' : 'Too long by ' + ( v.gpuLength - v.caseMaxLength ) + 'mm.' ] );
 
 			// Same sum as the PSU Calculator with its default extras
@@ -1310,12 +1483,29 @@
 			var vendor = gpu && gpu.recommended_psu_w ? gpu.recommended_psu_w : 0;
 			var recommended = Math.max( tally, vendor );
 			var psuOk = v.psuWattage >= recommended;
-			var basis = ( cpu && gpu ? 'about ' + Math.round( need ) + 'W estimated load' : v.systemNeed + 'W system need you entered' ) + ' + 30% headroom' + ( vendor ? ', and ' + ( gpu.brand === 'AMD' ? 'AMD' : 'NVIDIA' ) + '’s own ' + vendor + 'W recommendation for the ' + gpu.name : '' );
+			var basis = ( cpu && gpu ? 'about ' + Math.round( need ) + 'W estimated load' : v.systemNeed + 'W system need you entered' ) + ' + 30% headroom' + ( vendor ? ', and ' + gpu.brand + '’s own ' + vendor + 'W recommendation for the ' + gpu.name : '' );
 			checks.push( [ 'PSU wattage vs recommended', psuOk, ( psuOk ? 'Sufficient — ' + v.psuWattage + 'W meets the ' + recommended + 'W recommended' : 'Too low — get at least ' + recommended + 'W' ) + ' (' + basis + ').' ] );
 
-			var allPass = checks.every( function ( c ) { return c[ 1 ]; } );
-			var rows = checks.map( function ( c ) { return [ c[ 0 ], c[ 2 ] ]; } );
-			return resultBlock( allPass ? '<strong>✅ These components look compatible.</strong>' : '<strong>⚠ One or more compatibility issues found — see below.</strong>', rows, 'only the checks listed above are made. Also confirm BIOS support for your CPU, cooler height, and the power connectors on the motherboard and PSU on each manufacturer’s spec page.' );
+			// 16-pin plug: from the user's answer, or known for every RTX
+			// 4080/4090/5080/5090 (gpuPlug()).
+			var plug = v.gpuPlug !== 'skip' ? v.gpuPlug : ( '16pin' === gpuPlug( gpu ) ? '16pin' : 'skip' );
+			if ( '16pin' === plug ) {
+				if ( 'yes' === v.psuCable ) {
+					checks.push( [ 'GPU 16-pin plug vs PSU cables', true, 'Native 12V-2x6 cable — push the plug in fully until it clicks, with no sharp bend right at the plug.' ] );
+				} else {
+					checks.push( [ 'GPU 16-pin plug vs PSU cables', 'warn', ( 'no' === v.psuCable ? 'No native cable, so use' : 'This card takes the 16-pin 12V-2x6 plug. Without a native cable on the PSU, use' ) + ' the adapter that came with the card, with every one of its 8-pin plugs on its own PSU cable. An ATX 3.1 PSU with a native 12V-2x6 cable is the tidier and safer option.' ] );
+				}
+			} else if ( '8pin' === plug ) {
+				checks.push( [ 'GPU power plugs vs PSU cables', true, '8-pin PCIe — count the plugs on your card\'s spec page and make sure the PSU has a separate PCIe cable for each.' ] );
+			} else if ( 'maybe' === gpuPlug( gpu ) ) {
+				checks.push( [ 'GPU power plugs vs PSU cables', 'warn', 'Many ' + gpu.name + ' models use the 16-pin 12V-2x6 plug, others use 8-pin PCIe. Pick your card\'s plug above to check it against the PSU.' ] );
+			}
+
+			var failed = checks.some( function ( c ) { return c[ 1 ] === false; } );
+			var notes = checks.some( function ( c ) { return c[ 1 ] === 'warn'; } );
+			var rows = checks.map( function ( c ) { return [ c[ 0 ], ( c[ 1 ] === 'warn' ? '⚠ ' : '' ) + c[ 2 ] ]; } );
+			var headline = failed ? '<strong>⚠ One or more compatibility issues found — see below.</strong>' : ( notes ? '<strong>✅ These components fit together</strong>, with a step or two to check below.' : '<strong>✅ These components look compatible.</strong>' );
+			return resultBlock( headline, rows, 'only the checks listed above are made; checks left on "Not sure" are skipped. Also confirm radiator space for an AIO, RAM height under a large air cooler, and the motherboard’s power connectors on each manufacturer’s spec page.' );
 		}
 	};
 
@@ -1332,7 +1522,11 @@
 			{ id: 'futureProof', type: 'checkbox', label: 'I want this to hold up for 3+ years', default: false }
 		],
 		compute: function ( v, hw ) {
-			var base = { '1080p': { medium: 4, high: 6, ultra: 8 }, '1440p': { medium: 6, high: 8, ultra: 10 }, '4k': { medium: 8, high: 12, ultra: 14 } };
+			// D5 (Oct 2026, audit 1.21): 1080p medium was 4GB; 2026 games
+			// commonly list 6-8GB as their minimum, so the floor is 6GB at
+			// every 1080p setting. Keep in sync with BN_VRAM_NEED above,
+			// cs_bottleneck_vram_need() and the combo VRAM FAQ.
+			var base = { '1080p': { medium: 6, high: 6, ultra: 8 }, '1440p': { medium: 6, high: 8, ultra: 10 }, '4k': { medium: 8, high: 12, ultra: 14 } };
 			var needed = base[ v.resolution ][ v.quality ];
 			var extra = ( v.rayTracing ? 2 : 0 ) + ( v.futureProof ? 2 : 0 );
 			needed += extra;
@@ -1348,7 +1542,7 @@
 				return Object.keys( hw.gpu ).filter( function ( k ) { return hw.gpu[ k ].vram_gb >= gb; } )
 					.sort( function ( a, b ) { return hw.gpu[ a ].vram_gb - hw.gpu[ b ].vram_gb; } )
 					.slice( 0, 5 )
-					.map( function ( k ) { return hw.gpu[ k ].name + ' (' + hw.gpu[ k ].vram_gb + 'GB)'; } );
+					.map( function ( k ) { return /GB\)$/.test( hw.gpu[ k ].name ) ? hw.gpu[ k ].name : hw.gpu[ k ].name + ' (' + hw.gpu[ k ].vram_gb + 'GB)'; } );
 			};
 			var rows = [ [ 'Minimum VRAM', needed + ' GB' ], [ 'Comfortable VRAM (headroom for newer games)', comfy + ' GB' ] ];
 			var matches = gpusWith( needed );
@@ -1449,14 +1643,24 @@
 			} else {
 				cpuCooler = 'a 280–360mm AIO liquid cooler, or a top-tier dual-tower air cooler';
 			}
-			var caseFans = v.caseSize === 'compact' ? '2–3 fans (limited by case size — prioritize intake)' : v.caseSize === 'mid' ? '3–5 fans (2–3 intake, 1–2 exhaust)' : '5–7 fans for consistent front-to-back airflow';
+			// D5 (Oct 2026, audit 1.20): case fans scale with the combined
+			// heat load (under 350W / 350-549W / 550W+), not the case size
+			// alone; a 575W GPU + 253W CPU used to get the same "3-5 fans" as
+			// an RTX 4060 build.
+			var heat = totalTdp < 350 ? 0 : totalTdp < 550 ? 1 : 2;
+			var caseFans = {
+				compact: [ '2 fans (1 intake, 1 exhaust) plus the GPU’s own fans', '3 fans with a mesh front or side panel; prioritise intake', '3 or more fans in a mesh case. This much heat is hard to move out of a small case, so a mid tower is the easier choice' ],
+				mid: [ '3 fans (2 intake, 1 exhaust)', '4–5 fans (3 intake, 1–2 exhaust)', '5–6 fans (3 front intake, 2–3 top/rear exhaust) and a mesh front panel' ],
+				full: [ '3–4 fans (2 intake, 1–2 exhaust)', '5 fans (3 intake, 2 exhaust)', '6–7 fans (3–4 intake, 3 exhaust)' ]
+			}[ v.caseSize ][ heat ];
 			var rows = [
 				[ 'Combined CPU+GPU heat load', fmt( totalTdp, 0 ) + 'W' ],
 				[ 'CPU heat used (' + cpu.name + ', max turbo/boost power)', cpu.max + 'W' ],
+				[ 'GPU heat used (' + gpu.name + ', rated board power)', gpu.tdp_w + 'W' ],
 				[ 'Recommended CPU cooler', cpuCooler ],
-				[ 'Recommended case fan setup', caseFans ]
+				[ 'Recommended case fan setup', caseFans + ( gpu.tdp_w >= 300 ? '. A card this power-hungry dumps most of its heat inside the case, so strong front intake matters most.' : '' ) ]
 			];
-			return resultBlock( 'Based on a combined heat load of <strong>' + fmt( totalTdp, 0 ) + 'W</strong>, here is what we recommend:', rows, 'sized from the CPU’s max turbo/boost power and the GPU’s rated TDP. Case airflow, room temperature and how quiet you want the PC change what is enough.' );
+			return resultBlock( 'Based on a combined heat load of <strong>' + fmt( totalTdp, 0 ) + 'W</strong>, here is what we recommend:', rows, 'sized from the CPU’s max turbo/boost power and the GPU’s rated TDP; fan counts step up at about 350W and 550W of combined heat. Case airflow, room temperature and how quiet you want the PC change what is enough.' );
 		}
 	};
 
@@ -1466,7 +1670,7 @@
 			fields: [
 				{ id: 'part', type: 'select-hardware', source: source, label: source === 'cpu' ? 'CPU' : 'GPU' },
 				{ id: 'load', type: 'select', label: 'Typical load', default: 'gaming', options: [
-					{ value: 'idle', label: 'Idle / light use (~15%)' }, { value: 'gaming', label: 'Gaming / normal use (~70%)' }, { value: 'full', label: 'Full load / benchmark (~100%+ boost)' }
+					{ value: 'idle', label: 'Idle / light use (~15%)' }, { value: 'gaming', label: 'cpu' === source ? 'Gaming / normal use' : 'Gaming / normal use (~70%)' }, { value: 'full', label: 'Full load / benchmark (~100%+ boost)' }
 				] }
 			],
 			compute: function ( v, hw ) {
@@ -1484,6 +1688,10 @@
 				// power rather than a separate lower "base" rating.
 				if ( 'full' === v.load && 'cpu' === source && part.max_power_w ) {
 					watts = part.max_power_w;
+				} else if ( 'gaming' === v.load && 'cpu' === source ) {
+					// D5 (audit 1.19): same gaming figure as the PC Power
+					// Consumption Calculator.
+					watts = cpuGamingWatts( part );
 				} else {
 					var factor = { idle: 0.15, gaming: 0.7, full: 1.08 }[ v.load ];
 					watts = part.tdp_w * factor;
@@ -1495,7 +1703,7 @@
 				if ( 'full' === v.load && 'cpu' === source && part.max_power_w ) {
 					rows.push( [ 'Manufacturer’s max turbo/boost power spec', part.max_power_w + 'W' ] );
 				}
-				return resultBlock( 'At ' + v.load + ' load, the ' + part.name + ' draws roughly <strong>' + fmt( watts, 0 ) + 'W</strong>.', rows, 'cpu' === source ? 'idle and gaming are shares of the rated TDP, and full load uses the manufacturer’s max turbo/boost power. Real draw depends on board power limits, cooling and the workload.' : 'idle and gaming are shares of the rated board power, and full load adds about 8% for boost spikes. Real draw depends on the card model, power limits and the game.' );
+				return resultBlock( 'At ' + v.load + ' load, the ' + part.name + ' draws roughly <strong>' + fmt( watts, 0 ) + 'W</strong>.', rows, 'cpu' === source ? 'idle is about 15% of the rated TDP; gaming is about 55% of the manufacturer’s max turbo/boost power (45% for X3D chips), and full load uses that max power. Real draw depends on board power limits, cooling and the game or workload.' : 'idle and gaming are shares of the rated board power, and full load adds about 8% for boost spikes. Real draw depends on the card model, power limits and the game.' );
 			}
 		};
 	}

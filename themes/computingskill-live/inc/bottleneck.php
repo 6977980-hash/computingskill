@@ -99,7 +99,7 @@ function cs_bottleneck_game_profiles() {
  */
 function cs_bottleneck_vram_need() {
 	return array(
-		'1080p' => array( 'low' => 4, 'medium' => 4, 'high' => 6, 'ultra' => 8 ),
+		'1080p' => array( 'low' => 6, 'medium' => 6, 'high' => 6, 'ultra' => 8 ), // D5: 1080p floor 6GB (audit 1.21).
 		'1440p' => array( 'low' => 6, 'medium' => 6, 'high' => 8, 'ultra' => 10 ),
 		'4k'    => array( 'low' => 8, 'medium' => 8, 'high' => 12, 'ultra' => 14 ),
 	);
@@ -505,7 +505,9 @@ function cs_methodology_engine_text( $content ) {
 	// figures instead of one 65% average (calculators.js).
 	$content = preg_replace(
 		'#Power consumption estimates an average wattage draw at roughly 65% typical load \(CPU TDP \+ GPU TDP \+ a fixed allowance for the rest of the system\), then multiplies by your stated daily usage hours and electricity rate\.#u',
-		__( 'Power consumption estimates two figures: load draw (CPU TDP + GPU TDP + the PSU Calculator’s allowance for RAM, drives, fans and motherboard) and idle draw (CPU and GPU at about 15% of TDP, the rest of the system at about 30% of its allowance). It multiplies each by your gaming and idle hours per day, then by your electricity rate.', 'computingskill' ),
+		// D5 (audit 1.19): CPU gaming draw from max turbo/boost power, and
+		// PSU efficiency loss included.
+		__( 'Power consumption estimates two figures: load draw (the CPU at about 55% of its maximum turbo/boost power, 45% for AMD X3D chips, + GPU TDP + the PSU Calculator’s allowance for RAM, drives, fans and motherboard) and idle draw (CPU and GPU at about 15% of TDP, the rest of the system at about 30% of its allowance). Each is divided by a typical PSU efficiency (88% under load, 80% at idle) to get the draw from the wall, then multiplied by your gaming and idle hours per day and your electricity rate.', 'computingskill' ),
 		$content
 	);
 
