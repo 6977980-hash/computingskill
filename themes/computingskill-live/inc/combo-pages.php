@@ -72,8 +72,10 @@ function cs_combo_pages_sync() {
 			'post_status'    => 'publish',
 			'post_name'      => $slug,
 			'post_author'    => $author,
+			// "Bottleneck", not "Bottleneck Calculator": the page has no
+			// calculator on it (deep audit D6, 2.10).
 			/* translators: 1: CPU name, 2: GPU name */
-			'post_title'     => sprintf( __( '%1$s + %2$s Bottleneck Calculator', 'computingskill' ), $cpu, $gpu ),
+			'post_title'     => sprintf( __( '%1$s + %2$s Bottleneck', 'computingskill' ), $cpu, $gpu ),
 			/* translators: 1: CPU name, 2: GPU name */
 			'post_excerpt'   => sprintf( __( 'Bottleneck estimate for the %1$s paired with the %2$s at 1080p, 1440p and 4K, with upgrade guidance.', 'computingskill' ), $cpu, $gpu ),
 			'post_content'   => '',
@@ -113,7 +115,7 @@ add_action( 'init', 'cs_combo_pages_sync', 30 );
  * pages, so the date stays honest.
  */
 if ( ! defined( 'CS_GENERATED_CONTENT_REV' ) ) {
-	define( 'CS_GENERATED_CONTENT_REV', '2026-10-17-d5-psu-vram' );
+	define( 'CS_GENERATED_CONTENT_REV', '2026-10-17-d6-naming' );
 }
 
 function cs_generated_pages_touch() {

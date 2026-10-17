@@ -38,6 +38,10 @@ $intro     = $is_cs_cpt ? cs_archive_intro( $post_type ) : array( 'title' => '',
 		</header>
 
 		<?php if ( have_posts() ) : ?>
+			<?php if ( is_category() || is_tag() || is_tax() ) : ?>
+				<?php /* translators: %s: category name. D6 (2.4): the page jumped from the H1 to the footer's H3s. */ ?>
+				<h2 class="cs-archive-subhead"><?php printf( esc_html__( 'Articles in %s', 'computingskill' ), esc_html( single_term_title( '', false ) ) ); ?></h2>
+			<?php endif; ?>
 			<div class="cs-card-grid cs-archive-grid">
 				<?php
 				while ( have_posts() ) :

@@ -43,7 +43,8 @@ while ( have_posts() ) :
 
 			<article class="cs-article cs-bottleneck-page">
 				<header class="cs-article-header">
-					<h1><?php echo esc_html( $cpu['name'] . ' + ' . $gpu['name'] . ' Bottleneck Calculator' ); ?></h1>
+					<?php /* translators: 1: CPU name, 2: GPU name. Not "Calculator": the inputs live on the calculator page (D6, 2.10). */ ?>
+					<h1><?php printf( esc_html__( '%1$s + %2$s Bottleneck at 1080p, 1440p and 4K', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></h1>
 					<?php cs_article_meta(); ?>
 					<p class="cs-lede">
 						<?php
@@ -61,6 +62,15 @@ while ( have_posts() ) :
 					<h2><?php esc_html_e( 'Quick Summary', 'computingskill' ); ?></h2>
 					<p><?php echo wp_kses_post( cs_bottleneck_summary( $cpu['name'], $gpu['name'], $results, $labels, cs_bn_target_res( $gpu ) ) ); ?></p>
 					<?php cs_estimate_disclaimer( 'bottleneck estimate' ); ?>
+					<?php
+					// This page shows fixed results at High settings for a typical
+					// AAA game; the calculator takes the other inputs. Pre-filled
+					// through the share-link fields (cs_share_param_keys), whose
+					// canonical is the clean calculator URL; nofollow so crawlers
+					// don't queue one URL per pair.
+					$cs_calc_link = add_query_arg( array( 'cpu' => $cpu_slug, 'gpu' => $gpu_slug ), home_url( '/pc-bottleneck-calculator/' ) );
+					?>
+					<p class="cs-bn-calc-link"><a class="cs-btn" href="<?php echo esc_url( $cs_calc_link ); ?>" rel="nofollow"><?php esc_html_e( 'Change the game type or settings in the Bottleneck Calculator', 'computingskill' ); ?></a></p>
 				</section>
 
 				<section class="cs-bn-specs">

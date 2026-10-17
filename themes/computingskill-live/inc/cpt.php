@@ -150,36 +150,13 @@ function cs_register_post_types() {
 }
 add_action( 'init', 'cs_register_post_types' );
 
-/**
- * Custom rewrite so bottleneck pages resolve as /bottleneck/{cpu-slug}/{gpu-slug}/
- * while the underlying post_name only needs to be unique (cpu-gpu).
+/*
+ * Combo pages live at /bottleneck/{cpu}-{gpu}/, the post type's own
+ * permalink. The old two-segment rewrite (/bottleneck/{cpu}/{gpu}/) was
+ * removed in D6 (deep audit 2.1): it made every /bottleneck/x/y/ URL return
+ * a 200 copy of the homepage. Nested /bottleneck/ URLs are now redirected
+ * or answered with a 404 by cs_url_guards() in inc/technical-seo.php.
  */
-function cs_bottleneck_rewrite_rules( $rules ) {
-	$new_rules = array(
-		'bottleneck/([^/]+)/([^/]+)/?$' => 'index.php?post_type=cs_bottleneck&cs_pair=$matches[1]-$matches[2]',
-	);
-	return $new_rules + $rules;
-}
-add_filter( 'rewrite_rules_array', 'cs_bottleneck_rewrite_rules' );
-
-function cs_bottleneck_query_vars( $vars ) {
-	$vars[] = 'cs_pair';
-	return $vars;
-}
-add_filter( 'query_vars', 'cs_bottleneck_query_vars' );
-
-function cs_bottleneck_pre_get_posts( $query ) {
-	if ( ! $query->is_main_query() ) {
-		return;
-	}
-	$pair = $query->get( 'cs_pair' );
-	if ( $pair ) {
-		$query->set( 'post_type', 'cs_bottleneck' );
-		$query->set( 'name', $pair );
-		$query->set( 'cs_pair', '' );
-	}
-}
-add_action( 'pre_get_posts', 'cs_bottleneck_pre_get_posts' );
 
 /**
  * Show every Games hub entry on one page instead of paginating after the

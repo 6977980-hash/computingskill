@@ -13,6 +13,9 @@
  * single-cs_game.php can pull structured spec data for the CPT post
  * whose written content lives in the post itself.
  *
+ * 'publisher' (D6, Oct 2026): the publisher named on each game's store
+ * page, used in the VideoGame schema.
+ *
  * 'profile' (D3, Oct 2026): the game type the FPS Calculator applies when
  * the game is picked ('esports' or 'cpu-heavy', see
  * cs_bottleneck_game_profiles() in inc/bottleneck.php). Games without it
@@ -40,7 +43,7 @@ function cs_get_games_data() {
 		// fetched Sep 2026 ). Note: an SSD is a hard minimum requirement per
 		// Rockstar, not merely recommended.
 		'gta-5-enhanced' => array(
-			'name' => 'Grand Theft Auto V: Enhanced', 'developer' => 'Rockstar Games', 'release_year' => 2025,
+			'name' => 'Grand Theft Auto V: Enhanced', 'developer' => 'Rockstar Games', 'publisher' => 'Rockstar Games', 'release_year' => 2025,
 			'genre' => 'Open-World Action',
 			'min'  => array( 'cpu' => 'Intel Core i7-4770 / AMD FX-9590', 'gpu' => 'NVIDIA GTX 1630 4GB / AMD RX 6400 4GB', 'ram' => 8, 'storage_gb' => 105, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-9600K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA RTX 3060 8GB / AMD RX 6600XT 8GB', 'ram' => 16, 'storage_gb' => 105, 'os' => 'Windows 11 64-bit' ),
@@ -51,7 +54,7 @@ function cs_get_games_data() {
 		// OS is 64-bit Windows 10, same as minimum — Windows 11 is not stated
 		// for either tier. ( https://store.steampowered.com/app/1091500/Cyberpunk_2077/ , Sep 2026 )
 		'cyberpunk-2077' => array(
-			'name' => 'Cyberpunk 2077', 'developer' => 'CD Projekt Red', 'release_year' => 2020,
+			'name' => 'Cyberpunk 2077', 'developer' => 'CD Projekt Red', 'publisher' => 'CD Projekt Red', 'release_year' => 2020,
 			'genre' => 'Open-World RPG',
 			'min'  => array( 'cpu' => 'Intel Core i7-6700 / AMD Ryzen 5 1600', 'gpu' => 'NVIDIA GTX 1060 6GB / AMD RX 580 8GB', 'ram' => 12, 'storage_gb' => 70, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-12700 / AMD Ryzen 7 7800X3D', 'gpu' => 'NVIDIA RTX 2060 SUPER / AMD RX 5700 XT', 'ram' => 16, 'storage_gb' => 70, 'os' => 'Windows 10 64-bit' ),
@@ -69,7 +72,7 @@ function cs_get_games_data() {
 		// are left as-is — Riot's spec page doesn't itemize those per tier, so
 		// they aren't independently confirmed either way.
 		'valorant' => array(
-			'name' => 'Valorant', 'developer' => 'Riot Games', 'release_year' => 2020,
+			'name' => 'Valorant', 'developer' => 'Riot Games', 'publisher' => 'Riot Games', 'release_year' => 2020,
 			'genre' => 'Tactical Shooter', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-540 / AMD Athlon 200G', 'gpu' => 'Intel HD 4000 / AMD Radeon R5 220', 'ram' => 4, 'storage_gb' => 25, 'os' => 'Windows 10/11 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i3-4150 / AMD Ryzen 3 1200', 'gpu' => 'NVIDIA GeForce GT 730 / AMD Radeon R7 240', 'ram' => 8, 'storage_gb' => 25, 'os' => 'Windows 10/11 64-bit' ),
@@ -83,7 +86,7 @@ function cs_get_games_data() {
 		// inventing a number, but flagged here since this schema requires a
 		// 'rec' value and none officially exists.
 		'counter-strike-2' => array(
-			'name' => 'Counter-Strike 2', 'developer' => 'Valve', 'release_year' => 2023,
+			'name' => 'Counter-Strike 2', 'developer' => 'Valve', 'publisher' => 'Valve', 'release_year' => 2023,
 			'genre' => 'Tactical Shooter', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i5-750 / AMD equivalent', 'gpu' => 'NVIDIA GTX 660 / AMD equivalent, 1GB VRAM', 'ram' => 8, 'storage_gb' => 85, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-9600K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA GTX 1650 / AMD RX 570', 'ram' => 16, 'storage_gb' => 85, 'os' => 'Windows 11 64-bit' ),
@@ -100,7 +103,7 @@ function cs_get_games_data() {
 		// for either tier, so the existing 40GB values are left as-is.
 		// ( https://www.epicgames.com/help/en-US/fortnite-c75/pc-support-c80/what-are-the-system-requirements-for-fortnite-on-pc-and-mac-a3332 , Sep 2026 )
 		'fortnite' => array(
-			'name' => 'Fortnite', 'developer' => 'Epic Games', 'release_year' => 2017,
+			'name' => 'Fortnite', 'developer' => 'Epic Games', 'publisher' => 'Epic Games', 'release_year' => 2017,
 			'genre' => 'Battle Royale', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-3225', 'gpu' => 'Intel HD 4000', 'ram' => 8, 'storage_gb' => 40, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-7300U / AMD Ryzen 3 3300U', 'gpu' => 'NVIDIA GTX 960 / AMD R9 280', 'ram' => 16, 'storage_gb' => 40, 'os' => 'Windows 10/11 64-bit' ),
@@ -122,7 +125,7 @@ function cs_get_games_data() {
 		// Recommend a direct check of minecraft.net by someone with a browser
 		// given how consequential this change is.
 		'minecraft' => array(
-			'name' => 'Minecraft: Java Edition', 'developer' => 'Mojang Studios', 'release_year' => 2011,
+			'name' => 'Minecraft: Java Edition', 'developer' => 'Mojang Studios', 'publisher' => 'Mojang Studios', 'release_year' => 2011,
 			'genre' => 'Sandbox / Survival', 'profile' => 'cpu-heavy',
 			'min'  => array( 'cpu' => 'Intel Core i3-10100 / AMD Ryzen 3 3100', 'gpu' => 'Vulkan 1.3-compatible, 2GB VRAM (e.g. NVIDIA GTX 950 / AMD RX 460)', 'ram' => 8, 'storage_gb' => 4, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-12400 / AMD Ryzen 5 5600', 'gpu' => 'NVIDIA RTX 2060 / AMD RX 5600 XT 6GB', 'ram' => 16, 'storage_gb' => 4, 'os' => 'Windows 11 64-bit' ),
@@ -137,7 +140,7 @@ function cs_get_games_data() {
 		// previous i5-3570K figure (which is not on Respawn's page) was dropped
 		// rather than replaced with another guess.
 		'apex-legends' => array(
-			'name' => 'Apex Legends', 'developer' => 'Respawn Entertainment', 'release_year' => 2019,
+			'name' => 'Apex Legends', 'developer' => 'Respawn Entertainment', 'publisher' => 'Electronic Arts', 'release_year' => 2019,
 			'genre' => 'Battle Royale', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-6300 / AMD FX-4350', 'gpu' => 'NVIDIA GTX 950 / AMD Radeon HD 7790 2GB', 'ram' => 6, 'storage_gb' => 75, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'AMD Ryzen 5 or equivalent', 'gpu' => 'NVIDIA GTX 970 / AMD R9 290', 'ram' => 8, 'storage_gb' => 75, 'os' => 'Windows 10 64-bit' ),
@@ -152,7 +155,7 @@ function cs_get_games_data() {
 		// app, so the 116GB storage figure is Activision's own stated Warzone
 		// figure, but a full Call of Duty HQ install may require more.
 		'call-of-duty-warzone' => array(
-			'name' => 'Call of Duty: Warzone', 'developer' => 'Infinity Ward / Raven Software', 'release_year' => 2020,
+			'name' => 'Call of Duty: Warzone', 'developer' => 'Infinity Ward / Raven Software', 'publisher' => 'Activision', 'release_year' => 2020,
 			'genre' => 'Battle Royale',
 			'min'  => array( 'cpu' => 'Intel Core i5-6600 / AMD Ryzen 5 1400', 'gpu' => 'NVIDIA GTX 970/1060 / AMD RX 470 / Intel Arc A580', 'ram' => 8, 'storage_gb' => 116, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-6700K / AMD Ryzen 5 1600X', 'gpu' => 'NVIDIA RTX 3060 / AMD RX 6600XT / Intel Arc B580', 'ram' => 12, 'storage_gb' => 116, 'os' => 'Windows 11 64-bit' ),
@@ -164,7 +167,7 @@ function cs_get_games_data() {
 		// recommended-tier GPU VRAM was wrong (GTX 1060 is listed at 3GB by
 		// Krafton for this tier, not 6GB).
 		'pubg-battlegrounds' => array(
-			'name' => 'PUBG: Battlegrounds', 'developer' => 'Krafton', 'release_year' => 2017,
+			'name' => 'PUBG: Battlegrounds', 'developer' => 'Krafton', 'publisher' => 'Krafton', 'release_year' => 2017,
 			'genre' => 'Battle Royale',
 			'min'  => array( 'cpu' => 'Intel Core i5-4430 / AMD FX-6300', 'gpu' => 'NVIDIA GTX 960 2GB / AMD R7 370 2GB', 'ram' => 8, 'storage_gb' => 40, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-6600K / AMD Ryzen 5 1600', 'gpu' => 'NVIDIA GTX 1060 3GB / AMD RX 580 4GB', 'ram' => 16, 'storage_gb' => 50, 'os' => 'Windows 10 64-bit' ),
@@ -178,14 +181,14 @@ function cs_get_games_data() {
 		// i5-8250 / Ryzen 3 1200, not i5-3300, which isn't a real SKU).
 		// Recommended OS is now Windows 11 only (TPM 2.0 required per Riot).
 		'league-of-legends' => array(
-			'name' => 'League of Legends', 'developer' => 'Riot Games', 'release_year' => 2009,
+			'name' => 'League of Legends', 'developer' => 'Riot Games', 'publisher' => 'Riot Games', 'release_year' => 2009,
 			'genre' => 'MOBA', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-530', 'gpu' => 'NVIDIA GeForce 400 series / AMD Radeon HD 6570 / Intel HD 4600', 'ram' => 2, 'storage_gb' => 16, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-8250 / AMD Ryzen 3 1200', 'gpu' => 'NVIDIA GTX 560 / AMD Radeon HD 6950', 'ram' => 4, 'storage_gb' => 16, 'os' => 'Windows 11 64-bit' ),
 			'source_url' => 'https://support.riotgames.com/en-us/league-of-legends/performance/minimum-and-recommended-system-requirements-league-of-legends',
 		),
 		'elden-ring' => array(
-			'name' => 'Elden Ring', 'developer' => 'FromSoftware', 'release_year' => 2022,
+			'name' => 'Elden Ring', 'developer' => 'FromSoftware', 'publisher' => 'Bandai Namco Entertainment', 'release_year' => 2022,
 			'genre' => 'Action RPG',
 			'min'  => array( 'cpu' => 'Intel Core i5-8400 / AMD Ryzen 3 3300X', 'gpu' => 'NVIDIA GTX 1060 3GB / AMD RX 580 4GB', 'ram' => 12, 'storage_gb' => 60, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-8700K / AMD Ryzen 5 3600X', 'gpu' => 'NVIDIA GTX 1070 8GB / AMD RX Vega 56 8GB', 'ram' => 16, 'storage_gb' => 60, 'os' => 'Windows 10/11 64-bit' ),
@@ -197,14 +200,14 @@ function cs_get_games_data() {
 		// card is "AMD RX 480". Recommended OS narrowed to Windows 10 64-bit only —
 		// Larian's page does not list Windows 11 for either tier.
 		'baldurs-gate-3' => array(
-			'name' => "Baldur's Gate 3", 'developer' => 'Larian Studios', 'release_year' => 2023,
+			'name' => "Baldur's Gate 3", 'developer' => 'Larian Studios', 'publisher' => 'Larian Studios', 'release_year' => 2023,
 			'genre' => 'Role-Playing', 'profile' => 'cpu-heavy',
 			'min'  => array( 'cpu' => 'Intel Core i5-4690 / AMD FX-8350', 'gpu' => 'NVIDIA GTX 970 4GB / AMD RX 480 4GB', 'ram' => 8, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-8700K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA RTX 2060 Super / AMD RX 5700 XT', 'ram' => 16, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
 			'source_url' => 'https://store.steampowered.com/app/1086940/Baldurs_Gate_3/',
 		),
 		'red-dead-redemption-2' => array(
-			'name' => 'Red Dead Redemption 2', 'developer' => 'Rockstar Games', 'release_year' => 2019,
+			'name' => 'Red Dead Redemption 2', 'developer' => 'Rockstar Games', 'publisher' => 'Rockstar Games', 'release_year' => 2019,
 			'genre' => 'Open-World Action',
 			'min'  => array( 'cpu' => 'Intel Core i5-2500K / AMD FX-6300', 'gpu' => 'NVIDIA GTX 770 2GB / AMD R9 280 3GB', 'ram' => 8, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-4770K / AMD Ryzen 5 1500X', 'gpu' => 'NVIDIA GTX 1060 6GB / AMD RX 480 4GB', 'ram' => 12, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
@@ -217,7 +220,7 @@ function cs_get_games_data() {
 		// wording (no "6GB" qualifier on the GTX 1060, and Windows 10 only —
 		// not "10/11" — for the recommended tier).
 		'overwatch-2' => array(
-			'name' => 'Overwatch 2', 'developer' => 'Blizzard Entertainment', 'release_year' => 2022,
+			'name' => 'Overwatch 2', 'developer' => 'Blizzard Entertainment', 'publisher' => 'Blizzard Entertainment', 'release_year' => 2022,
 			'genre' => 'Hero Shooter',
 			'min'  => array( 'cpu' => 'Intel Core i3 or AMD Phenom X3 8650', 'gpu' => 'NVIDIA GTX 600 series / AMD Radeon HD 7000 series', 'ram' => 6, 'storage_gb' => 50, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7 / AMD Ryzen 5', 'gpu' => 'NVIDIA GTX 1060/1650 / AMD R9 380/RX 6400', 'ram' => 8, 'storage_gb' => 50, 'os' => 'Windows 10 64-bit' ),
@@ -229,7 +232,7 @@ function cs_get_games_data() {
 		// specifies "Windows 10 version 21H1" for minimum and does not offer
 		// Windows 11 at that tier (recommended tier does list 10/11, unchanged).
 		'starfield' => array(
-			'name' => 'Starfield', 'developer' => 'Bethesda Game Studios', 'release_year' => 2023,
+			'name' => 'Starfield', 'developer' => 'Bethesda Game Studios', 'publisher' => 'Bethesda Softworks', 'release_year' => 2023,
 			'genre' => 'Open-World RPG',
 			'min'  => array( 'cpu' => 'Intel Core i7-6800K / AMD Ryzen 5 2600X', 'gpu' => 'NVIDIA GTX 1070 Ti / AMD RX 5700', 'ram' => 16, 'storage_gb' => 125, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-10600K / AMD Ryzen 5 3600X', 'gpu' => 'NVIDIA RTX 2080 / AMD RX 6800 XT', 'ram' => 16, 'storage_gb' => 125, 'os' => 'Windows 10/11 64-bit' ),
@@ -243,7 +246,7 @@ function cs_get_games_data() {
 		// Arrowhead's current listing — unusual, but that is what the official
 		// page states, likely reflecting post-launch optimization patches.
 		'helldivers-2' => array(
-			'name' => 'Helldivers 2', 'developer' => 'Arrowhead Game Studios', 'release_year' => 2024,
+			'name' => 'Helldivers 2', 'developer' => 'Arrowhead Game Studios', 'publisher' => 'PlayStation Publishing LLC', 'release_year' => 2024,
 			'genre' => 'Co-op Shooter',
 			'min'  => array( 'cpu' => 'Intel Core i7-4790K / AMD Ryzen 5 1500X', 'gpu' => 'NVIDIA GTX 1050 Ti / AMD RX 470', 'ram' => 8, 'storage_gb' => 135, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-9700K / AMD Ryzen 7 3700X', 'gpu' => 'NVIDIA RTX 2060 / AMD RX 6600XT', 'ram' => 16, 'storage_gb' => 40, 'os' => 'Windows 10 64-bit' ),

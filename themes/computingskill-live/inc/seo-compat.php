@@ -188,13 +188,108 @@ function cs_shorten_long_titles( $title ) {
 		return __( 'Computing Skill – Calculate & Optimize Your PC Build', 'computingskill' );
 	}
 	if ( is_singular( 'cs_bottleneck' ) ) {
-		return get_the_title();
+		return cs_bn_title_tag( get_queried_object_id() );
 	}
 	if ( is_singular( 'cs_game' ) ) {
 		/* translators: %s: game name */
-		return sprintf( __( '%s System Requirements', 'computingskill' ), get_the_title() );
+		$base = sprintf( __( '%s System Requirements', 'computingskill' ), get_the_title() );
+		// D6 (2.6): short game names gave 28-character titles. Say what the
+		// page lists when it still fits in 60 characters.
+		/* translators: %s: game name */
+		$long = sprintf( __( '%s PC System Requirements (Minimum & Recommended)', 'computingskill' ), get_the_title() );
+		return cs_title_length( $long ) <= 60 ? $long : $base;
+	}
+	$overrides = cs_title_overrides();
+	if ( is_post_type_archive( 'cs_game' ) && isset( $overrides['archive:cs_game'] ) ) {
+		return $overrides['archive:cs_game'];
+	}
+	if ( is_category() || is_tag() ) {
+		$term = get_queried_object();
+		if ( $term instanceof WP_Term && isset( $overrides[ 'term:' . $term->slug ] ) ) {
+			return $overrides[ 'term:' . $term->slug ];
+		}
+	}
+	if ( is_singular() ) {
+		$slug = get_post_field( 'post_name', get_queried_object_id() );
+		if ( isset( $overrides[ $slug ] ) ) {
+			return $overrides[ $slug ];
+		}
+	}
+	// D6 (2.6): a title over 60 characters drops the " - Computing Skill"
+	// suffix first; the page name is what has to show in search results.
+	if ( cs_title_length( $title ) > 60 ) {
+		$short = preg_replace( '/\s+[-–|]\s+Computing Skill$/u', '', $title );
+		if ( $short !== $title && cs_title_length( $short ) >= 30 ) {
+			return $short;
+		}
 	}
 	return $title;
+}
+
+/**
+ * Character count of a title as a searcher sees it (entities decoded).
+ */
+function cs_title_length( $title ) {
+	return mb_strlen( html_entity_decode( wp_strip_all_tags( (string) $title ), ENT_QUOTES, 'UTF-8' ) );
+}
+
+/**
+ * Deep audit D6 (2.6): titles under 30 characters (hubs, About, Contact,
+ * legal pages, the Games archive) said too little, and the new post's title
+ * was 82 characters. Each line is 30-60 characters and says what the page
+ * really holds. Keys are page/post slugs, "archive:{post type}" or
+ * "term:{slug}". The H1 and the page text are not changed.
+ */
+function cs_title_overrides() {
+	return array(
+		'about-us'                  => __( 'About Computing Skill: Who Makes These PC Tools', 'computingskill' ),
+		'blog'                      => __( 'All PC Calculators, Tools & Guides - Computing Skill', 'computingskill' ),
+		'comparisons'               => __( 'PC Hardware Comparisons: SSD vs HDD, DDR4 vs DDR5', 'computingskill' ),
+		'contact'                   => __( 'Contact Computing Skill: Questions & Spec Corrections', 'computingskill' ),
+		'disclaimer'                => __( 'Disclaimer: Estimates & Trademarks - Computing Skill', 'computingskill' ),
+		'guides'                    => __( 'PC Building, Upgrade & Gaming Guides - Computing Skill', 'computingskill' ),
+		'hardware'                  => __( 'PC Hardware Explained: CPU, GPU, RAM, PSU & More', 'computingskill' ),
+		'methodology'               => __( 'Methodology: How Our PC Calculators Work', 'computingskill' ),
+		'ssd-vs-hdd'                => __( 'SSD vs HDD: Speed, Durability, Price & Which to Pick', 'computingskill' ),
+		'best-gpu-for-ryzen-5-5600' => __( 'Best GPU for Ryzen 5 5600 & 5600X (2026, No Bottleneck)', 'computingskill' ),
+		'archive:cs_game'           => __( 'PC Game System Requirements: Can Your PC Run It?', 'computingskill' ),
+		'term:buying-guides'        => __( 'PC Buying Guides: Articles - Computing Skill', 'computingskill' ),
+	);
+}
+
+/**
+ * Short part name for titles and cards: drops the maker prefix ("Intel",
+ * "AMD", "GeForce", "Radeon") and the brackets around a VRAM size, so
+ * "GeForce RTX 5060 Ti (16GB)" reads "RTX 5060 Ti 16GB".
+ */
+function cs_bn_short_name( $name ) {
+	$name = preg_replace( '/^(Intel|AMD|NVIDIA)\s+/', '', $name );
+	$name = preg_replace( '/^(GeForce|Radeon)\s+/', '', $name );
+	$name = preg_replace( '/\s*\((\d+GB)\)/', ' $1', $name );
+	return trim( $name );
+}
+
+/**
+ * Deep audit D6 (2.6, 2.10): combo title tags were "{CPU} + {GPU}
+ * Bottleneck Calculator", up to 71 characters, on pages that have no
+ * calculator. Now short part names plus the resolutions the page covers,
+ * in at most 60 characters.
+ */
+function cs_bn_title_tag( $post_id ) {
+	$cpus = cs_get_cpu_data();
+	$gpus = cs_get_gpu_data();
+	$c    = get_post_meta( $post_id, 'cs_cpu', true );
+	$g    = get_post_meta( $post_id, 'cs_gpu', true );
+	if ( ! isset( $cpus[ $c ], $gpus[ $g ] ) ) {
+		return get_the_title( $post_id );
+	}
+	$pair = cs_bn_short_name( $cpus[ $c ]['name'] ) . ' + ' . cs_bn_short_name( $gpus[ $g ]['name'] );
+	foreach ( array( __( ' Bottleneck: 1080p, 1440p & 4K', 'computingskill' ), __( ' Bottleneck at 1080p-4K', 'computingskill' ) ) as $suffix ) {
+		if ( cs_title_length( $pair . $suffix ) <= 60 ) {
+			return $pair . $suffix;
+		}
+	}
+	return $pair . __( ' Bottleneck', 'computingskill' );
 }
 add_filter( 'rank_math/frontend/title', 'cs_shorten_long_titles' );
 
@@ -209,7 +304,8 @@ add_filter( 'rank_math/frontend/title', 'cs_shorten_long_titles' );
  */
 function cs_games_archive_description( $description ) {
 	if ( is_post_type_archive( 'cs_game' ) ) {
-		return __( 'Minimum and recommended PC specs for popular games — CPU, GPU, RAM and storage requirements, so you can check whether your PC can run them before you buy or upgrade.', 'computingskill' );
+		// D6 (2.7): was 165 characters.
+		return __( 'Minimum and recommended PC specs for popular games: CPU, GPU, RAM and storage, so you can check whether your PC runs them before you buy or upgrade.', 'computingskill' );
 	}
 	return $description;
 }
@@ -253,15 +349,18 @@ function cs_page_description_overrides() {
 		'resolution-calculator' => __( 'Look up a resolution\'s standard name (720p, 1080p, 1440p, 4K, ultrawide), its total megapixels and its exact aspect ratio in one step.', 'computingskill' ),
 		'privacy-policy' => __( 'How ComputingSkill handles contact messages, server logs, cookies and Google Analytics (only with your consent), what we never sell, and your privacy rights.', 'computingskill' ),
 		'terms-of-use' => __( 'The terms for using ComputingSkill.com: free calculators and guides, estimates rather than guarantees, acceptable use, our content and trademarks.', 'computingskill' ),
+		// D6 (2.7): the post's own description was 164 characters.
+		'best-gpu-for-ryzen-5-5600' => __( 'Which graphics card suits a Ryzen 5 5600 or 5600X without a bottleneck? Estimates for 20 GPUs at 1080p, 1440p and 4K, with the best match for each.', 'computingskill' ),
 		'editorial-policy' => __( 'How ComputingSkill writes and checks its calculators and guides: who writes them, where the numbers come from, independence, and how corrections are made.', 'computingskill' ),
 	);
 }
 
 function cs_improve_short_descriptions( $description ) {
 	if ( is_front_page() ) {
-		return __( 'Free PC hardware calculators and tools: estimate CPU/GPU bottlenecks, PSU wattage, FPS, RAM and VRAM needs, and game requirements before you buy, build or upgrade.', 'computingskill' );
+		// D6 (2.7): was 163 characters.
+		return __( 'Free PC hardware calculators: estimate CPU/GPU bottlenecks, PSU wattage, FPS, RAM and VRAM needs, and game requirements before you buy, build or upgrade.', 'computingskill' );
 	}
-	if ( is_page() ) {
+	if ( is_singular( array( 'page', 'post' ) ) ) {
 		$map  = cs_page_description_overrides();
 		$slug = get_post_field( 'post_name' );
 		if ( isset( $map[ $slug ] ) ) {
