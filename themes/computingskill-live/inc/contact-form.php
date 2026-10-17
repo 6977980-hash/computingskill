@@ -52,6 +52,37 @@ function cs_handle_contact_form() {
 }
 add_action( 'template_redirect', 'cs_handle_contact_form' );
 
+/**
+ * The page cache kept /contact/ for days (deep audit 6.3, Oct 2026), so
+ * every visitor got the same security token long after WordPress stopped
+ * accepting it (12-24h) and "Security check failed" ate the message. Two
+ * fixes: the page holding the form is never cached, and the form fetches a
+ * fresh token from admin-ajax.php (never cached) when it loads, in case a
+ * cache layer keeps the page anyway.
+ */
+function cs_contact_page_has_form() {
+	return is_page( 'contact' ) || is_singular() && has_shortcode( (string) get_post_field( 'post_content', get_queried_object_id() ), 'cs_contact_form' );
+}
+
+function cs_contact_page_no_cache() {
+	if ( ! cs_contact_page_has_form() ) {
+		return;
+	}
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+	do_action( 'litespeed_control_set_nocache', 'contact form token' );
+	nocache_headers();
+}
+add_action( 'template_redirect', 'cs_contact_page_no_cache', 1 );
+
+function cs_contact_fresh_nonce() {
+	nocache_headers();
+	wp_send_json_success( array( 'nonce' => wp_create_nonce( 'cs_contact_form' ) ) );
+}
+add_action( 'wp_ajax_cs_contact_nonce', 'cs_contact_fresh_nonce' );
+add_action( 'wp_ajax_nopriv_cs_contact_nonce', 'cs_contact_fresh_nonce' );
+
 function cs_contact_form_shortcode() {
 	ob_start();
 	$status = isset( $GLOBALS['cs_contact_status'] ) ? $GLOBALS['cs_contact_status'] : null;
@@ -78,6 +109,16 @@ function cs_contact_form_shortcode() {
 			</div>
 			<button type="submit" name="cs_contact_submit" value="1"><?php esc_html_e( 'Send Message', 'computingskill' ); ?></button>
 		</form>
+		<script>
+		(function () {
+			var field = document.querySelector('.cs-contact-form input[name="cs_contact_nonce"]');
+			if (!field || !window.fetch) { return; }
+			fetch(<?php echo wp_json_encode( add_query_arg( 'action', 'cs_contact_nonce', admin_url( 'admin-ajax.php' ) ) ); ?>, { credentials: 'same-origin', cache: 'no-store' })
+				.then(function (r) { return r.json(); })
+				.then(function (d) { if (d && d.success && d.data.nonce) { field.value = d.data.nonce; } })
+				.catch(function () {});
+		})();
+		</script>
 	</div>
 	<?php
 	return ob_get_clean();

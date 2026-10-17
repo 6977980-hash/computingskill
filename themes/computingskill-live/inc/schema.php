@@ -433,7 +433,7 @@ function cs_schema_page_kind() {
 	if ( 'contact' === $slug ) {
 		return 'contact';
 	}
-	if ( in_array( $slug, array( 'privacy-policy', 'disclaimer' ), true ) ) {
+	if ( in_array( $slug, array( 'privacy-policy', 'disclaimer', 'terms-of-use', 'editorial-policy' ), true ) ) {
 		return 'legal';
 	}
 	return 'article';

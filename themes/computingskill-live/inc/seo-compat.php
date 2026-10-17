@@ -249,7 +249,9 @@ function cs_page_description_overrides() {
 		'pc-case' => __( 'How PC case size, airflow, GPU clearance, cooler height and radiator support affect your build, and how to choose the right case form factor and layout.', 'computingskill' ),
 		'refresh-rate-calculator' => __( 'Convert monitor refresh rate (Hz) to frame time in milliseconds and back — for example 144Hz = 6.94ms — and see why higher refresh rates feel smoother.', 'computingskill' ),
 		'resolution-calculator' => __( 'Look up a resolution\'s standard name (720p, 1080p, 1440p, 4K, ultrawide), its total megapixels and its exact aspect ratio in one step.', 'computingskill' ),
-		'privacy-policy' => __( 'How ComputingSkill handles contact form data, server logs, cookies and any analytics, what we never sell, and how to ask for your data to be deleted.', 'computingskill' ),
+		'privacy-policy' => __( 'How ComputingSkill handles contact messages, server logs, cookies and Google Analytics (only with your consent), what we never sell, and your privacy rights.', 'computingskill' ),
+		'terms-of-use' => __( 'The terms for using ComputingSkill.com: free calculators and guides, estimates rather than guarantees, acceptable use, our content and trademarks.', 'computingskill' ),
+		'editorial-policy' => __( 'How ComputingSkill writes and checks its calculators and guides: who writes them, where the numbers come from, independence, and how corrections are made.', 'computingskill' ),
 	);
 }
 

@@ -34,7 +34,11 @@
 				<li><a href="<?php echo esc_url( home_url( '/methodology/' ) ); ?>"><?php esc_html_e( 'Methodology', 'computingskill' ); ?></a></li>
 				<li><a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>"><?php esc_html_e( 'Privacy Policy', 'computingskill' ); ?></a></li>
 				<li><a href="<?php echo esc_url( home_url( '/disclaimer/' ) ); ?>"><?php esc_html_e( 'Disclaimer', 'computingskill' ); ?></a></li>
+				<li><a href="<?php echo esc_url( home_url( '/terms-of-use/' ) ); ?>"><?php esc_html_e( 'Terms of Use', 'computingskill' ); ?></a></li>
+				<li><a href="<?php echo esc_url( home_url( '/editorial-policy/' ) ); ?>"><?php esc_html_e( 'Editorial Policy', 'computingskill' ); ?></a></li>
 				<li><a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php esc_html_e( 'Contact', 'computingskill' ); ?></a></li>
+				<?php // Shown by the consent script in inc/analytics.php only when analytics is on. ?>
+				<li><button type="button" class="cs-cookie-settings" data-cs-consent-open hidden><?php esc_html_e( 'Cookie settings', 'computingskill' ); ?></button></li>
 			</ul>
 		</div>
 
@@ -47,6 +51,7 @@
 
 	<div class="cs-container cs-footer-bottom">
 		<p>&copy; <?php echo esc_html( date_i18n( 'Y' ) ); ?> <?php bloginfo( 'name' ); ?>. <?php esc_html_e( 'All rights reserved.', 'computingskill' ); ?></p>
+		<p class="cs-footer-trademarks"><?php echo esc_html( cs_trademark_sentence() ); ?></p>
 	</div>
 </footer>
 
