@@ -28,3 +28,9 @@
 .cs-cookie-settings:hover { color: var(--cs-primary); }
 .cs-cookie-settings[hidden] { display: none; }
 .cs-footer-trademarks { font-size: 0.8rem; color: var(--cs-text-muted); margin-top: 6px; }
+
+/* D3 (Oct 2026): GPU-limited is normal, so its bar and gauge (CPU headroom)
+   are drawn faded rather than as a warning; only CPU bottlenecks are solid. */
+.cs-lb-gpu .cs-lb-fill,
+.cs-gauge.cs-lb-gpu .cs-gauge-arc { opacity: 0.5; }
+.cs-bn-meaning { font-size: 0.92rem; color: var(--cs-text-muted); }

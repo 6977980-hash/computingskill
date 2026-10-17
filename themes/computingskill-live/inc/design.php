@@ -61,7 +61,9 @@ function cs_wordmark() {
 
 /**
  * Per-resolution bars for a cs_calculate_bottleneck() result.
- * Bar length = percent on the engine's 0-60 scale (60 is its cap).
+ * Bar length = percent on the engine's 0-60 scale (60 is its cap). Since D3
+ * (Oct 2026) a GPU-limited row is labelled normal and its (faded) bar is
+ * the CPU's headroom, not a bottleneck.
  *
  * @param array $results Engine output keyed 1080p / 1440p / 4k.
  * @param bool  $compact Short labels ("20% CPU") for small cards.
@@ -72,19 +74,24 @@ function cs_bn_load_bars( $results, $compact = false ) {
 	foreach ( $results as $res => $r ) {
 		$component = $r['component'];
 		$percent   = (int) $r['percent'];
+		$sev        = array(
+			'mild'       => __( 'mild', 'computingskill' ),
+			'noticeable' => __( 'noticeable', 'computingskill' ),
+			'severe'     => __( 'severe', 'computingskill' ),
+		);
 		if ( 'balanced' === $component ) {
-			$word = __( 'balanced', 'computingskill' );
+			$text = __( 'balanced', 'computingskill' );
 		} elseif ( 'cpu' === $component ) {
-			$word = $compact ? __( 'CPU', 'computingskill' ) : __( 'CPU-bound', 'computingskill' );
+			$text = cs_bn_pct( $r ) . ' ' . ( $compact ? __( 'CPU', 'computingskill' ) : __( 'CPU', 'computingskill' ) . ', ' . $sev[ $r['severity'] ] );
 		} else {
-			$word = $compact ? __( 'GPU', 'computingskill' ) : __( 'GPU-bound', 'computingskill' );
+			$text = $compact ? __( 'GPU-limited', 'computingskill' ) : __( 'GPU-limited (normal)', 'computingskill' );
 		}
 		$width = max( 4, min( 100, round( $percent / 60 * 100 ) ) );
 		$label = isset( $res_labels[ $res ] ) ? $res_labels[ $res ] : $res;
 		$html .= '<div class="cs-lb-row cs-lb-' . esc_attr( $component ) . '" role="listitem">';
 		$html .= '<span class="cs-lb-res">' . esc_html( $label ) . '</span>';
 		$html .= '<span class="cs-lb-track" aria-hidden="true"><span class="cs-lb-fill" style="width:' . esc_attr( $width ) . '%"></span></span>';
-		$html .= '<span class="cs-lb-val">' . esc_html( $percent . '% ' . $word ) . '</span>';
+		$html .= '<span class="cs-lb-val">' . esc_html( $text ) . '</span>';
 		$html .= '</div>';
 	}
 	return $html . '</div>';

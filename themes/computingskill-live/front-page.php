@@ -44,7 +44,7 @@ get_header();
 						<div class="cs-telemetry-part"><small><?php esc_html_e( 'GPU', 'computingskill' ); ?></small><strong><?php echo esc_html( $hero_gpu['name'] ); ?></strong></div>
 					</div>
 					<?php echo cs_bn_load_bars( cs_calculate_bottleneck( $hero_cpu, $hero_gpu ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
-					<p class="cs-telemetry-note"><?php esc_html_e( 'Specs-based estimate. Try your own parts in the full calculator.', 'computingskill' ); ?></p>
+					<p class="cs-telemetry-note"><?php esc_html_e( 'Estimate from our gaming-performance scores. Try your own parts in the full calculator.', 'computingskill' ); ?></p>
 					<a class="cs-btn" href="<?php echo esc_url( home_url( '/pc-bottleneck-calculator/' ) ); ?>"><?php esc_html_e( 'Open Bottleneck Calculator', 'computingskill' ); ?> →</a>
 				</div>
 			<?php endif; ?>
@@ -58,7 +58,7 @@ get_header();
 				<?php
 				printf(
 					/* translators: %s: link to the Methodology page. */
-					esc_html__( 'ComputingSkill is a free collection of PC hardware calculators and computer tools for anyone planning a new build, an upgrade or their first gaming PC. Choose your parts and the calculators estimate how well a CPU and GPU pairing is balanced at 1080p, 1440p and 4K, roughly what FPS to expect, how much power supply wattage the build needs, and how much RAM, VRAM and storage you are likely to use. Every tool runs in your browser with no account and no sign-up. Results are specs-based estimates, not lab benchmarks, and each calculator explains its formula and its limits so you can see how a number was reached. Hardware specs come from manufacturer pages, and our %s describes the full approach.', 'computingskill' ),
+					esc_html__( 'ComputingSkill is a free collection of PC hardware calculators and computer tools for anyone planning a new build, an upgrade or their first gaming PC. Choose your parts and the calculators estimate how well a CPU and GPU pairing is balanced at 1080p, 1440p and 4K, roughly what FPS to expect, how much power supply wattage the build needs, and how much RAM, VRAM and storage you are likely to use. Every tool runs in your browser with no account and no sign-up. Results are estimates built from our gaming-performance scores, not lab benchmarks, and each calculator explains its formula and its limits so you can see how a number was reached. Hardware specs come from manufacturer pages, and our %s describes the full approach.', 'computingskill' ),
 					'<a href="' . esc_url( home_url( '/methodology/' ) ) . '">' . esc_html__( 'methodology page', 'computingskill' ) . '</a>'
 				);
 				?>
@@ -152,7 +152,7 @@ get_header();
 			}
 			echo '</div>';
 			?>
-			<p class="cs-lb-legend"><span class="cs-lb-key cs-lb-cpu"><?php esc_html_e( 'CPU-bound', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-gpu"><?php esc_html_e( 'GPU-bound', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-balanced"><?php esc_html_e( 'Balanced (under 6%)', 'computingskill' ); ?></span></p>
+			<p class="cs-lb-legend"><span class="cs-lb-key cs-lb-cpu"><?php esc_html_e( 'CPU bottleneck (% of GPU left idle)', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-gpu"><?php esc_html_e( 'GPU-limited (normal)', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-balanced"><?php esc_html_e( 'Balanced (under 6%)', 'computingskill' ); ?></span></p>
 		</section>
 
 		<?php echo cs_latest_posts_section( 4 ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
@@ -193,7 +193,7 @@ get_header();
 		<?php
 		echo do_shortcode( '[cs_faq]
 [cs_faq_item q="Are the calculators on ComputingSkill really free?"]Yes. Every calculator, converter and guide on this site is free to use, with no account required.[/cs_faq_item]
-[cs_faq_item q="How accurate are the bottleneck and FPS estimates?"]They are specs-based estimates designed to catch obviously mismatched hardware pairings and give you a general sense of what to expect — not lab-measured benchmark results. Actual performance depends on the specific game, drivers, RAM and settings.[/cs_faq_item]
+[cs_faq_item q="How accurate are the bottleneck and FPS estimates?"]They are estimates, built from our gaming-performance scores, designed to catch obviously mismatched hardware pairings and give you a general sense of what to expect — not lab-measured benchmark results. Actual performance depends on the specific game, drivers, RAM and settings.[/cs_faq_item]
 [cs_faq_item q="Where do the hardware specifications come from?"]From manufacturer and publisher specification pages. We do not invent specifications or benchmark scores — and if you spot a spec that looks wrong, please use the contact page to flag it so we can check it against the source and correct it.[/cs_faq_item]
 [/cs_faq]' );
 		?>

@@ -13,6 +13,11 @@
  * single-cs_game.php can pull structured spec data for the CPT post
  * whose written content lives in the post itself.
  *
+ * 'profile' (D3, Oct 2026): the game type the FPS Calculator applies when
+ * the game is picked ('esports' or 'cpu-heavy', see
+ * cs_bottleneck_game_profiles() in inc/bottleneck.php). Games without it
+ * use the typical AAA profile. It is a rough class, not per-game data.
+ *
  * @package ComputingSkill
  */
 
@@ -65,7 +70,7 @@ function cs_get_games_data() {
 		// they aren't independently confirmed either way.
 		'valorant' => array(
 			'name' => 'Valorant', 'developer' => 'Riot Games', 'release_year' => 2020,
-			'genre' => 'Tactical Shooter',
+			'genre' => 'Tactical Shooter', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-540 / AMD Athlon 200G', 'gpu' => 'Intel HD 4000 / AMD Radeon R5 220', 'ram' => 4, 'storage_gb' => 25, 'os' => 'Windows 10/11 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i3-4150 / AMD Ryzen 3 1200', 'gpu' => 'NVIDIA GeForce GT 730 / AMD Radeon R7 240', 'ram' => 8, 'storage_gb' => 25, 'os' => 'Windows 10/11 64-bit' ),
 			'source_url' => 'https://support.riotgames.com/en-us/valorant/support-tools/minimum-recommended-pc-specs',
@@ -79,7 +84,7 @@ function cs_get_games_data() {
 		// 'rec' value and none officially exists.
 		'counter-strike-2' => array(
 			'name' => 'Counter-Strike 2', 'developer' => 'Valve', 'release_year' => 2023,
-			'genre' => 'Tactical Shooter',
+			'genre' => 'Tactical Shooter', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i5-750 / AMD equivalent', 'gpu' => 'NVIDIA GTX 660 / AMD equivalent, 1GB VRAM', 'ram' => 8, 'storage_gb' => 85, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-9600K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA GTX 1650 / AMD RX 570', 'ram' => 16, 'storage_gb' => 85, 'os' => 'Windows 11 64-bit' ),
 			// Oct 2026: shown as our suggestion, not Valve's (Steam API checked
@@ -96,7 +101,7 @@ function cs_get_games_data() {
 		// ( https://www.epicgames.com/help/en-US/fortnite-c75/pc-support-c80/what-are-the-system-requirements-for-fortnite-on-pc-and-mac-a3332 , Sep 2026 )
 		'fortnite' => array(
 			'name' => 'Fortnite', 'developer' => 'Epic Games', 'release_year' => 2017,
-			'genre' => 'Battle Royale',
+			'genre' => 'Battle Royale', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-3225', 'gpu' => 'Intel HD 4000', 'ram' => 8, 'storage_gb' => 40, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-7300U / AMD Ryzen 3 3300U', 'gpu' => 'NVIDIA GTX 960 / AMD R9 280', 'ram' => 16, 'storage_gb' => 40, 'os' => 'Windows 10/11 64-bit' ),
 			'source_url' => 'https://www.epicgames.com/help/en-US/fortnite-c75/pc-support-c80/what-are-the-system-requirements-for-fortnite-on-pc-and-mac-a3332',
@@ -118,7 +123,7 @@ function cs_get_games_data() {
 		// given how consequential this change is.
 		'minecraft' => array(
 			'name' => 'Minecraft: Java Edition', 'developer' => 'Mojang Studios', 'release_year' => 2011,
-			'genre' => 'Sandbox / Survival',
+			'genre' => 'Sandbox / Survival', 'profile' => 'cpu-heavy',
 			'min'  => array( 'cpu' => 'Intel Core i3-10100 / AMD Ryzen 3 3100', 'gpu' => 'Vulkan 1.3-compatible, 2GB VRAM (e.g. NVIDIA GTX 950 / AMD RX 460)', 'ram' => 8, 'storage_gb' => 4, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-12400 / AMD Ryzen 5 5600', 'gpu' => 'NVIDIA RTX 2060 / AMD RX 5600 XT 6GB', 'ram' => 16, 'storage_gb' => 4, 'os' => 'Windows 11 64-bit' ),
 			'source_url' => 'https://www.minecraft.net/en-us/article/minecraft-java-edition-system-requirements',
@@ -133,7 +138,7 @@ function cs_get_games_data() {
 		// rather than replaced with another guess.
 		'apex-legends' => array(
 			'name' => 'Apex Legends', 'developer' => 'Respawn Entertainment', 'release_year' => 2019,
-			'genre' => 'Battle Royale',
+			'genre' => 'Battle Royale', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-6300 / AMD FX-4350', 'gpu' => 'NVIDIA GTX 950 / AMD Radeon HD 7790 2GB', 'ram' => 6, 'storage_gb' => 75, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'AMD Ryzen 5 or equivalent', 'gpu' => 'NVIDIA GTX 970 / AMD R9 290', 'ram' => 8, 'storage_gb' => 75, 'os' => 'Windows 10 64-bit' ),
 			'source_url' => 'https://store.steampowered.com/app/1172470/Apex_Legends/',
@@ -174,7 +179,7 @@ function cs_get_games_data() {
 		// Recommended OS is now Windows 11 only (TPM 2.0 required per Riot).
 		'league-of-legends' => array(
 			'name' => 'League of Legends', 'developer' => 'Riot Games', 'release_year' => 2009,
-			'genre' => 'MOBA',
+			'genre' => 'MOBA', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-530', 'gpu' => 'NVIDIA GeForce 400 series / AMD Radeon HD 6570 / Intel HD 4600', 'ram' => 2, 'storage_gb' => 16, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-8250 / AMD Ryzen 3 1200', 'gpu' => 'NVIDIA GTX 560 / AMD Radeon HD 6950', 'ram' => 4, 'storage_gb' => 16, 'os' => 'Windows 11 64-bit' ),
 			'source_url' => 'https://support.riotgames.com/en-us/league-of-legends/performance/minimum-and-recommended-system-requirements-league-of-legends',
@@ -193,7 +198,7 @@ function cs_get_games_data() {
 		// Larian's page does not list Windows 11 for either tier.
 		'baldurs-gate-3' => array(
 			'name' => "Baldur's Gate 3", 'developer' => 'Larian Studios', 'release_year' => 2023,
-			'genre' => 'Role-Playing',
+			'genre' => 'Role-Playing', 'profile' => 'cpu-heavy',
 			'min'  => array( 'cpu' => 'Intel Core i5-4690 / AMD FX-8350', 'gpu' => 'NVIDIA GTX 970 4GB / AMD RX 480 4GB', 'ram' => 8, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-8700K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA RTX 2060 Super / AMD RX 5700 XT', 'ram' => 16, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
 			'source_url' => 'https://store.steampowered.com/app/1086940/Baldurs_Gate_3/',

@@ -31,7 +31,7 @@ function cs_calculator_page_fixes() {
 	$score = __( 'ComputingSkill’s own gaming-performance index, placed from publicly reported third-party review averages', 'computingskill' );
 
 	return array(
-		// Audit 1.5. The "% split" framing on this page is D3's job.
+		// Audit 1.5 (D2), then 1.2 (D3) below.
 		'pc-bottleneck-calculator' => array(
 			array(
 				'Instead, it uses published', 'relative performance score.',
@@ -44,6 +44,33 @@ function cs_calculator_page_fixes() {
 			array( 'spec-based performance tiers', 'performance tiers', __( 'gaming-performance scores', 'computingskill' ) ),
 			array( 'This tool is a specs-based estimate', 'specs-based estimate', __( 'This tool is an estimate built from those scores', 'computingskill' ) ),
 			array( 'which is also spec-based', 'benchmark-based', __( 'which also works from estimated scores rather than benchmark runs', 'computingskill' ) ),
+			// D3 (audit 1.2): the result is one % with a clear meaning, not a
+			// "CPU-bound vs GPU-bound split" where 50/50 is balanced. The quick
+			// answer has a <strong> in the middle, so it is two replacements.
+			array(
+				'This calculator compares your CPU and GPU', 'at your chosen resolution, since',
+				__( 'This calculator compares your CPU and GPU’s gaming-performance scores at 1080p, 1440p and 4K and tells you which part limits your frame rate at your chosen resolution, since', 'computingskill' ),
+			),
+			array(
+				'as pixel count grows.', 'capping your frame rate.',
+				__( 'as pixel count grows. When the CPU is the limit, the % is a CPU bottleneck: the share of your graphics card left idle (under 6% balanced, 6–14% mild, 15–29% noticeable, 30% or more severe). When the GPU is the limit, that is normal for gaming, and the % shows how much spare headroom the CPU has.', 'computingskill' ),
+			),
+			array(
+				'The result is expressed as a rough percentage split', 'working as hard per frame.',
+				__( 'The result names the part that limits your frame rate at the resolution you selected, with one percentage whose meaning depends on that part. If the CPU is the limit, the percentage is a CPU bottleneck: the share of the graphics card’s capacity left unused because the CPU can’t prepare frames fast enough, roughly 100 minus the GPU usage a monitoring overlay would show. Under 6% counts as balanced, 6–14% as mild, 15–29% as noticeable and 30% or more as severe; anything above 60% is shown as 60%+. If the GPU is the limit, the result says GPU-limited, which is the normal and usually desirable state for gaming, and the percentage is the CPU’s spare headroom: a faster CPU reads higher there, and only a faster graphics card would raise frame rates.', 'computingskill' ),
+			),
+			array(
+				'to read this as a directional signal', 'running on the machine.',
+				__( 'to read this as a directional signal, not a guarantee. Two systems with the same 20% CPU bottleneck reading can behave differently depending on the game, the settings used, and background software running on the machine; the Game type and Graphics settings inputs cover the biggest of those differences.', 'computingskill' ),
+			),
+			array(
+				'rather than giving one fixed answer regardless of resolution.', 'rather than giving one fixed answer regardless of resolution.',
+				__( 'rather than giving one fixed answer regardless of resolution. The Game type and Graphics settings inputs shift the balance the same way: esports titles and low settings lean on the CPU, CPU-heavy strategy and simulation games load it much more per frame, and cards with less VRAM than our GPU VRAM Calculator suggests, or a 128-bit memory bus, are scaled down further at 1440p and 4K. Ray tracing, upscaling and frame generation are not modelled.', 'computingskill' ),
+			),
+			array(
+				'At 1080p, where CPU throughput matters more', 'squarely GPU work.',
+				__( 'At 1080p the calculator shows a noticeable CPU bottleneck of about 20%: roughly a fifth of the RTX 4070’s capacity goes unused, so GPU usage would sit around 80%. At 1440p the pair is GPU-limited with about 15% CPU headroom, and at 4K it is GPU-limited with about 48% headroom. That is normal, because the RTX 4070 now has to render four times the pixels per frame, which is squarely GPU work.', 'computingskill' ),
+			),
 		),
 
 		// Audit 1.5 and 1.10.
@@ -59,9 +86,36 @@ function cs_calculator_page_fixes() {
 			),
 			array(
 				'Take an RTX 4070 Super', 'toward the lower end.',
-				__( 'Take an RTX 4070 Super paired with a Ryzen 5 7600 at 1440p on high settings. The calculator puts the graphics card’s ceiling at about 105 FPS and the CPU’s at about 142 FPS, so the GPU is the limit: the estimated average is 105 FPS, shown as a range of roughly 90–121 FPS. Lighter or more CPU-friendly titles can run above that range, and the most GPU-demanding titles sit toward the lower end.', 'computingskill' ),
+				__( 'Take an RTX 4070 Super paired with a Ryzen 5 7600 at 1440p on high settings. The calculator puts the graphics card’s ceiling at about 105 FPS and the CPU’s at about 142 FPS, so the GPU is the limit: the estimated average is 105 FPS, shown as a range of roughly 90–121 FPS. Lighter or more CPU-friendly titles can run above that range, and the most GPU-demanding titles sit toward the lower end. Pick Esports as the game type (or a game such as Valorant) and the same parts are estimated at about 316 FPS, because competitive shooters ask far less of the graphics card per frame.', 'computingskill' ),
 			),
 			array( 'This estimate is based on component specs', 'general scaling patterns', __( 'This estimate is based on the gaming-performance scores and general scaling patterns', 'computingskill' ) ),
+			// D3 (audit 1.9): presets, game type and memory now change the result.
+			array(
+				'and then applies scaling factors for resolution and settings level', 'how much work the GPU does per frame)',
+				__( 'and then applies scaling factors for resolution, settings level (Low runs about 2.1 times the frame rate of Ultra on the graphics card’s side), game type (esports titles run several times faster than a typical AAA game, while strategy and simulation games load the CPU much more) and VRAM (cards below our GPU VRAM Calculator’s minimum, or with a 128-bit memory bus, lose more at 1440p and 4K)', 'computingskill' ),
+			),
+		),
+
+		// D3 (audit 1.13): the CPU decision now comes from the bottleneck engine.
+		'pc-upgrade-calculator' => array(
+			array(
+				'even before touching the CPU or GPU.', 'even before touching the CPU or GPU.',
+				__( 'even before touching the CPU or GPU. The suggestions are listed by how much each is likely to help, and for gaming the CPU is flagged only when the PC Bottleneck Calculator’s engine shows it leaving 15% or more of your graphics card unused at your target resolution, so the two tools always agree.', 'computingskill' ),
+			),
+		),
+
+		// D3 (audit 3.8): one meaning of "bottleneck %" across the guides and the tool.
+		'cpu-bottleneck-explained' => array(
+			array(
+				'more likely to be limiting your performance at a given resolution.', 'more likely to be limiting your performance at a given resolution.',
+				__( 'more likely to be limiting your performance at a given resolution. Its CPU bottleneck percentage is the same signal seen from the other side: it estimates the share of the GPU left idle, so a 20% CPU bottleneck corresponds to GPU usage of roughly 80%. When the GPU is the limit (usage near 100%), the calculator calls the result GPU-limited, which is normal, and shows the CPU’s spare headroom instead.', 'computingskill' ),
+			),
+		),
+		'gpu-bottleneck-explained' => array(
+			array(
+				'so you know where an upgrade would actually help before you buy one.', 'so you know where an upgrade would actually help before you buy one.',
+				__( 'so you know where an upgrade would actually help before you buy one. It labels this case GPU-limited and treats it as normal; the percentage it shows there is how much spare headroom your CPU has, not a problem score. Only a CPU-side result is reported as a bottleneck, as the share of the GPU left idle.', 'computingskill' ),
+			),
 		),
 
 		// Audit 1.6.
@@ -175,18 +229,15 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-17-d2' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-17-d3' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// D2 text or result changes.
-		'pc-bottleneck-calculator', 'fps-calculator', 'cpu-performance-calculator', 'gpu-performance-calculator',
-		'cpu-power-consumption-calculator', 'pc-build-cost-calculator', 'psu-calculator', 'ram-calculator',
-		'gpu-vram-calculator', 'pc-cooling-calculator', 'pc-compatibility-checker', 'cpu-vs-gpu-calculator',
-		'editorial-policy',
-		// Tools changed earlier in October (theme 1.0.32-1.0.34).
-		'internet-data-usage-calculator', 'pc-power-consumption-calculator', 'data-storage-converter',
+		// D3 text or result changes (D2's list ran with CS_CALC_PAGES_REV
+		// 2026-10-17-d2 and is already done).
+		'pc-bottleneck-calculator', 'fps-calculator', 'pc-upgrade-calculator', 'cpu-vs-gpu-calculator',
+		'cpu-bottleneck-explained', 'gpu-bottleneck-explained', 'methodology',
 	);
 }
 

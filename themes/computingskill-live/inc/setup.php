@@ -101,10 +101,11 @@ function cs_enqueue_calculators() {
 	if ( function_exists( 'cs_get_games_data' ) ) {
 		foreach ( cs_get_games_data() as $slug => $g ) {
 			$games[ $slug ] = array(
-				'name' => $g['name'],
-				'url'  => home_url( '/games/' . $slug . '/' ),
-				'min'  => array( 'cpu' => $g['min']['cpu'], 'gpu' => $g['min']['gpu'], 'ram' => $g['min']['ram'] ),
-				'rec'  => array( 'cpu' => $g['rec']['cpu'], 'gpu' => $g['rec']['gpu'], 'ram' => $g['rec']['ram'] ),
+				'name'    => $g['name'],
+				'url'     => home_url( '/games/' . $slug . '/' ),
+				'profile' => isset( $g['profile'] ) ? $g['profile'] : 'aaa',
+				'min'     => array( 'cpu' => $g['min']['cpu'], 'gpu' => $g['min']['gpu'], 'ram' => $g['min']['ram'] ),
+				'rec'     => array( 'cpu' => $g['rec']['cpu'], 'gpu' => $g['rec']['gpu'], 'ram' => $g['rec']['ram'] ),
 			);
 		}
 	}

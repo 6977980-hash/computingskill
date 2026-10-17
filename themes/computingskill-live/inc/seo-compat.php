@@ -297,7 +297,7 @@ add_filter( 'rank_math/frontend/description', 'cs_improve_short_descriptions', 2
  * Keep the list in sync with the field ids of share-enabled calculators.
  */
 function cs_share_param_keys() {
-	return array( 'cpu', 'gpu', 'resolution', 'preset', 'game', 'cpuTdp', 'ramSticks', 'storageDrives', 'fans', 'overclock' );
+	return array( 'cpu', 'gpu', 'resolution', 'preset', 'gametype', 'game', 'cpuTdp', 'ramSticks', 'storageDrives', 'fans', 'overclock' );
 }
 
 function cs_canonical_without_share_params( $url ) {

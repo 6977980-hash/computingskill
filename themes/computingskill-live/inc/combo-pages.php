@@ -113,7 +113,7 @@ add_action( 'init', 'cs_combo_pages_sync', 30 );
  * pages, so the date stays honest.
  */
 if ( ! defined( 'CS_GENERATED_CONTENT_REV' ) ) {
-	define( 'CS_GENERATED_CONTENT_REV', '2026-10-13-compare-tables' );
+	define( 'CS_GENERATED_CONTENT_REV', '2026-10-17-d3-engine' );
 }
 
 function cs_generated_pages_touch() {

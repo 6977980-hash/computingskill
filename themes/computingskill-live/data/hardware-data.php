@@ -15,7 +15,7 @@
  *
  * What the score represents (Phase 2 audit fix, Oct 2026):
  *  - GPU score = average rasterized gaming throughput at high settings,
- *    RTX 4090 = 100. Higher-end parts can exceed 100 (RTX 5090 = 133, see
+ *    RTX 4090 = 100. Higher-end parts can exceed 100 (RTX 5090 = 123, see
  *    its note). Resolution is NOT baked in: inc/bottleneck.php scales GPU
  *    throughput by pixel load per resolution.
  *  - CPU score = average gaming frame-rate ceiling (how many frames per
@@ -121,20 +121,16 @@ function cs_get_gpu_data() {
 			'name' => 'GeForce RTX 5090', 'brand' => 'NVIDIA', 'architecture' => 'Blackwell',
 			'vram_gb' => 32, 'memory_type' => 'GDDR7', 'memory_bus' => 512, 'boost_clock_mhz' => 2410,
 			'tdp_w' => 575, 'cores' => 21760, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 1000,
-			// Fixed during Sep 2026 audit: this used to be capped at 100, tying it
-			// with the RTX 4090 below — meaning the bottleneck estimator and FPS
-			// estimator both treated the two cards as identically fast, which is
-			// wrong. Multi-outlet native-4K benchmark aggregates (no upscaling/
-			// frame-gen) consistently show the 5090 well ahead of the 4090 —
-			// e.g. dsogaming.com's 20-game native 4K test: "the NVIDIA RTX 5090
-			// is 33% faster than the RTX 4090" (checked Sep 2026:
-			// https://www.dsogaming.com/articles/nvidia-rtx-5090-vs-rtx-4090-native-4k-gaming-benchmarks/ ).
-			// 100 * 1.33 ≈ 133, so the 4090 (still 100) keeps its exact prior
-			// score/ranking relative to every other card — only the new
-			// flagship's own score moved, which is the minimal change that
-			// removes the tie. See also assets/js/calculators.js's score-max
-			// display fix, needed because this is now the first score > 100.
-			'tier' => 'Flagship / 4K', 'score' => 133, 'release_year' => 2025,
+			// D3 (Oct 2026, audit 1.12): re-anchored on the same kind of measure
+			// as every other score, a general review average across 1440p and
+			// 4K, instead of a native-4K-only ratio (+33%, dsogaming). Broad
+			// review averages put the 5090 about 20% ahead of the 4090 at 1440p
+			// and about 26% at 4K (TechRadar's RTX 5090 vs RTX 4090 comparison,
+			// https://www.techradar.com/computing/gpu/nvidia-rtx-5090-vs-rtx-4090 ;
+			// TechSpot's review shows the same spread per game,
+			// https://www.techspot.com/review/2944-nvidia-geforce-rtx-5090/ ).
+			// The midpoint, +23%, gives 123 (was 133). The 4090 stays at 100.
+			'tier' => 'Flagship / 4K', 'score' => 123, 'release_year' => 2025,
 			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/',
 		),
 		'rx-6600' => array(

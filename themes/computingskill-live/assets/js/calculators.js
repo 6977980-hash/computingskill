@@ -596,35 +596,98 @@
 	// (score * BN_CPU_PARITY) barely moves with resolution, while the GPU's
 	// throughput shrinks with pixel count (score * BN_GPU_RES_FACTOR[res]).
 	// Comparing the two separately at each resolution lets a pair be
-	// CPU-bound at 1080p and GPU-bound at 4K. The old model used one score
-	// gap for all three resolutions, so the direction could never change.
+	// CPU-bound at 1080p and GPU-bound at 4K.
+	// D3 (Oct 2026): graphics preset, game type and a VRAM / memory-bus
+	// penalty (same constants as the PHP file), and the % is read two ways:
+	// CPU-bound = share of the GPU left idle (the bottleneck, with a severity
+	// label); GPU-bound = normal, and the % is the CPU's headroom.
 	var BN_CPU_PARITY = 0.85;
 	var BN_GPU_RES_FACTOR = { '1080p': 1.0, '1440p': 0.68, '4k': 0.42 };
+	var BN_PRESET_FACTOR = { low: 1.7, medium: 1.3, high: 1.0, ultra: 0.8 };
+	var BN_GAME_PROFILE = {
+		aaa: { cpu: 1.0, gpu: 1.0 },
+		esports: { cpu: 2.8, gpu: 3.0 },
+		'cpu-heavy': { cpu: 0.7, gpu: 1.0 }
+	};
+	// The GPU VRAM Calculator's minimums (CS_DEFS.vram "base"; low = medium).
+	var BN_VRAM_NEED = {
+		'1080p': { low: 4, medium: 4, high: 6, ultra: 8 },
+		'1440p': { low: 6, medium: 6, high: 8, ultra: 10 },
+		'4k': { low: 8, medium: 8, high: 12, ultra: 14 }
+	};
+	var BN_NARROW_BUS = { '1080p': 1.0, '1440p': 0.96, '4k': 0.92 };
+	var GAME_TYPE_OPTIONS = [
+		{ value: 'aaa', label: 'Typical AAA / single-player' },
+		{ value: 'esports', label: 'Esports / competitive (Valorant, CS2, Fortnite)' },
+		{ value: 'cpu-heavy', label: 'CPU-heavy (strategy, simulation, MMO)' }
+	];
+	var PRESET_OPTIONS = [
+		{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'ultra', label: 'Ultra / Max' }
+	];
 
-	function bottleneckEstimate( cpuScore, gpuScore ) {
-		var cpuEff = cpuScore * BN_CPU_PARITY;
+	function bnMemoryFactor( gpu, res, preset, game ) {
+		var f = 1;
+		if ( game !== 'esports' && gpu.vram_gb ) {
+			var short = BN_VRAM_NEED[ res ][ preset ] - Number( gpu.vram_gb );
+			if ( short > 0 ) {
+				f *= Math.max( 0.75, 1 - 0.05 * short );
+			}
+		}
+		if ( gpu.memory_bus && Number( gpu.memory_bus ) <= 128 ) {
+			f *= BN_NARROW_BUS[ res ];
+		}
+		return f;
+	}
+
+	function bnSeverity( component, percent ) {
+		if ( component === 'balanced' ) {
+			return 'balanced';
+		}
+		if ( component === 'gpu' ) {
+			return 'normal';
+		}
+		return percent >= 30 ? 'severe' : ( percent >= 15 ? 'noticeable' : 'mild' );
+	}
+
+	function bottleneckEstimate( cpu, gpu, opts ) {
+		opts = opts || {};
+		var preset = BN_PRESET_FACTOR[ opts.preset ] ? opts.preset : 'high';
+		var game = BN_GAME_PROFILE[ opts.game ] ? opts.game : 'aaa';
+		var profile = BN_GAME_PROFILE[ game ];
+		var cpuEff = cpu.score * BN_CPU_PARITY * profile.cpu;
 		var out = {};
 		Object.keys( BN_GPU_RES_FACTOR ).forEach( function ( res ) {
-			var gpuEff = gpuScore * BN_GPU_RES_FACTOR[ res ];
+			var gpuEff = gpu.score * BN_GPU_RES_FACTOR[ res ] * BN_PRESET_FACTOR[ preset ] * profile.gpu * bnMemoryFactor( gpu, res, preset, game );
 			var stronger = Math.max( cpuEff, gpuEff );
 			// Rounded to 4 decimals first, same as the PHP mirror, so both agree
 			// on values that land exactly on .5 after float math.
 			var share = stronger > 0 ? Number( ( Math.abs( gpuEff - cpuEff ) / stronger * 100 ).toFixed( 4 ) ) : 0;
-			var percent = Math.min( 60, Math.floor( share + 0.5 ) );
+			var raw = Math.floor( share + 0.5 );
+			var percent = Math.min( 60, raw );
 			var component = gpuEff > cpuEff ? 'cpu' : 'gpu'; // GPU has spare capacity => CPU is the limit.
 			if ( percent < 6 ) {
 				component = 'balanced';
 			}
-			out[ res ] = { percent: percent, component: component };
+			out[ res ] = { percent: percent, component: component, capped: raw > 60, severity: bnSeverity( component, percent ) };
 		} );
 		return out;
 	}
 
+	var BN_SEV_WORD = { mild: 'Mild', noticeable: 'Noticeable', severe: 'Severe' };
+
+	// "23%" or "60%+" when the real value is above the cap (audit 1.4).
+	function bnPct( r ) {
+		return r.percent + ( r.capped ? '%+' : '%' );
+	}
+
 	function bnLabel( r ) {
 		if ( r.component === 'balanced' ) {
-			return r.percent + '% (balanced)';
+			return 'Balanced';
 		}
-		return r.percent + '% (' + ( r.component === 'cpu' ? 'CPU-bound' : 'GPU-bound' ) + ')';
+		if ( r.component === 'gpu' ) {
+			return 'GPU-limited, normal (' + bnPct( r ) + ' CPU headroom)';
+		}
+		return BN_SEV_WORD[ r.severity ] + ' CPU bottleneck (' + bnPct( r ) + ')';
 	}
 
 	// Plain-language note when the likely limiting part changes between
@@ -637,7 +700,7 @@
 		}
 		var parts = Object.keys( all ).map( function ( res ) {
 			var r = all[ res ];
-			return ( r.component === 'balanced' ? 'balanced' : ( r.component === 'cpu' ? 'CPU-bound' : 'GPU-bound' ) ) + ' at ' + ( res === '4k' ? '4K' : res );
+			return ( r.component === 'balanced' ? 'balanced' : ( r.component === 'cpu' ? 'CPU-limited' : 'GPU-limited' ) ) + ' at ' + ( res === '4k' ? '4K' : res );
 		} );
 		return 'The limiting part shifts with resolution: ' + parts[ 0 ] + ', ' + parts[ 1 ] + ' and ' + parts[ 2 ] + '. Higher resolutions give the GPU more pixels to draw, so load moves onto the graphics card.';
 	}
@@ -645,25 +708,30 @@
 	// Phase 8 (Oct 2026): visual for the bottleneck result, a ring gauge for
 	// the chosen resolution plus one bar per resolution. Display only; it
 	// reads the same bottleneckEstimate() output as the text and table.
+	// D3: a GPU-limited gauge shows the CPU's headroom, labelled as normal.
 	var BN_RES_SHORT = { '1080p': '1080p', '1440p': '1440p', '4k': '4K' };
-	function bnWord( r ) {
+	function bnWord( r, compact ) {
 		if ( r.component === 'balanced' ) {
 			return 'balanced';
 		}
-		return r.component === 'cpu' ? 'CPU-bound' : 'GPU-bound';
+		if ( r.component === 'gpu' ) {
+			return compact ? 'GPU-limited' : 'GPU-limited (normal)';
+		}
+		return bnPct( r ) + ' CPU' + ( compact ? '' : ', ' + r.severity );
 	}
 	function bnVisual( all, res ) {
 		var r = all[ res ];
 		var circ = 314.16; // 2 * PI * r(50)
 		var offset = ( circ * ( 1 - Math.max( r.percent, 2 ) / 100 ) ).toFixed( 2 );
+		var center = r.component === 'gpu' ? '<small>CPU headroom</small><small>GPU-limited</small>' : ( r.component === 'balanced' ? '<small>balanced</small>' : '<small>CPU bottleneck</small><small>' + r.severity + '</small>' );
 		var html = '<div class="cs-bn-visual">';
 		html += '<div class="cs-gauge cs-lb-' + r.component + '"><svg viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle class="cs-gauge-track" cx="60" cy="60" r="50"/><circle class="cs-gauge-arc" cx="60" cy="60" r="50" stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '"/></svg>';
-		html += '<div class="cs-gauge-c"><strong>' + r.percent + '%</strong><small>' + bnWord( r ) + '</small><small>' + BN_RES_SHORT[ res ] + '</small></div></div>';
+		html += '<div class="cs-gauge-c"><strong>' + bnPct( r ) + '</strong>' + center + '<small>' + BN_RES_SHORT[ res ] + '</small></div></div>';
 		html += '<div class="cs-lb" role="list">';
 		Object.keys( all ).forEach( function ( k ) {
 			var x = all[ k ];
 			var width = Math.max( 4, Math.min( 100, Math.round( x.percent / 60 * 100 ) ) );
-			html += '<div class="cs-lb-row cs-lb-' + x.component + ( k === res ? ' is-current' : '' ) + '" role="listitem"><span class="cs-lb-res">' + BN_RES_SHORT[ k ] + '</span><span class="cs-lb-track" aria-hidden="true"><span class="cs-lb-fill" style="width:' + width + '%"></span></span><span class="cs-lb-val">' + x.percent + '% ' + bnWord( x ) + '</span></div>';
+			html += '<div class="cs-lb-row cs-lb-' + x.component + ( k === res ? ' is-current' : '' ) + '" role="listitem"><span class="cs-lb-res">' + BN_RES_SHORT[ k ] + '</span><span class="cs-lb-track" aria-hidden="true"><span class="cs-lb-fill" style="width:' + width + '%"></span></span><span class="cs-lb-val">' + bnWord( x ) + '</span></div>';
 		} );
 		html += '</div></div>';
 		return html;
@@ -680,32 +748,36 @@
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'Your GPU', icon: 'gpu' },
 			{ id: 'resolution', type: 'select', label: 'Resolution', icon: 'resolution', options: [
 				{ value: '1080p', label: '1080p (Full HD)' }, { value: '1440p', label: '1440p (QHD)' }, { value: '4k', label: '4K (UHD)' }
-			], default: '1080p' }
+			], default: '1080p' },
+			// D3 (audit 1.7): game type and settings change how the load splits.
+			{ id: 'gametype', type: 'select', label: 'Game type', default: 'aaa', options: GAME_TYPE_OPTIONS, help: 'Esports titles lean on the CPU at high frame rates; strategy and simulation games load the CPU much more per frame.' },
+			{ id: 'preset', type: 'select', label: 'Graphics settings', default: 'high', options: PRESET_OPTIONS }
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
-			var all = bottleneckEstimate( cpu.score, gpu.score );
+			var all = bottleneckEstimate( cpu, gpu, { preset: v.preset, game: v.gametype } );
 			var r = all[ v.resolution ];
+			var at = RES_LABELS[ v.resolution ];
 			var verdict;
 			if ( r.component === 'balanced' ) {
-				verdict = 'These parts are well matched at ' + RES_LABELS[ v.resolution ] + '. Neither is a significant limiting factor.';
+				verdict = 'These parts are well matched at ' + at + '. Neither is a significant limiting factor.';
 			} else if ( r.component === 'cpu' ) {
-				verdict = 'The ' + cpu.name + ' is the more likely limiting factor at ' + RES_LABELS[ v.resolution ] + ' (~' + r.percent + '% estimated bottleneck).';
+				verdict = BN_SEV_WORD[ r.severity ] + ' CPU bottleneck at ' + at + ': the ' + cpu.name + ' leaves about ' + bnPct( r ) + ' of the ' + gpu.name + '’s capacity unused (GPU usage ' + ( r.capped ? 'under 40%' : 'around ' + ( 100 - r.percent ) + '%' ) + ').';
 			} else {
-				verdict = 'The ' + gpu.name + ' is the more likely limiting factor at ' + RES_LABELS[ v.resolution ] + ' (~' + r.percent + '% estimated bottleneck).';
+				verdict = 'The ' + gpu.name + ' sets the frame rate at ' + at + ', which is normal for gaming: the graphics card is fully used and the ' + cpu.name + ' has ' + ( r.capped ? 'more than 60%' : 'about ' + r.percent + '%' ) + ' of spare headroom.' + ( r.percent >= 30 ? ' For higher frame rates here, a faster graphics card is what helps; a faster CPU would not.' : '' );
 			}
 			var shift = bnShiftNote( all );
 			if ( shift ) {
 				verdict += ' ' + shift;
 			}
 			var rows = [
-				[ 'Estimated bottleneck', r.percent + '%' ],
+				[ r.component === 'gpu' ? 'CPU headroom' : 'Estimated CPU bottleneck', r.component === 'gpu' ? bnPct( r ) + ' (GPU-limited, normal)' : bnPct( r ) + ( r.component === 'cpu' ? ' (' + BN_SEV_WORD[ r.severity ] + ')' : ' (balanced)' ) ],
 				[ 'Likely limiting part', r.component === 'balanced' ? 'Balanced' : ( r.component === 'cpu' ? cpu.name : gpu.name ) ],
 				[ '1080p', bnLabel( all[ '1080p' ] ) ],
 				[ '1440p', bnLabel( all[ '1440p' ] ) ],
 				[ '4K', bnLabel( all[ '4k' ] ) ]
 			];
-			return bnVisual( all, v.resolution ) + resultBlock( verdict, rows, 'this is a general estimate, not a per-game benchmark; ' + SCORE_NOTE );
+			return bnVisual( all, v.resolution ) + resultBlock( verdict, rows, 'a CPU bottleneck % is the share of the GPU left idle (roughly 100 minus GPU usage): under 6% balanced, 6–14% mild, 15–29% noticeable, 30%+ severe. GPU-limited is normal and shows the CPU’s spare headroom. Ray tracing, upscaling and frame generation aren’t modelled. This is a general estimate, not a per-game benchmark; ' + SCORE_NOTE );
 		}
 	};
 
@@ -903,10 +975,9 @@
 			{ id: 'resolution', type: 'select', label: 'Resolution', icon: 'resolution', default: '1080p', options: [
 				{ value: '1080p', label: '1080p (Full HD)' }, { value: '1440p', label: '1440p (QHD)' }, { value: '4k', label: '4K (UHD)' }
 			] },
-			{ id: 'preset', type: 'select', label: 'Graphics settings', default: 'high', options: [
-				{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'ultra', label: 'Ultra / Max' }
-			] },
-			{ id: 'game', type: 'select', label: 'Game (optional)', default: '', options: gameOptions(), help: 'Adds that game\'s officially published minimum/recommended specs next to the estimate.' }
+			{ id: 'preset', type: 'select', label: 'Graphics settings', default: 'high', options: PRESET_OPTIONS },
+			{ id: 'gametype', type: 'select', label: 'Game type', default: 'aaa', options: GAME_TYPE_OPTIONS, help: 'Esports titles run at several hundred FPS on fast hardware; strategy and simulation games load the CPU much more.' },
+			{ id: 'game', type: 'select', label: 'Game (optional)', default: '', options: gameOptions(), help: 'Adds that game\'s officially published minimum/recommended specs next to the estimate, and uses its game type.' }
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
@@ -920,10 +991,18 @@
 			// high, was 1.8) re-anchors the scale to published 1080p averages,
 			// e.g. an RTX 4070 at roughly 135-140 FPS when nothing else limits it.
 			var FPS_PER_POINT = 2.5;
-			var resMult = BN_GPU_RES_FACTOR[ v.resolution ];
-			var presetMult = { low: 1.3, medium: 1.1, high: 1.0, ultra: 0.82 }[ v.preset ];
-			var gpuFps = gpu.score * FPS_PER_POINT * resMult * presetMult;
-			var cpuCap = cpu.score * BN_CPU_PARITY * FPS_PER_POINT;
+			// D3 (Oct 2026, audit 1.9): same preset, game-type and VRAM /
+			// memory-bus factors as the bottleneck engine, so the limiting part
+			// matches it at every setting. Presets now span about 2.1x (low vs
+			// ultra), and the esports profile lifts the ceiling from about 200 FPS
+			// (9800X3D, AAA) to several hundred. A picked game with a known type
+			// (data/games-data.php 'profile') sets the game type.
+			var game = v.game && GAMES[ v.game ] ? GAMES[ v.game ] : null;
+			var gameType = game && BN_GAME_PROFILE[ game.profile ] ? game.profile : ( BN_GAME_PROFILE[ v.gametype ] ? v.gametype : 'aaa' );
+			var profile = BN_GAME_PROFILE[ gameType ];
+			var preset = BN_PRESET_FACTOR[ v.preset ] ? v.preset : 'high';
+			var gpuFps = gpu.score * FPS_PER_POINT * BN_GPU_RES_FACTOR[ v.resolution ] * BN_PRESET_FACTOR[ preset ] * profile.gpu * bnMemoryFactor( gpu, v.resolution, preset, gameType );
+			var cpuCap = cpu.score * BN_CPU_PARITY * FPS_PER_POINT * profile.cpu;
 			var estimate = Math.min( gpuFps, cpuCap );
 			// The FPS calculator page says the range is wider when CPU and GPU
 			// both matter and narrower when one part clearly dominates; it used to
@@ -942,17 +1021,15 @@
 			];
 			// Game selection (Sep 2026 audit): shows the publisher's own
 			// minimum/recommended specs from data/games-data.php beside the
-			// estimate. It deliberately does NOT scale the FPS number per
-			// game — that would need per-game benchmark data we haven't
-			// measured, and inventing a per-game multiplier would be a
-			// fabricated figure presented as a result.
-			var game = v.game && GAMES[ v.game ] ? GAMES[ v.game ] : null;
+			// estimate. The FPS number is scaled only by the game's broad type
+			// (D3), never by a per-game multiplier we haven't measured.
+			rows.push( [ 'Game type used', escapeHtml( GAME_TYPE_OPTIONS.filter( function ( o ) { return o.value === gameType; } )[ 0 ].label ) ] );
 			if ( game ) {
 				rows.push( [ game.name + ' — publisher minimum', escapeHtml( game.min.cpu + ' · ' + game.min.gpu + ' · ' + game.min.ram + 'GB RAM' ) ] );
 				rows.push( [ game.name + ' — publisher recommended', escapeHtml( game.rec.cpu + ' · ' + game.rec.gpu + ' · ' + game.rec.ram + 'GB RAM' ) ] );
 				rows.push( [ 'Full requirements', '<a href="' + escapeHtml( game.url ) + '">' + escapeHtml( game.name ) + ' system requirements</a>' ] );
 			}
-			return resultBlock( 'Estimated average: <strong>' + Math.round( estimate ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( game ? ' — a general estimate for this hardware, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers; ' + SCORE_NOTE );
+			return resultBlock( 'Estimated average: <strong>' + Math.round( estimate ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( game ? ' — a general estimate for this type of game, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers. Ray tracing, upscaling and frame generation aren’t modelled; ' + SCORE_NOTE );
 		}
 	};
 
@@ -1005,33 +1082,57 @@
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
-			// Targets re-set with the Phase 2 score recalibration (Oct 2026).
 			// GPU targets = the lowest score among cards this site's own tier
 			// labels (data/hardware-data.php 'tier') call suitable for that
 			// resolution, so the advisor never calls a "1440p" card too weak for
-			// 1440p (the old 60 failed the RTX 4070, the old 80 failed the RTX
-			// 4080 at 4K). CPU targets follow the new CPU scale.
+			// 1440p. inc/bottleneck-content.php cs_bn_upgrade_targets() mirrors
+			// these.
+			// D3 (Oct 2026, audit 1.13): for gaming targets the CPU decision comes
+			// from the bottleneck engine at that resolution (typical AAA game,
+			// high settings), so this tool can no longer flag a CPU that the
+			// Bottleneck Calculator says is not the limit. The old fixed CPU
+			// targets (55 / 53 / 50) are gone. Productivity keeps a CPU score
+			// target (59), since the engine only models games.
+			// Items are sorted by severity instead of a fixed storage, RAM, GPU,
+			// CPU order. Severity, 0-100: GPU = how far below the target its
+			// score is (%); CPU = the engine's CPU bottleneck %; HDD = 30 (the
+			// biggest everyday speed-up); RAM = 40 at 8GB or less, 20 under 16GB.
+			var gaming = v.target !== 'productivity';
 			var targetGpuScore = { '1080p': 33, '1440p': 50, '4k': 70, productivity: 55 }[ v.target ];
-			var targetCpuScore = { '1080p': 55, '1440p': 53, '4k': 50, productivity: 59 }[ v.target ];
-			var priorities = [];
+			var items = [];
+			var notes = [];
 			if ( v.storageType === 'hdd' ) {
-				priorities.push( 'Storage — moving to an NVMe SSD is the single biggest everyday speed upgrade you can make.' );
+				items.push( { sev: 30, text: 'Storage — moving to an NVMe SSD is the single biggest everyday speed upgrade you can make.' } );
 			}
 			if ( v.ram < 16 ) {
-				priorities.push( 'RAM — ' + v.ram + 'GB is tight for modern games and multitasking; 16GB is the current sensible minimum.' );
+				items.push( { sev: v.ram <= 8 ? 40 : 20, text: 'RAM — ' + v.ram + 'GB is tight for modern games and multitasking; 16GB is the current sensible minimum.' } );
 			}
 			if ( gpu.score < targetGpuScore ) {
-				priorities.push( 'GPU — the ' + gpu.name + ' is below the performance level typically needed for your target (' + v.target + ').' );
+				items.push( { sev: Math.round( ( targetGpuScore - gpu.score ) / targetGpuScore * 100 ), text: 'GPU — the ' + gpu.name + ' is below the performance level typically needed for ' + ( gaming ? RES_LABELS[ v.target ] + ' gaming' : 'GPU-accelerated creative work' ) + '.' } );
 			}
-			if ( cpu.score < targetCpuScore ) {
-				priorities.push( 'CPU — the ' + cpu.name + ' may limit frame rates in CPU-heavy titles for your target.' );
+			if ( gaming ) {
+				var r = bottleneckEstimate( cpu, gpu )[ v.target ];
+				if ( r.component === 'cpu' && r.percent >= 15 ) {
+					items.push( { sev: r.percent, text: 'CPU — the ' + cpu.name + ' holds the ' + gpu.name + ' back at ' + RES_LABELS[ v.target ] + ': ' + BN_SEV_WORD[ r.severity ].toLowerCase() + ' CPU bottleneck of about ' + bnPct( r ) + ' in our Bottleneck Calculator.' } );
+				} else if ( r.component === 'cpu' ) {
+					notes.push( 'The ' + cpu.name + ' shows only a mild CPU bottleneck (' + bnPct( r ) + ') with this card at ' + RES_LABELS[ v.target ] + ', so a CPU upgrade isn’t a priority.' );
+				} else if ( r.component === 'gpu' ) {
+					notes.push( 'Your CPU isn’t the limit at ' + RES_LABELS[ v.target ] + ': the ' + gpu.name + ' sets the frame rate (normal) and the CPU has about ' + bnPct( r ) + ' headroom, so a faster GPU is what would add FPS.' );
+				} else {
+					notes.push( 'The ' + cpu.name + ' and ' + gpu.name + ' are balanced at ' + RES_LABELS[ v.target ] + '.' );
+				}
+			} else if ( cpu.score < 59 ) {
+				items.push( { sev: Math.round( ( 59 - cpu.score ) / 59 * 100 ), text: 'CPU — the ' + cpu.name + ' is below the level typically wanted for productivity and creative work.' } );
 			}
-			if ( ! priorities.length ) {
-				priorities.push( 'Your current CPU, GPU, RAM and storage already look well suited to this target — no upgrade is strictly necessary yet.' );
+			items.sort( function ( a, b ) { return b.sev - a.sev; } );
+			var html = '<div class="cs-result-block"><p class="cs-result-headline">' + ( items.length ? 'Suggested upgrade priority (biggest gain first):' : 'Your current CPU, GPU, RAM and storage already look well suited to this target — no upgrade is strictly necessary yet.' ) + '</p>';
+			if ( items.length ) {
+				html += '<ol class="cs-priority-list">';
+				items.forEach( function ( it ) { html += '<li>' + escapeHtml( it.text ) + '</li>'; } );
+				html += '</ol>';
 			}
-			var html = '<div class="cs-result-block"><p class="cs-result-headline">Suggested upgrade priority:</p><ol class="cs-priority-list">';
-			priorities.forEach( function ( p ) { html += '<li>' + escapeHtml( p ) + '</li>'; } );
-			html += '</ol><p class="cs-disclaimer"><strong>Estimate only:</strong> based on typical requirements for your stated goal, not your exact game library.</p></div>';
+			notes.forEach( function ( n ) { html += '<p>' + escapeHtml( n ) + '</p>'; } );
+			html += '<p class="cs-disclaimer"><strong>Estimate only:</strong> based on typical requirements for your stated goal and, for gaming, the same engine as the PC Bottleneck Calculator (typical AAA game, high settings), not your exact game library.</p></div>';
 			return html;
 		}
 	};
@@ -1172,7 +1273,7 @@
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
-			var all = bottleneckEstimate( cpu.score, gpu.score );
+			var all = bottleneckEstimate( cpu, gpu );
 			var rows = [
 				[ cpu.name + ' score', fmt( cpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.cpu ), 0 ) ],
 				[ gpu.name + ' score', fmt( gpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.gpu ), 0 ) ],
@@ -1186,9 +1287,9 @@
 			var headline = bnShiftNote( all );
 			if ( ! headline ) {
 				var c = all[ '1080p' ].component;
-				headline = c === 'balanced' ? 'This pair is well matched at every resolution.' : ( c === 'cpu' ? 'The CPU is the more likely limit at every resolution.' : 'The GPU is the more likely limit at every resolution.' );
+				headline = c === 'balanced' ? 'This pair is well matched at every resolution.' : ( c === 'cpu' ? 'The CPU is the bottleneck at every resolution.' : 'The GPU sets the frame rate at every resolution, which is normal for gaming.' );
 			}
-			return resultBlock( 'For this pair: ' + headline + ' See the resolution breakdown below.', rows, 'a general estimate, not a per-game benchmark; ' + SCORE_NOTE );
+			return resultBlock( 'For this pair: ' + headline + ' See the resolution breakdown below.', rows, 'a general estimate for a typical AAA game at high settings, not a per-game benchmark. A CPU bottleneck % is the share of the GPU left idle; GPU-limited is normal and shows the CPU’s headroom; ' + SCORE_NOTE );
 		}
 	};
 

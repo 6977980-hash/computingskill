@@ -8,9 +8,10 @@
  * and engine results (cs_calculate_bottleneck()), plus the same rules the
  * site's calculators use, so the text can't disagree with the table on the
  * page or with the calculators:
- *  - "Who it suits" uses the PC Upgrade Calculator's targets
- *    (assets/js/calculators.js CS_DEFS.upgrade). Keep CS_BN_UPGRADE_*
- *    identical to that file's targetGpuScore / targetCpuScore.
+ *  - "Who it suits" uses the PC Upgrade Calculator's GPU targets
+ *    (assets/js/calculators.js CS_DEFS.upgrade targetGpuScore). Keep
+ *    cs_bn_upgrade_targets() identical to it. Since D3 the Upgrade tool takes
+ *    its CPU decision from the bottleneck engine, so there are no CPU targets.
  *  - VRAM uses the GPU VRAM Calculator's guideline (CS_DEFS.vram "base").
  *  - Power uses the PSU Calculator's formula with its default extras
  *    (CS_DEFS.psu: 2 RAM sticks, 2 drives, 3 fans, no overclock).
@@ -47,7 +48,6 @@ function cs_bottleneck_primary_limit( $results ) {
 function cs_bn_upgrade_targets() {
 	return array(
 		'gpu' => array( '1080p' => 33, '1440p' => 50, '4k' => 70 ),
-		'cpu' => array( '1080p' => 55, '1440p' => 53, '4k' => 50 ),
 	);
 }
 
@@ -68,7 +68,8 @@ function cs_bn_join( $items ) {
 }
 
 /**
- * "CPU-limited at 1080p (~20%)" / "balanced at 4K".
+ * "a noticeable CPU bottleneck at 1080p (~20%)" / "GPU-limited at 4K (~48%
+ * CPU headroom)" / "balanced at 4K" (D3 meaning, see cs_calculate_bottleneck()).
  */
 function cs_bn_phrase( $res, $r ) {
 	$short = cs_bn_res_short();
@@ -76,9 +77,16 @@ function cs_bn_phrase( $res, $r ) {
 		return sprintf( __( 'balanced at %s', 'computingskill' ), $short[ $res ] );
 	}
 	if ( 'cpu' === $r['component'] ) {
-		return sprintf( __( 'CPU-limited at %1$s (~%2$d%%)', 'computingskill' ), $short[ $res ], $r['percent'] );
+		$sev = array(
+			'mild'       => __( 'a mild', 'computingskill' ),
+			'noticeable' => __( 'a noticeable', 'computingskill' ),
+			'severe'     => __( 'a severe', 'computingskill' ),
+		);
+		/* translators: 1: "a mild" etc., 2: resolution, 3: percent */
+		return sprintf( __( '%1$s CPU bottleneck at %2$s (~%3$s)', 'computingskill' ), $sev[ $r['severity'] ], $short[ $res ], cs_bn_pct( $r ) );
 	}
-	return sprintf( __( 'GPU-limited at %1$s (~%2$d%%)', 'computingskill' ), $short[ $res ], $r['percent'] );
+	/* translators: 1: resolution, 2: percent */
+	return sprintf( __( 'GPU-limited at %1$s (~%2$s CPU headroom)', 'computingskill' ), $short[ $res ], cs_bn_pct( $r ) );
 }
 
 function cs_bn_phrases( $results, $only = null ) {
@@ -97,28 +105,13 @@ function cs_bn_phrases( $results, $only = null ) {
 function cs_bn_pcts( $results, $only ) {
 	$short = cs_bn_res_short();
 	if ( 1 === count( $only ) ) {
-		return '~' . $results[ $only[0] ]['percent'] . '%';
+		return '~' . cs_bn_pct( $results[ $only[0] ] );
 	}
 	$out = array();
 	foreach ( $only as $res ) {
-		$out[] = sprintf( __( '~%1$d%% at %2$s', 'computingskill' ), $results[ $res ]['percent'], $short[ $res ] );
+		$out[] = sprintf( __( '~%1$s at %2$s', 'computingskill' ), cs_bn_pct( $results[ $res ] ), $short[ $res ] );
 	}
 	return cs_bn_join( $out );
-}
-
-/**
- * Resolutions where the PC Upgrade Calculator's CPU target isn't met.
- */
-function cs_bn_cpu_flags( $cpu ) {
-	$targets = cs_bn_upgrade_targets();
-	$short   = cs_bn_res_short();
-	$out     = array();
-	foreach ( $targets['cpu'] as $res => $t ) {
-		if ( $cpu['score'] < $t ) {
-			$out[] = $short[ $res ];
-		}
-	}
-	return $out;
 }
 
 function cs_bn_socket_memory( $socket ) {
@@ -242,27 +235,20 @@ function cs_bottleneck_verdict( $cpu_slug, $cpu, $gpu, $results ) {
 			$names( $fit['gpu_low'] ), $gpu['name']
 		);
 	}
-	$flags = cs_bn_cpu_flags( $cpu );
-	if ( $flags ) {
-		$p1 .= ' ' . sprintf(
-			__( 'Our PC Upgrade Calculator, which checks the CPU against a fixed target per resolution rather than against this card, would also flag the %1$s as a possible limit in CPU-heavy games at %2$s.', 'computingskill' ),
-			$cpu['name'], cs_bn_join( $flags )
-		);
-	}
 
 	// 2. Upgrade path, from the same main limit as the block above.
 	$primary = cs_bottleneck_primary_limit( $results );
 	if ( 'gpu' === $primary ) {
-		$p2   = sprintf( __( 'The %s is the part that limits most at 1440p, so a graphics card upgrade changes this estimate most.', 'computingskill' ), $gpu['name'] );
+		$p2   = sprintf( __( 'The %s sets the frame rate at 1440p while the CPU still has headroom, so a faster graphics card is the upgrade that adds the most FPS.', 'computingskill' ), $gpu['name'] );
 		$step = cs_bn_gpu_step( $cpu, $gpu );
 		if ( $step ) {
 			$p2 .= ' ' . sprintf(
-				__( 'If you want a stronger 1440p setup, the smallest step up in our database that brings 1440p under 15%% with the %1$s is the %2$s, which our engine rates as %3$s.', 'computingskill' ),
+				__( 'If you want a stronger 1440p setup, the smallest step up in our database that uses most of the %1$s’s headroom at 1440p (under 15%% left) is the %2$s, which our engine rates as %3$s.', 'computingskill' ),
 				$cpu['name'], $step['gpu']['name'], cs_bn_phrases( $step['results'] )
 			);
 		}
 	} elseif ( 'cpu' === $primary ) {
-		$p2  = sprintf( __( 'The %s is the part that limits most, so a CPU upgrade changes this estimate most.', 'computingskill' ), $cpu['name'] );
+		$p2  = sprintf( __( 'The %s is the real bottleneck here, so a CPU upgrade is what lets the graphics card run at full speed.', 'computingskill' ), $cpu['name'] );
 		$up  = cs_bn_socket_upgrade( $cpu_slug, $cpu );
 		if ( $up ) {
 			$r2  = cs_calculate_bottleneck( $up, $gpu );
@@ -285,8 +271,7 @@ function cs_bottleneck_verdict( $cpu_slug, $cpu, $gpu, $results ) {
 		}
 	} elseif ( 'gpu4k' === $primary ) {
 		$p2 = sprintf(
-			__( 'There is no pressing upgrade: the GPU-side limit at 4K (~%d%%) is normal at that resolution, and upscaling or lower settings usually help more there than new parts.', 'computingskill' ),
-			$results['4k']['percent']
+			__( 'There is no pressing upgrade: being GPU-limited at 4K is normal, and upscaling or lower settings usually help more there than new parts.', 'computingskill' )
 		);
 	} else {
 		$p2 = __( 'Neither part needs replacing to rebalance this pair; upgrade when your resolution or frame-rate target changes.', 'computingskill' );
@@ -303,7 +288,7 @@ function cs_bottleneck_verdict( $cpu_slug, $cpu, $gpu, $results ) {
 function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 	$short = cs_bn_res_short();
 	$items = array();
-	$note  = __( 'These are specs-based estimates, not benchmark results.', 'computingskill' );
+	$note  = __( 'These are estimates from our gaming-performance scores, not benchmark results.', 'computingskill' );
 
 	// 1. Is the CPU fast enough?
 	$cpu_res = array();
@@ -336,10 +321,6 @@ function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 			cs_bn_join( array_map( function ( $res ) use ( $short ) { return $short[ $res ]; }, $other ) ),
 			cs_bn_phrases( $results, $other )
 		);
-	}
-	$flags = cs_bn_cpu_flags( $cpu );
-	if ( $flags ) {
-		$a .= ' ' . sprintf( __( 'Separately, our PC Upgrade Calculator, which checks the CPU against a fixed target per resolution rather than against this card, flags it as a possible limit in CPU-heavy games at %s.', 'computingskill' ), cs_bn_join( $flags ) );
 	}
 	$items[] = array(
 		'q' => sprintf( __( 'Is the %1$s fast enough for the %2$s?', 'computingskill' ), $cpu['name'], $gpu['name'] ),
@@ -499,14 +480,17 @@ function cs_bn_published_pairs() {
 }
 
 /**
- * "CPU ~20%" / "GPU ~12%" / "Balanced" for a table cell.
+ * "CPU ~20%" / "GPU-limited" / "Balanced" for a table cell. Since D3 only a
+ * CPU-side % is a bottleneck; GPU-limited is normal.
  */
 function cs_bn_cell( $r ) {
 	if ( 'balanced' === $r['component'] ) {
 		return __( 'Balanced', 'computingskill' );
 	}
-	$part = 'cpu' === $r['component'] ? __( 'CPU', 'computingskill' ) : __( 'GPU', 'computingskill' );
-	return sprintf( '%1$s ~%2$d%%', $part, $r['percent'] );
+	if ( 'gpu' === $r['component'] ) {
+		return __( 'GPU-limited', 'computingskill' );
+	}
+	return sprintf( __( 'CPU ~%s', 'computingskill' ), cs_bn_pct( $r ) );
 }
 
 /**
@@ -586,7 +570,7 @@ function cs_bn_neighbours_html( $cpu_slug, $gpu_slug, $cpu, $gpu ) {
 		}
 		$note = sprintf(
 			/* translators: 1: CPU, 2: GPU, 3: 1440p phrase */
-			__( 'Of the graphics cards we pair with the %1$s, the %2$s gives the lowest 1440p estimate (%3$s).', 'computingskill' ),
+			__( 'Of the graphics cards we pair with the %1$s, the %2$s is the closest match at 1440p (%3$s).', 'computingskill' ),
 			$cpu['name'], $same_cpu[ $best ]['part']['name'], cs_bn_phrase( '1440p', $same_cpu[ $best ]['results']['1440p'] )
 		);
 		if ( $best !== $gpu_slug ) {

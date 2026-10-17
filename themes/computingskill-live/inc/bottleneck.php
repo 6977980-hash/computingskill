@@ -21,10 +21,14 @@
  *  3. The two effective scores are compared SEPARATELY at every
  *     resolution. Whichever is lower is the likely limiting part there, so
  *     a pair can be CPU-bound at 1080p and GPU-bound at 4K.
- *  4. The estimated bottleneck % is the share of the stronger part's
- *     capacity the weaker part leaves unused:
- *     (stronger - weaker) / stronger * 100, rounded, capped at 60.
- *     Under 6% is shown as "balanced".
+ *  4. The % is (stronger - weaker) / stronger * 100, rounded, capped at 60
+ *     (under 6% = "balanced"). Since D3 (Oct 2026) it is read two ways:
+ *     CPU-bound = the share of the GPU left idle (the bottleneck, with a
+ *     severity label); GPU-bound = normal, and the % is CPU headroom. See
+ *     cs_calculate_bottleneck().
+ *  5. D3 also adds a graphics preset, a game type (AAA / esports /
+ *     CPU-heavy) and a VRAM / memory-bus penalty. Combo pages use the
+ *     defaults: high preset, AAA game.
  *
  * The previous model took ONE score gap and applied it to all three
  * resolutions, so the CPU-vs-GPU direction could never change with
@@ -55,17 +59,120 @@ function cs_bottleneck_gpu_res_factors() {
 	);
 }
 
-function cs_calculate_bottleneck( $cpu, $gpu ) {
-	$cpu_eff = $cpu['score'] * CS_BN_CPU_PARITY;
+/**
+ * D3 (Oct 2026, audit 1.7 / 1.9): graphics preset. Scales the GPU's work
+ * per frame only; the CPU prepares about the same frames at any preset.
+ * Low vs Ultra is about 2.1x, in line with typical AAA preset scaling
+ * (was 1.3 / 1.1 / 1.0 / 0.82, only 1.59x).
+ */
+function cs_bottleneck_preset_factors() {
+	return array(
+		'low'    => 1.7,
+		'medium' => 1.3,
+		'high'   => 1.0,
+		'ultra'  => 0.8,
+	);
+}
+
+/**
+ * D3 (audit 1.7 / 1.9): game type. Multiplies the CPU's and the GPU's
+ * frame-rate ceilings relative to a typical AAA game at the same settings.
+ *  - esports: light competitive shooters / MOBAs (Valorant, CS2, Fortnite,
+ *    Apex, League). Both parts run several times faster, the GPU a little
+ *    more than the CPU, so these games lean CPU-bound and reach several
+ *    hundred FPS on fast hardware.
+ *  - cpu-heavy: strategy, simulation, big open worlds and MMOs, where the
+ *    CPU's per-frame work is much higher.
+ * Rough class profiles, not per-game benchmarks.
+ */
+function cs_bottleneck_game_profiles() {
+	return array(
+		'aaa'       => array( 'cpu' => 1.0, 'gpu' => 1.0 ),
+		'esports'   => array( 'cpu' => 2.8, 'gpu' => 3.0 ),
+		'cpu-heavy' => array( 'cpu' => 0.7, 'gpu' => 1.0 ),
+	);
+}
+
+/**
+ * D3 (audit 1.8): the GPU VRAM Calculator's minimum VRAM per resolution and
+ * texture level (calculators.js CS_DEFS.vram "base"; low uses medium).
+ */
+function cs_bottleneck_vram_need() {
+	return array(
+		'1080p' => array( 'low' => 4, 'medium' => 4, 'high' => 6, 'ultra' => 8 ),
+		'1440p' => array( 'low' => 6, 'medium' => 6, 'high' => 8, 'ultra' => 10 ),
+		'4k'    => array( 'low' => 8, 'medium' => 8, 'high' => 12, 'ultra' => 14 ),
+	);
+}
+
+/**
+ * D3 (audit 1.8): memory penalty on top of the shared resolution factor.
+ *  - VRAM short of the VRAM Calculator's minimum: -5% per missing GB
+ *    (floor 0.75), e.g. an 8GB card at 4K high (needs 12GB) gets x0.80.
+ *    Not applied to esports titles, which use little VRAM.
+ *  - 128-bit memory bus: x0.96 at 1440p and x0.92 at 4K, where narrow-bus
+ *    cards (RTX 4060 / 5060 / 5060 Ti, RX 7600 / 9060 XT) fall further
+ *    behind in reviews than their 1080p standing suggests.
+ */
+function cs_bottleneck_gpu_memory_factor( $gpu, $res, $preset = 'high', $game = 'aaa' ) {
+	$factor = 1.0;
+	$need   = cs_bottleneck_vram_need();
+	if ( 'esports' !== $game && isset( $gpu['vram_gb'], $need[ $res ][ $preset ] ) ) {
+		$short = $need[ $res ][ $preset ] - (int) $gpu['vram_gb'];
+		if ( $short > 0 ) {
+			$factor *= max( 0.75, 1 - 0.05 * $short );
+		}
+	}
+	if ( isset( $gpu['memory_bus'] ) && (int) $gpu['memory_bus'] <= 128 ) {
+		$bus     = array( '1080p' => 1.0, '1440p' => 0.96, '4k' => 0.92 );
+		$factor *= $bus[ $res ];
+	}
+	return $factor;
+}
+
+/**
+ * Normalised options: preset (high) and game type (aaa) by default, which
+ * is what the combo pages use.
+ */
+function cs_bottleneck_opts( $opts = array() ) {
+	$opts = wp_parse_args( (array) $opts, array( 'preset' => 'high', 'game' => 'aaa' ) );
+	if ( ! isset( cs_bottleneck_preset_factors()[ $opts['preset'] ] ) ) {
+		$opts['preset'] = 'high';
+	}
+	if ( ! isset( cs_bottleneck_game_profiles()[ $opts['game'] ] ) ) {
+		$opts['game'] = 'aaa';
+	}
+	return $opts;
+}
+
+/**
+ * Per-resolution estimate.
+ *
+ * D3 (Oct 2026, audit 1.1 / 1.4 / 3.8), what the number means:
+ *  - CPU-bound ('cpu'): percent = the share of the GPU left idle because
+ *    the CPU can't feed it, i.e. roughly 100 minus the GPU usage you'd see
+ *    in a monitoring overlay. This is the real bottleneck. Severity:
+ *    under 6 balanced, 6-14 mild, 15-29 noticeable, 30+ severe.
+ *  - GPU-bound ('gpu'): normal for gaming. percent = the CPU's spare
+ *    headroom, so a faster CPU reads higher, which is good, not worse.
+ *  - percent is capped at 60; 'capped' is true when the real value is
+ *    higher, so the UI can say "60%+".
+ */
+function cs_calculate_bottleneck( $cpu, $gpu, $opts = array() ) {
+	$opts    = cs_bottleneck_opts( $opts );
+	$profile = cs_bottleneck_game_profiles()[ $opts['game'] ];
+	$preset  = cs_bottleneck_preset_factors()[ $opts['preset'] ];
+	$cpu_eff = $cpu['score'] * CS_BN_CPU_PARITY * $profile['cpu'];
 
 	$results = array();
 	foreach ( cs_bottleneck_gpu_res_factors() as $res => $factor ) {
-		$gpu_eff  = $gpu['score'] * $factor;
+		$gpu_eff  = $gpu['score'] * $factor * $preset * $profile['gpu'] * cs_bottleneck_gpu_memory_factor( $gpu, $res, $opts['preset'], $opts['game'] );
 		$stronger = max( $cpu_eff, $gpu_eff );
 		// Round to 4 decimals first so PHP and JS agree on values that land
 		// exactly on .5 after float math.
 		$share     = $stronger > 0 ? round( abs( $gpu_eff - $cpu_eff ) / $stronger * 100, 4 ) : 0;
-		$percent   = (int) min( 60, floor( $share + 0.5 ) );
+		$raw       = (int) floor( $share + 0.5 );
+		$percent   = min( 60, $raw );
 		$component = $gpu_eff > $cpu_eff ? 'cpu' : 'gpu'; // GPU has spare capacity => CPU is the limit.
 
 		if ( $percent < 6 ) {
@@ -75,10 +182,71 @@ function cs_calculate_bottleneck( $cpu, $gpu ) {
 		$results[ $res ] = array(
 			'percent'   => $percent,
 			'component' => $component,
+			'capped'    => $raw > 60,
+			'severity'  => cs_bottleneck_severity( $component, $percent ),
 		);
 	}
 
 	return $results;
+}
+
+/**
+ * 'balanced', 'mild', 'noticeable', 'severe' (CPU-bound) or 'normal' (GPU-bound).
+ */
+function cs_bottleneck_severity( $component, $percent ) {
+	if ( 'balanced' === $component ) {
+		return 'balanced';
+	}
+	if ( 'gpu' === $component ) {
+		return 'normal';
+	}
+	if ( $percent >= 30 ) {
+		return 'severe';
+	}
+	return $percent >= 15 ? 'noticeable' : 'mild';
+}
+
+/**
+ * Display percent: "60%+" when capped, else "23%".
+ */
+function cs_bn_pct( $r ) {
+	return $r['percent'] . ( ! empty( $r['capped'] ) ? '%+' : '%' );
+}
+
+/**
+ * Short label for a result: "Balanced", "Noticeable CPU bottleneck (23%)",
+ * "GPU-limited, normal (33% CPU headroom)".
+ */
+function cs_bn_label( $r ) {
+	$sev = array(
+		'mild'       => __( 'Mild', 'computingskill' ),
+		'noticeable' => __( 'Noticeable', 'computingskill' ),
+		'severe'     => __( 'Severe', 'computingskill' ),
+	);
+	if ( 'balanced' === $r['component'] ) {
+		return __( 'Balanced', 'computingskill' );
+	}
+	if ( 'gpu' === $r['component'] ) {
+		/* translators: %s: percent */
+		return sprintf( __( 'GPU-limited, normal (%s CPU headroom)', 'computingskill' ), cs_bn_pct( $r ) );
+	}
+	/* translators: 1: severity word, 2: percent */
+	return sprintf( __( '%1$s CPU bottleneck (%2$s)', 'computingskill' ), $sev[ $r['severity'] ], cs_bn_pct( $r ) );
+}
+
+/**
+ * The resolution a card is built for, from its tier label ("Mid-range /
+ * 1440p" => 1440p, "High-end / 1440p-4K" => 1440p). Audit 1.3: the combo
+ * Quick Summary leads with this instead of the worst resolution.
+ */
+function cs_bn_target_res( $gpu ) {
+	$tier = isset( $gpu['tier'] ) ? $gpu['tier'] : '';
+	foreach ( array( '1080p' => '1080p', '1440p' => '1440p', '4K' => '4k' ) as $needle => $res ) {
+		if ( false !== strpos( $tier, $needle ) ) {
+			return $res;
+		}
+	}
+	return '1080p';
 }
 
 /**
@@ -93,44 +261,43 @@ function cs_bottleneck_has_shift( $results ) {
 }
 
 /**
- * One-paragraph headline for a pair: describes the shift when the limiting
- * part changes with resolution, otherwise the single most significant
- * resolution's verdict.
+ * One-paragraph headline for a pair. D3 (audit 1.3): it leads with the
+ * resolution the GPU is built for (its tier label), not the worst
+ * resolution, which for every GPU-limited pair used to be 4K. The other
+ * resolutions follow in one sentence.
  */
-function cs_bottleneck_summary( $cpu_name, $gpu_name, $results, $labels ) {
-	if ( ! cs_bottleneck_has_shift( $results ) ) {
-		$worst_res = '1080p';
-		foreach ( $results as $res => $r ) {
-			if ( $r['percent'] > $results[ $worst_res ]['percent'] ) {
-				$worst_res = $res;
-			}
-		}
-		return cs_bottleneck_sentence( $cpu_name, $gpu_name, $labels[ $worst_res ], $results[ $worst_res ] );
+function cs_bottleneck_summary( $cpu_name, $gpu_name, $results, $labels, $target = '1080p' ) {
+	if ( ! isset( $results[ $target ] ) ) {
+		$target = '1080p';
 	}
-
-	$short = array( '1080p' => '1080p', '1440p' => '1440p', '4k' => '4K' );
-	$parts = array();
-	foreach ( $results as $res => $r ) {
-		if ( 'balanced' === $r['component'] ) {
-			$parts[] = sprintf( __( 'balanced at %s', 'computingskill' ), $short[ $res ] );
-		} elseif ( 'cpu' === $r['component'] ) {
-			$parts[] = sprintf( __( 'CPU-limited at %1$s (~%2$d%%)', 'computingskill' ), $short[ $res ], $r['percent'] );
-		} else {
-			$parts[] = sprintf( __( 'GPU-limited at %1$s (~%2$d%%)', 'computingskill' ), $short[ $res ], $r['percent'] );
-		}
-	}
-
-	return sprintf(
-		/* translators: 1: CPU name, 2: GPU name, 3: list of per-resolution results */
-		__( 'The limiting part shifts with resolution for the %1$s and %2$s: our estimate is %3$s. As resolution rises the GPU has more pixels to draw per frame, so more of the load lands on the graphics card.', 'computingskill' ),
+	$out = cs_bottleneck_sentence(
 		$cpu_name,
 		$gpu_name,
-		$parts[0] . ', ' . $parts[1] . ' ' . __( 'and', 'computingskill' ) . ' ' . $parts[2]
+		/* translators: %s: resolution label */
+		sprintf( __( '%s, the resolution this card is built for', 'computingskill' ), $labels[ $target ] ),
+		$results[ $target ]
 	);
+
+	if ( cs_bottleneck_has_shift( $results ) ) {
+		$out .= ' ' . sprintf(
+			/* translators: %s: list of per-resolution results */
+			__( 'Across resolutions the limiting part shifts: our estimate is %s. As resolution rises the GPU has more pixels to draw per frame, so more of the load lands on the graphics card.', 'computingskill' ),
+			cs_bn_phrases( $results )
+		);
+	} else {
+		$out .= ' ' . sprintf(
+			/* translators: %s: list of per-resolution results */
+			__( 'Across all three resolutions our estimate is %s.', 'computingskill' ),
+			cs_bn_phrases( $results )
+		);
+	}
+	return $out;
 }
 
 /**
- * Human-readable verdict sentence for a resolution's result.
+ * Human-readable verdict sentence for a resolution's result (D3 meaning:
+ * a CPU-side % is GPU capacity left idle; GPU-limited is normal and its %
+ * is CPU headroom).
  */
 function cs_bottleneck_sentence( $cpu_name, $gpu_name, $res_label, $result ) {
 	if ( 'balanced' === $result['component'] ) {
@@ -144,24 +311,38 @@ function cs_bottleneck_sentence( $cpu_name, $gpu_name, $res_label, $result ) {
 	}
 
 	if ( 'cpu' === $result['component'] ) {
+		$sev = array(
+			'mild'       => __( 'mild', 'computingskill' ),
+			'noticeable' => __( 'noticeable', 'computingskill' ),
+			'severe'     => __( 'severe', 'computingskill' ),
+		);
+		$usage = ! empty( $result['capped'] )
+			? __( 'under 40%', 'computingskill' )
+			: sprintf( __( 'around %d%%', 'computingskill' ), 100 - $result['percent'] );
 		return sprintf(
-			/* translators: 1: CPU name, 2: GPU name, 3: resolution label, 4: percent */
-			__( 'At %3$s, the %1$s is the more likely limiting factor — our estimate puts the CPU-side bottleneck at roughly %4$d%%. The %2$s may not reach its full potential in CPU-heavy or high-framerate titles at this resolution.', 'computingskill' ),
+			/* translators: 1: CPU name, 2: GPU name, 3: resolution label, 4: severity, 5: percent, 6: GPU usage */
+			__( 'At %3$s, the %1$s is the likely limit: our estimate is a %4$s CPU bottleneck of about %5$s, meaning roughly that share of the %2$s’s capacity goes unused (GPU usage %6$s in a monitoring overlay), most of all in CPU-heavy or high-frame-rate games.', 'computingskill' ),
 			$cpu_name,
 			$gpu_name,
 			$res_label,
-			$result['percent']
+			$sev[ $result['severity'] ],
+			cs_bn_pct( $result ),
+			$usage
 		);
 	}
 
-	return sprintf(
+	$out = sprintf(
 		/* translators: 1: CPU name, 2: GPU name, 3: resolution label, 4: percent */
-		__( 'At %3$s, the %2$s is the more likely limiting factor — our estimate puts the GPU-side bottleneck at roughly %4$d%%. The %1$s has more headroom than the graphics card can use at this resolution.', 'computingskill' ),
+		__( 'At %3$s, the %2$s sets the frame rate, which is normal for gaming: the graphics card is fully used and the %1$s has %4$s of spare headroom.', 'computingskill' ),
 		$cpu_name,
 		$gpu_name,
 		$res_label,
-		$result['percent']
+		! empty( $result['capped'] ) ? __( 'more than 60%', 'computingskill' ) : sprintf( __( 'about %d%%', 'computingskill' ), $result['percent'] )
 	);
+	if ( $result['percent'] >= 30 ) {
+		$out .= ' ' . __( 'For higher frame rates here, a faster graphics card is what helps; a faster CPU would not.', 'computingskill' );
+	}
+	return $out;
 }
 
 /**
@@ -291,7 +472,7 @@ function cs_methodology_engine_text( $content ) {
 		return $content;
 	}
 
-	$bottleneck = __( 'Compares your CPU and GPU separately at 1080p, 1440p and 4K. The CPU score stands for how many frames per second the CPU can prepare, which barely changes with resolution. The GPU score is scaled for each resolution by its pixel load (1080p ×1.00, 1440p ×0.68, 4K ×0.42, the same factors the FPS Calculator uses), because every extra pixel is extra work for the graphics card. Whichever part comes out lower at a resolution is the more likely limiting one there, so the same pairing can be CPU-bound at 1080p and GPU-bound at 4K. The estimated bottleneck percentage is the share of the stronger part’s capacity that goes unused (capped at 60%); anything under 6% is shown as balanced.', 'computingskill' );
+	$bottleneck = __( 'Compares your CPU and GPU separately at 1080p, 1440p and 4K. The CPU score stands for how many frames per second the CPU can prepare, which barely changes with resolution. The GPU score is scaled for each resolution by its pixel load (1080p ×1.00, 1440p ×0.68, 4K ×0.42, the same factors the FPS Calculator uses), because every extra pixel is extra work for the graphics card. Cards below the GPU VRAM Calculator’s minimum for the chosen settings lose 5% per missing GB (at most 25%), and cards with a 128-bit memory bus lose a further 4% at 1440p and 8% at 4K. The Graphics settings input scales the GPU’s work (Low ×1.7, Medium ×1.3, High ×1.0, Ultra ×0.8), and the Game type input sets the balance: esports titles run the CPU ×2.8 and the GPU ×3.0 faster than a typical AAA game, CPU-heavy strategy and simulation games run the CPU at ×0.7. Whichever part comes out lower at a resolution is the more likely limiting one there, so the same pairing can be CPU-bound at 1080p and GPU-bound at 4K. If the CPU is the limit, the percentage is a CPU bottleneck: the share of the GPU’s capacity left unused, roughly 100 minus the GPU usage you would see in a monitoring overlay (under 6% balanced, 6–14% mild, 15–29% noticeable, 30% or more severe, shown as 60%+ above 60%). If the GPU is the limit, the result is GPU-limited, which is normal for gaming, and the percentage is the CPU’s spare headroom. Combo pages use a typical AAA game at high settings.', 'computingskill' );
 
 	$score = __( 'We generate this as a simplified relative gaming-performance index per part. A GPU’s score stands for its average gaming throughput at high settings, with the RTX 4090 at 100 (a faster card, such as the RTX 5090, scores above 100). A CPU’s score stands for the frame rate it can sustain in games when the graphics card isn’t the limit, so it ranks gaming speed, not multi-core work. Both are built from published specs and positioned using publicly reported review averages, never as an absolute performance claim; we don’t run our own benchmarks. CPU and GPU scores are separate scales, so the calculators convert between them instead of comparing the raw numbers.', 'computingskill' );
 	// (The page's own next paragraph already says the score is not a
@@ -302,6 +483,11 @@ function cs_methodology_engine_text( $content ) {
 
 	$content = preg_replace( sprintf( $element, 'resolution-specific sensitivity curves' ), '<p>' . $bottleneck . '</p>', $content, 1 );
 	$content = preg_replace( sprintf( $element, 'relative index per part' ), '<p>' . $score . '</p>', $content, 1 );
+
+	// D3 (Oct 2026, audit 1.9): the FPS formula now also uses the game type
+	// and the VRAM / memory-bus factors, and a wider preset range.
+	$fps = __( 'Estimates a GPU-driven frame rate from the GPU’s score (2.5 FPS per point at 1080p high), scaled by the same resolution, graphics-preset, VRAM and memory-bus factors as the bottleneck calculator, then caps it at a CPU-driven ceiling from the CPU’s score. Both ceilings are multiplied by the game type’s profile (esports titles run several times faster than a typical AAA game; picking a game such as Valorant uses its type), so the limiting part always matches the bottleneck calculator for the same choices. The lower of the two becomes the estimate, shown as a range (roughly ±18%) rather than a single misleadingly precise figure, since actual FPS depends heavily on the specific game engine, drivers and settings we can’t see. Ray tracing, upscaling and frame generation are not modelled.', 'computingskill' );
+	$content = preg_replace( sprintf( $element, 'Estimates a GPU-driven frame rate' ), '<p>' . $fps . '</p>', $content, 1 );
 
 	// FAQ answers (plain text inside [cs_faq_item]).
 	$content = preg_replace(

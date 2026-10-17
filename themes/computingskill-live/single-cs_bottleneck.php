@@ -49,7 +49,7 @@ while ( have_posts() ) :
 						<?php
 						printf(
 							/* translators: 1: CPU name, 2: GPU name */
-							esc_html__( 'A specs-based bottleneck estimate for pairing the %1$s with the %2$s, broken down by resolution — plus what it means for your build.', 'computingskill' ),
+							esc_html__( 'A bottleneck estimate for pairing the %1$s with the %2$s, built from our gaming-performance scores and broken down by resolution — plus what it means for your build.', 'computingskill' ),
 							esc_html( $cpu['name'] ),
 							esc_html( $gpu['name'] )
 						);
@@ -59,7 +59,7 @@ while ( have_posts() ) :
 
 				<section class="cs-bn-summary">
 					<h2><?php esc_html_e( 'Quick Summary', 'computingskill' ); ?></h2>
-					<p><?php echo wp_kses_post( cs_bottleneck_summary( $cpu['name'], $gpu['name'], $results, $labels ) ); ?></p>
+					<p><?php echo wp_kses_post( cs_bottleneck_summary( $cpu['name'], $gpu['name'], $results, $labels, cs_bn_target_res( $gpu ) ) ); ?></p>
 					<?php cs_estimate_disclaimer( 'bottleneck estimate' ); ?>
 				</section>
 
@@ -103,7 +103,7 @@ while ( have_posts() ) :
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Resolution', 'computingskill' ); ?></th>
-									<th><?php esc_html_e( 'Estimated Bottleneck', 'computingskill' ); ?></th>
+									<th><?php esc_html_e( 'Estimate', 'computingskill' ); ?></th>
 									<th><?php esc_html_e( 'Likely Limiting Part', 'computingskill' ); ?></th>
 								</tr>
 							</thead>
@@ -111,7 +111,7 @@ while ( have_posts() ) :
 								<?php foreach ( $results as $res => $r ) : ?>
 									<tr>
 										<td><?php echo esc_html( $labels[ $res ] ); ?></td>
-										<td><?php echo esc_html( $r['percent'] . '%' ); ?></td>
+										<td><?php echo esc_html( cs_bn_label( $r ) ); ?></td>
 										<td>
 											<?php
 											if ( 'balanced' === $r['component'] ) {
@@ -129,6 +129,7 @@ while ( have_posts() ) :
 						</table>
 					</div>
 
+					<p class="cs-bn-meaning"><?php esc_html_e( 'How to read this: a CPU bottleneck % is the share of the graphics card left idle because the CPU can’t keep up (roughly 100 minus the GPU usage a monitoring overlay would show): under 6% is balanced, 6–14% mild, 15–29% noticeable and 30% or more severe. GPU-limited is normal for gaming; there the % is how much spare headroom the CPU has. Estimates assume a typical AAA game at high settings.', 'computingskill' ); ?></p>
 					<?php foreach ( $results as $res => $r ) : ?>
 						<p><strong><?php echo esc_html( $labels[ $res ] ); ?>:</strong> <?php echo wp_kses_post( cs_bottleneck_sentence( $cpu['name'], $gpu['name'], $labels[ $res ], $r ) ); ?></p>
 					<?php endforeach; ?>
@@ -150,17 +151,17 @@ while ( have_posts() ) :
 				$primary = cs_bottleneck_primary_limit( $results );
 				?>
 				<?php if ( 'gpu' === $primary ) : ?>
-					<p><?php printf( esc_html__( 'The %2$s is the more limiting part of this pairing. If you want more FPS before considering a GPU upgrade, lowering shadow quality, ambient occlusion and render resolution scale typically helps more than any other settings on a GPU-bound system.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<p><?php printf( esc_html__( 'The %2$s sets the frame rate in this pairing, which is the normal case for gaming. If you want more FPS before considering a GPU upgrade, lowering shadow quality, ambient occlusion and render resolution scale typically helps more than any other settings on a GPU-bound system.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
 					<?php if ( 'cpu' === $r1080['component'] ) : ?>
-						<p><?php printf( esc_html__( 'At 1080p the balance tips the other way: the %1$s becomes the likely limit (~%2$d%%), mainly in CPU-heavy games or when chasing very high frame rates.', 'computingskill' ), esc_html( $cpu['name'] ), (int) $r1080['percent'] ); ?></p>
+						<p><?php printf( esc_html__( 'At 1080p the balance tips the other way: the %1$s becomes the likely limit (~%2$s CPU bottleneck), mainly in CPU-heavy games or when chasing very high frame rates.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( cs_bn_pct( $r1080 ) ) ); ?></p>
 					<?php endif; ?>
 				<?php elseif ( 'cpu' === $primary ) : ?>
-					<p><?php printf( esc_html__( 'The %1$s is the more limiting part of this pairing, especially at 1080p and in CPU-heavy games (large open worlds, simulation and strategy titles, competitive shooters running uncapped framerates). A CPU upgrade — or simply raising the resolution/settings to shift load back onto the GPU — will get more out of the %2$s.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<p><?php printf( esc_html__( 'The %1$s is the real bottleneck in this pairing, especially at 1080p and in CPU-heavy games (large open worlds, simulation and strategy titles, competitive shooters running uncapped framerates). A CPU upgrade — or simply raising the resolution/settings to shift load back onto the GPU — will get more out of the %2$s.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
 					<?php if ( 'gpu' === $r4k['component'] ) : ?>
-						<p><?php printf( esc_html__( 'At 4K the load moves onto the graphics card and the %1$s becomes the likely limit instead (~%2$d%%).', 'computingskill' ), esc_html( $gpu['name'] ), (int) $r4k['percent'] ); ?></p>
+						<p><?php printf( esc_html__( 'At 4K the load moves onto the graphics card and the %1$s sets the frame rate instead, which is normal at that resolution.', 'computingskill' ), esc_html( $gpu['name'] ) ); ?></p>
 					<?php endif; ?>
 				<?php elseif ( 'gpu4k' === $primary ) : ?>
-					<p><?php printf( esc_html__( 'The %1$s and %2$s are well matched at 1080p and 1440p. At 4K the %2$s becomes the more limiting part (~%3$d%%), which is normal at that resolution: lowering shadow quality, ambient occlusion or render resolution scale (or using upscaling) helps most there.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ), (int) $r4k['percent'] ); ?></p>
+					<p><?php printf( esc_html__( 'The %1$s and %2$s are well matched at 1080p and 1440p. At 4K the %2$s sets the frame rate, which is normal at that resolution: lowering shadow quality, ambient occlusion or render resolution scale (or using upscaling) helps most there.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
 				<?php else : ?>
 					<p><?php printf( esc_html__( 'This is a well-balanced pairing. Neither the %1$s nor the %2$s is likely to hold the other back significantly across common resolutions, so upgrade decisions should be driven by which resolution and framerate target you actually want, not by rebalancing this pair.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
 				<?php endif; ?>
