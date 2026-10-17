@@ -100,13 +100,67 @@
 		return a || 1;
 	}
 
+	// D4 (Oct 2026, audit 1.11): the lists grew to 30+ parts each, so they
+	// are grouped by brand (in data-file order) and sorted by name inside
+	// each group. Hardware pickers have no `default`, so share links always
+	// carry the part and the new order changes no shared result.
 	function hardwareOptions( source ) {
 		var data = HW[ source ] || {};
-		var options = [];
+		var noun = source === 'cpu' ? ' CPUs' : ' GPUs';
+		var groups = [];
+		var byGroup = {};
 		Object.keys( data ).forEach( function ( key ) {
-			options.push( { value: key, label: data[ key ].name } );
+			var g = ( data[ key ].brand || 'Other' ) + noun;
+			if ( ! byGroup[ g ] ) {
+				byGroup[ g ] = [];
+				groups.push( g );
+			}
+			byGroup[ g ].push( { value: key, label: data[ key ].name, group: g } );
+		} );
+		var options = [];
+		groups.forEach( function ( g ) {
+			byGroup[ g ].sort( function ( a, b ) {
+				return a.label.localeCompare( b.label, 'en', { numeric: true } );
+			} );
+			options = options.concat( byGroup[ g ] );
 		} );
 		return options;
+	}
+
+	// The "Other / not listed" companion picker: every part, fastest first,
+	// so a reader can place an unlisted part next to one they know from a
+	// review. The estimate then uses that listed part's own data.
+	var OTHER_VALUE = '__other';
+	function closestPartOptions( source ) {
+		var data = HW[ source ] || {};
+		return Object.keys( data ).sort( function ( a, b ) {
+			return ( data[ b ].score - data[ a ].score ) || data[ a ].name.localeCompare( data[ b ].name, 'en', { numeric: true } );
+		} ).map( function ( key ) {
+			return { value: key, label: data[ key ].name };
+		} );
+	}
+
+	function hardwareStart( source ) {
+		return Object.keys( HW[ source ] || {} )[ 0 ] || '';
+	}
+
+	function fillSelect( select, opts ) {
+		var groupEls = {};
+		opts.forEach( function ( opt ) {
+			var o = document.createElement( 'option' );
+			o.value = opt.value;
+			o.textContent = opt.label;
+			if ( opt.group ) {
+				if ( ! groupEls[ opt.group ] ) {
+					groupEls[ opt.group ] = document.createElement( 'optgroup' );
+					groupEls[ opt.group ].label = opt.group;
+					select.appendChild( groupEls[ opt.group ] );
+				}
+				groupEls[ opt.group ].appendChild( o );
+			} else {
+				select.appendChild( o );
+			}
+		} );
 	}
 
 	/* ----------------------------------------------------------------
@@ -151,14 +205,17 @@
 		if ( field.type === 'select' || field.type === 'select-hardware' ) {
 			input = document.createElement( 'select' );
 			var opts = field.type === 'select-hardware' ? hardwareOptions( field.source ) : field.options;
-			opts.forEach( function ( opt ) {
-				var o = document.createElement( 'option' );
-				o.value = opt.value;
-				o.textContent = opt.label;
-				input.appendChild( o );
-			} );
+			if ( field.type === 'select-hardware' && field.other ) {
+				opts = opts.concat( [ { value: OTHER_VALUE, label: 'Other / not listed' } ] );
+			}
+			fillSelect( input, opts );
 			if ( field.default !== undefined ) {
 				input.value = field.default;
+			} else if ( field.type === 'select-hardware' ) {
+				// Start on the first part in the data file (Ryzen 5 5600 /
+				// RTX 3060, as before the lists were sorted), not on the
+				// alphabetically first, oldest part.
+				input.value = hardwareStart( field.source );
 			}
 		} else if ( field.type === 'checkbox' ) {
 			input = document.createElement( 'input' );
@@ -185,6 +242,32 @@
 			main.appendChild( help );
 		}
 
+		if ( field.type === 'select-hardware' && field.other ) {
+			var noun = field.source === 'cpu' ? 'CPU' : 'GPU';
+			var otherBox = document.createElement( 'div' );
+			otherBox.className = 'cs-field-other';
+			otherBox.hidden = true;
+			var otherLabel = document.createElement( 'label' );
+			otherLabel.setAttribute( 'for', inputId + '-other' );
+			otherLabel.textContent = 'Closest listed ' + noun + ' in performance';
+			var otherSelect = document.createElement( 'select' );
+			otherSelect.id = inputId + '-other';
+			fillSelect( otherSelect, closestPartOptions( field.source ) );
+			var otherHelp = document.createElement( 'p' );
+			otherHelp.className = 'cs-field-help';
+			otherHelp.textContent = 'Fastest first. Pick the listed ' + noun + ' that reviews place closest to yours; the estimate uses that ' + noun + '’s data.';
+			otherBox.appendChild( otherLabel );
+			otherBox.appendChild( otherSelect );
+			otherBox.appendChild( otherHelp );
+			main.appendChild( otherBox );
+			input.csOther = otherSelect;
+			var syncOther = function () {
+				otherBox.hidden = input.value !== OTHER_VALUE;
+			};
+			input.addEventListener( 'change', syncOther );
+			input.csSyncOther = syncOther;
+		}
+
 		wrapper.appendChild( main );
 
 		if ( iconKey ) {
@@ -204,6 +287,11 @@
 	 * Throws { msg } on a hard error (empty required field / non-numeric).
 	 */
 	function readField( input, field ) {
+		if ( field.type === 'select-hardware' && input.csOther && input.value === OTHER_VALUE ) {
+			var picked = input.csOther.value;
+			var part = HW[ field.source ] && HW[ field.source ][ picked ];
+			return { value: picked, warning: part ? 'Your ' + ( field.source === 'cpu' ? 'CPU' : 'GPU' ) + ' isn’t in our list, so this estimate uses the closest listed part you picked: ' + part.name + '.' : null };
+		}
 		if ( field.type === 'select' || field.type === 'select-hardware' ) {
 			return { value: input.value };
 		}
@@ -330,6 +418,9 @@
 				input.checked = val;
 			} else {
 				input.value = val;
+			}
+			if ( input.csSyncOther ) {
+				input.csSyncOther();
 			}
 			applied = true;
 		} );
@@ -525,8 +616,15 @@
 						input.checked = !! field.default;
 					} else if ( field.default !== undefined ) {
 						input.value = field.default;
+					} else if ( field.type === 'select-hardware' ) {
+						// value = '' left a picker empty and the next
+						// Calculate failed.
+						input.value = hardwareStart( field.source );
 					} else {
 						input.value = '';
+					}
+					if ( input.csSyncOther ) {
+						input.csSyncOther();
 					}
 				} );
 				resultRoot.classList.remove( 'has-error' );
@@ -744,8 +842,8 @@
 		share: true,
 		comboLink: true,
 		fields: [
-			{ id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'Your CPU', icon: 'cpu' },
-			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'Your GPU', icon: 'gpu' },
+			{ id: 'cpu', type: 'select-hardware', source: 'cpu', other: true, label: 'Your CPU', icon: 'cpu' },
+			{ id: 'gpu', type: 'select-hardware', source: 'gpu', other: true, label: 'Your GPU', icon: 'gpu' },
 			{ id: 'resolution', type: 'select', label: 'Resolution', icon: 'resolution', options: [
 				{ value: '1080p', label: '1080p (Full HD)' }, { value: '1440p', label: '1440p (QHD)' }, { value: '4k', label: '4K (UHD)' }
 			], default: '1080p' },
@@ -970,8 +1068,8 @@
 		share: true,
 		comboLink: true,
 		fields: [
-			{ id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'CPU', icon: 'cpu' },
-			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' },
+			{ id: 'cpu', type: 'select-hardware', source: 'cpu', other: true, label: 'CPU', icon: 'cpu' },
+			{ id: 'gpu', type: 'select-hardware', source: 'gpu', other: true, label: 'GPU', icon: 'gpu' },
 			{ id: 'resolution', type: 'select', label: 'Resolution', icon: 'resolution', default: '1080p', options: [
 				{ value: '1080p', label: '1080p (Full HD)' }, { value: '1440p', label: '1440p (QHD)' }, { value: '4k', label: '4K (UHD)' }
 			] },
@@ -1070,8 +1168,8 @@
 	/* ---- 7. PC Upgrade Calculator ---- */
 	CS_DEFS.upgrade = {
 		fields: [
-			{ id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'Current CPU', icon: 'cpu' },
-			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'Current GPU', icon: 'gpu' },
+			{ id: 'cpu', type: 'select-hardware', source: 'cpu', other: true, label: 'Current CPU', icon: 'cpu' },
+			{ id: 'gpu', type: 'select-hardware', source: 'gpu', other: true, label: 'Current GPU', icon: 'gpu' },
 			{ id: 'ram', type: 'number', label: 'Current RAM (GB)', default: 16, min: 4, max: 256 },
 			{ id: 'storageType', type: 'select', label: 'Primary storage type', default: 'nvme', options: [
 				{ value: 'hdd', label: 'Hard disk drive (HDD)' }, { value: 'sata-ssd', label: 'SATA SSD' }, { value: 'nvme', label: 'NVMe SSD' }
@@ -1268,8 +1366,8 @@
 	/* ---- 10. CPU vs GPU Calculator ---- */
 	CS_DEFS['cpu-vs-gpu'] = {
 		fields: [
-			{ id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'CPU', icon: 'cpu' },
-			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
+			{ id: 'cpu', type: 'select-hardware', source: 'cpu', other: true, label: 'CPU', icon: 'cpu' },
+			{ id: 'gpu', type: 'select-hardware', source: 'gpu', other: true, label: 'GPU', icon: 'gpu' }
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];

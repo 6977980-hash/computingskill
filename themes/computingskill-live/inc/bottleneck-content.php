@@ -184,8 +184,15 @@ function cs_bn_gpu_step( $cpu, $gpu ) {
 	uasort( $gpus, function ( $a, $b ) {
 		return $a['score'] - $b['score'];
 	} );
+	// D4 (Oct 2026): the database now holds older cards (GTX 16, RTX 20/30,
+	// RX 6000) for owners of those parts. An upgrade suggestion should be a
+	// card people can still buy new, so only cards from the newest three
+	// release years in the data are suggested (2023-2025 today).
+	$newest = max( array_map( function ( $g ) {
+		return (int) $g['release_year'];
+	}, $gpus ) );
 	foreach ( $gpus as $g ) {
-		if ( $g['score'] <= $gpu['score'] ) {
+		if ( $g['score'] <= $gpu['score'] || (int) $g['release_year'] < $newest - 2 ) {
 			continue;
 		}
 		$r = cs_calculate_bottleneck( $cpu, $g );
@@ -243,7 +250,7 @@ function cs_bottleneck_verdict( $cpu_slug, $cpu, $gpu, $results ) {
 		$step = cs_bn_gpu_step( $cpu, $gpu );
 		if ( $step ) {
 			$p2 .= ' ' . sprintf(
-				__( 'If you want a stronger 1440p setup, the smallest step up in our database that uses most of the %1$s’s headroom at 1440p (under 15%% left) is the %2$s, which our engine rates as %3$s.', 'computingskill' ),
+				__( 'If you want a stronger 1440p setup, the smallest step up among current cards in our database that uses most of the %1$s’s headroom at 1440p (under 15%% left) is the %2$s, which our engine rates as %3$s.', 'computingskill' ),
 				$cpu['name'], $step['gpu']['name'], cs_bn_phrases( $step['results'] )
 			);
 		}

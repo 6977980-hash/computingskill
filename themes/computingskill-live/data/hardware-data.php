@@ -234,6 +234,147 @@ function cs_get_gpu_data() {
 			'tier' => 'High-end / 4K', 'score' => 79, 'release_year' => 2025,
 			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5070-family/',
 		),
+		// D4 (Oct 2026, deep audit 1.11): 17 popular GPUs added. Spec fields
+		// copied from each maker's own page, checked 17 Oct 2026. GTX 16 and
+		// RTX 20 cards: NVIDIA's compare page (the series pages carry no
+		// specs); GTX 1650 = original GDDR5 model, RTX 2060 = original 6GB.
+		// RTX 3060 Ti = GDDR6 model, RTX 3080 = 10GB model, RTX 4060 Ti = 8GB
+		// model. AMD figures from each product page (typical board power,
+		// "Minimum PSU Recommendation"). The RX 7900 GRE page lists no PSU
+		// figure, so 700W is used: AMD's figure for the RX 7800 XT, whose
+		// board power (263W) is about the same as the GRE's 260W. Arc B580
+		// and A750: Intel's specifications pages (TBP, graphics clock); the
+		// A750 page lists no PSU, so 600W is Intel's own minimum from its Arc
+		// support article (intel.com/content/www/us/en/support/articles/000094366/graphics.html).
+		// Release years for NVIDIA cards are not on their pages; they are the
+		// launch years. Scores on the same gaming index, placed from public
+		// review averages: RTX 3060 Ti a little below the RTX 5060, RTX 3070
+		// just under 50, RTX 3080 10GB a little above the RTX 4070, RTX 4060 Ti
+		// 8GB just above the RTX 5060, RX 6700 XT just under the RTX 3070,
+		// RX 6800 between the RX 7700 XT and RTX 4070, RX 7900 GRE level with
+		// the RTX 4070 Super, RX 9070 about 12% behind the RX 9070 XT, Arc B580
+		// a little above the RTX 4060, Arc A750 close to the RTX 3060, RTX 5050
+		// about level with the RTX 4060, GTX 1650 about half an RTX 3060. Under
+		// 50 is labelled 1080p (the Upgrade Calculator's 1440p GPU target).
+		'gtx-1650' => array(
+			'name' => 'GeForce GTX 1650', 'brand' => 'NVIDIA', 'architecture' => 'Turing',
+			'vram_gb' => 4, 'memory_type' => 'GDDR5', 'memory_bus' => 128, 'boost_clock_mhz' => 1665,
+			'tdp_w' => 75, 'cores' => 896, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 300,
+			'tier' => 'Entry / 1080p', 'score' => 17, 'release_year' => 2019,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/compare/?section=compare-16',
+		),
+		'gtx-1660-super' => array(
+			'name' => 'GeForce GTX 1660 Super', 'brand' => 'NVIDIA', 'architecture' => 'Turing',
+			'vram_gb' => 6, 'memory_type' => 'GDDR6', 'memory_bus' => 192, 'boost_clock_mhz' => 1785,
+			'tdp_w' => 125, 'cores' => 1408, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 450,
+			'tier' => 'Entry / 1080p', 'score' => 25, 'release_year' => 2019,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/compare/?section=compare-16',
+		),
+		'rtx-2060' => array(
+			'name' => 'GeForce RTX 2060 (6GB)', 'brand' => 'NVIDIA', 'architecture' => 'Turing',
+			'vram_gb' => 6, 'memory_type' => 'GDDR6', 'memory_bus' => 192, 'boost_clock_mhz' => 1680,
+			'tdp_w' => 160, 'cores' => 1920, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 500,
+			'tier' => 'Entry / 1080p', 'score' => 30, 'release_year' => 2019,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/compare/?section=compare-20',
+		),
+		'rtx-3060-ti' => array(
+			'name' => 'GeForce RTX 3060 Ti', 'brand' => 'NVIDIA', 'architecture' => 'Ampere',
+			'vram_gb' => 8, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 1670,
+			'tdp_w' => 200, 'cores' => 4864, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 600,
+			'tier' => 'Mainstream / 1080p', 'score' => 43, 'release_year' => 2020,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3060-3060ti/',
+		),
+		'rtx-3070' => array(
+			'name' => 'GeForce RTX 3070', 'brand' => 'NVIDIA', 'architecture' => 'Ampere',
+			'vram_gb' => 8, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 1730,
+			'tdp_w' => 220, 'cores' => 5888, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 650,
+			'tier' => 'Mainstream / 1080p', 'score' => 49, 'release_year' => 2020,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3070-3070ti/',
+		),
+		'rtx-3080' => array(
+			'name' => 'GeForce RTX 3080 (10GB)', 'brand' => 'NVIDIA', 'architecture' => 'Ampere',
+			'vram_gb' => 10, 'memory_type' => 'GDDR6X', 'memory_bus' => 320, 'boost_clock_mhz' => 1710,
+			'tdp_w' => 320, 'cores' => 8704, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 750,
+			'tier' => 'Mid-range / 1440p', 'score' => 57, 'release_year' => 2020,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3080-3080ti/',
+		),
+		'rtx-4060-ti' => array(
+			'name' => 'GeForce RTX 4060 Ti (8GB)', 'brand' => 'NVIDIA', 'architecture' => 'Ada Lovelace',
+			'vram_gb' => 8, 'memory_type' => 'GDDR6', 'memory_bus' => 128, 'boost_clock_mhz' => 2540,
+			'tdp_w' => 160, 'cores' => 4352, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 550,
+			'tier' => 'Mainstream / 1080p', 'score' => 46, 'release_year' => 2023,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/',
+		),
+		'rtx-5050' => array(
+			'name' => 'GeForce RTX 5050', 'brand' => 'NVIDIA', 'architecture' => 'Blackwell',
+			'vram_gb' => 8, 'memory_type' => 'GDDR6', 'memory_bus' => 128, 'boost_clock_mhz' => 2570,
+			'tdp_w' => 130, 'cores' => 2560, 'core_label' => 'CUDA Cores', 'recommended_psu_w' => 550,
+			'tier' => 'Entry / 1080p', 'score' => 37, 'release_year' => 2025,
+			'source_url' => 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5050/',
+		),
+		'rx-6600-xt' => array(
+			'name' => 'Radeon RX 6600 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 2',
+			'vram_gb' => 8, 'memory_type' => 'GDDR6', 'memory_bus' => 128, 'boost_clock_mhz' => 2589,
+			'tdp_w' => 160, 'cores' => 32, 'core_label' => 'Compute Units', 'recommended_psu_w' => 500,
+			'tier' => 'Entry / 1080p', 'score' => 38, 'release_year' => 2021,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6600-xt.html',
+		),
+		'rx-6650-xt' => array(
+			'name' => 'Radeon RX 6650 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 2',
+			'vram_gb' => 8, 'memory_type' => 'GDDR6', 'memory_bus' => 128, 'boost_clock_mhz' => 2635,
+			'tdp_w' => 180, 'cores' => 32, 'core_label' => 'Compute Units', 'recommended_psu_w' => 500,
+			'tier' => 'Entry / 1080p', 'score' => 40, 'release_year' => 2022,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6650-xt.html',
+		),
+		'rx-6700-xt' => array(
+			'name' => 'Radeon RX 6700 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 2',
+			'vram_gb' => 12, 'memory_type' => 'GDDR6', 'memory_bus' => 192, 'boost_clock_mhz' => 2581,
+			'tdp_w' => 230, 'cores' => 40, 'core_label' => 'Compute Units', 'recommended_psu_w' => 650,
+			'tier' => 'Mainstream / 1080p', 'score' => 47, 'release_year' => 2021,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6700-xt.html',
+		),
+		'rx-6800' => array(
+			'name' => 'Radeon RX 6800', 'brand' => 'AMD', 'architecture' => 'RDNA 2',
+			'vram_gb' => 16, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 2105,
+			'tdp_w' => 250, 'cores' => 60, 'core_label' => 'Compute Units', 'recommended_psu_w' => 650,
+			'tier' => 'Mid-range / 1440p', 'score' => 53, 'release_year' => 2020,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6800.html',
+		),
+		'rx-7600-xt' => array(
+			'name' => 'Radeon RX 7600 XT', 'brand' => 'AMD', 'architecture' => 'RDNA 3',
+			'vram_gb' => 16, 'memory_type' => 'GDDR6', 'memory_bus' => 128, 'boost_clock_mhz' => 2755,
+			'tdp_w' => 190, 'cores' => 32, 'core_label' => 'Compute Units', 'recommended_psu_w' => 600,
+			'tier' => 'Entry / 1080p', 'score' => 39, 'release_year' => 2024,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7600-xt.html',
+		),
+		'rx-7900-gre' => array(
+			'name' => 'Radeon RX 7900 GRE', 'brand' => 'AMD', 'architecture' => 'RDNA 3',
+			'vram_gb' => 16, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 2245,
+			'tdp_w' => 260, 'cores' => 80, 'core_label' => 'Compute Units', 'recommended_psu_w' => 700,
+			'tier' => 'Mid-range / 1440p', 'score' => 62, 'release_year' => 2023,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900-gre.html',
+		),
+		'rx-9070' => array(
+			'name' => 'Radeon RX 9070', 'brand' => 'AMD', 'architecture' => 'RDNA 4',
+			'vram_gb' => 16, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 2520,
+			'tdp_w' => 220, 'cores' => 56, 'core_label' => 'Compute Units', 'recommended_psu_w' => 650,
+			'tier' => 'High-end / 1440p', 'score' => 69, 'release_year' => 2025,
+			'source_url' => 'https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070.html',
+		),
+		'arc-b580' => array(
+			'name' => 'Intel Arc B580', 'brand' => 'Intel', 'architecture' => 'Xe2 (Battlemage)',
+			'vram_gb' => 12, 'memory_type' => 'GDDR6', 'memory_bus' => 192, 'boost_clock_mhz' => 2670,
+			'tdp_w' => 190, 'cores' => 20, 'core_label' => 'Xe-cores', 'recommended_psu_w' => 600,
+			'tier' => 'Mainstream / 1080p', 'score' => 41, 'release_year' => 2024,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html',
+		),
+		'arc-a750' => array(
+			'name' => 'Intel Arc A750', 'brand' => 'Intel', 'architecture' => 'Xe HPG (Alchemist)',
+			'vram_gb' => 8, 'memory_type' => 'GDDR6', 'memory_bus' => 256, 'boost_clock_mhz' => 2050,
+			'tdp_w' => 225, 'cores' => 28, 'core_label' => 'Xe-cores', 'recommended_psu_w' => 600,
+			'tier' => 'Entry / 1080p', 'score' => 33, 'release_year' => 2022,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/227954/intel-arc-a750-graphics/specifications.html',
+		),
 	);
 
 	return $gpus;
@@ -410,6 +551,111 @@ function cs_get_cpu_data() {
 			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM5', 'score' => 75, 'release_year' => 2024,
 			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-7-9700x.html',
 		),
+		// D4 (Oct 2026, deep audit 1.11): 15 popular CPUs added so owners of
+		// common parts can use the tools. Spec fields copied from each maker's
+		// own page, checked 17 Oct 2026 (AMD: product page, or for the
+		// 5700X3D and 3600 the AMD spec/support page, the same page type the
+		// 5600 and 5700X use; Intel: the specifications page). AMD max_power_w
+		// = default TDP x 1.35 (AMD's PPT rule, see the note above); Intel
+		// max_power_w = Maximum Turbo Power. Scores on the same gaming index,
+		// placed from public review averages: 7800X3D a step below the
+		// 9800X3D, 9950X3D level with it, 7600X3D between them and the
+		// non-X3D chips; 5800X3D about level with the 7600X, 5700X3D a little
+		// lower; i9-14900K about 18% behind the 9800X3D (TechSpot, see the
+		// file header); 265K close to the 285K; 9600X and 9900X with the
+		// 7600X/9700X; 7500F just under the 7600; 14400F a step above the
+		// 13400F; 12600K/12700K between the 13400F and the 13600K; 5800X a
+		// little above the 5700X; 3600 (Zen 2) well below the 5600.
+		'ryzen-7-7800x3d' => array(
+			'name' => 'AMD Ryzen 7 7800X3D', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series, 3D V-Cache)',
+			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 4.2, 'boost_clock_ghz' => 5.0,
+			'tdp_w' => 120, 'max_power_w' => 162, 'socket' => 'AM5', 'score' => 87, 'release_year' => 2023,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html',
+		),
+		'ryzen-5-7600x3d' => array(
+			'name' => 'AMD Ryzen 5 7600X3D', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series, 3D V-Cache)',
+			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 4.1, 'boost_clock_ghz' => 4.7,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM5', 'score' => 80, 'release_year' => 2024,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600x3d.html',
+		),
+		'ryzen-7-5800x3d' => array(
+			'name' => 'AMD Ryzen 7 5800X3D', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series, 3D V-Cache)',
+			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 3.4, 'boost_clock_ghz' => 4.5,
+			'tdp_w' => 105, 'max_power_w' => 142, 'socket' => 'AM4', 'score' => 70, 'release_year' => 2022,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-7-5800x3d.html',
+		),
+		'ryzen-7-5700x3d' => array(
+			'name' => 'AMD Ryzen 7 5700X3D', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series, 3D V-Cache)',
+			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 3.0, 'boost_clock_ghz' => 4.1,
+			'tdp_w' => 105, 'max_power_w' => 142, 'socket' => 'AM4', 'score' => 66, 'release_year' => 2024,
+			'source_url' => 'https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-7-5700x3d.html',
+		),
+		'ryzen-7-5800x' => array(
+			'name' => 'AMD Ryzen 7 5800X', 'brand' => 'AMD', 'generation' => 'Zen 3 (5000 Series)',
+			'cores' => 8, 'threads' => 16, 'base_clock_ghz' => 3.8, 'boost_clock_ghz' => 4.7,
+			'tdp_w' => 105, 'max_power_w' => 142, 'socket' => 'AM4', 'score' => 57, 'release_year' => 2020,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-7-5800x.html',
+		),
+		'ryzen-5-3600' => array(
+			'name' => 'AMD Ryzen 5 3600', 'brand' => 'AMD', 'generation' => 'Zen 2 (3000 Series)',
+			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 3.6, 'boost_clock_ghz' => 4.2,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM4', 'score' => 42, 'release_year' => 2019,
+			'source_url' => 'https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-3000-series/amd-ryzen-5-3600.html',
+		),
+		'ryzen-5-9600x' => array(
+			'name' => 'AMD Ryzen 5 9600X', 'brand' => 'AMD', 'generation' => 'Zen 5 (9000 Series)',
+			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 3.9, 'boost_clock_ghz' => 5.4,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM5', 'score' => 72, 'release_year' => 2024,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-5-9600x.html',
+		),
+		'ryzen-5-7500f' => array(
+			'name' => 'AMD Ryzen 5 7500F', 'brand' => 'AMD', 'generation' => 'Zen 4 (7000 Series)',
+			'cores' => 6, 'threads' => 12, 'base_clock_ghz' => 3.7, 'boost_clock_ghz' => 5.0,
+			'tdp_w' => 65, 'max_power_w' => 88, 'socket' => 'AM5', 'score' => 65, 'release_year' => 2023,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7500f.html',
+		),
+		'ryzen-9-9900x' => array(
+			'name' => 'AMD Ryzen 9 9900X', 'brand' => 'AMD', 'generation' => 'Zen 5 (9000 Series)',
+			'cores' => 12, 'threads' => 24, 'base_clock_ghz' => 4.4, 'boost_clock_ghz' => 5.6,
+			'tdp_w' => 120, 'max_power_w' => 162, 'socket' => 'AM5', 'score' => 75, 'release_year' => 2024,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9900x.html',
+		),
+		'ryzen-9-9950x3d' => array(
+			'name' => 'AMD Ryzen 9 9950X3D', 'brand' => 'AMD', 'generation' => 'Zen 5 (9000 Series, 3D V-Cache)',
+			'cores' => 16, 'threads' => 32, 'base_clock_ghz' => 4.3, 'boost_clock_ghz' => 5.7,
+			'tdp_w' => 170, 'max_power_w' => 230, 'socket' => 'AM5', 'score' => 94, 'release_year' => 2025,
+			'source_url' => 'https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x3d.html',
+		),
+		'core-i5-14400f' => array(
+			'name' => 'Intel Core i5-14400F', 'brand' => 'Intel', 'generation' => '14th Gen (Raptor Lake Refresh)',
+			'cores' => 10, 'threads' => 16, 'base_clock_ghz' => 2.5, 'boost_clock_ghz' => 4.7,
+			'tdp_w' => 65, 'max_power_w' => 148, 'socket' => 'LGA 1700', 'score' => 60, 'release_year' => 2024,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html',
+		),
+		'core-i5-12600k' => array(
+			'name' => 'Intel Core i5-12600K', 'brand' => 'Intel', 'generation' => '12th Gen (Alder Lake)',
+			'cores' => 10, 'threads' => 16, 'base_clock_ghz' => 3.7, 'boost_clock_ghz' => 4.9,
+			'tdp_w' => 125, 'max_power_w' => 150, 'socket' => 'LGA 1700', 'score' => 62, 'release_year' => 2021,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/134589/intel-core-i512600k-processor-20m-cache-up-to-4-90-ghz/specifications.html',
+		),
+		'core-i7-12700k' => array(
+			'name' => 'Intel Core i7-12700K', 'brand' => 'Intel', 'generation' => '12th Gen (Alder Lake)',
+			'cores' => 12, 'threads' => 20, 'base_clock_ghz' => 3.6, 'boost_clock_ghz' => 5.0,
+			'tdp_w' => 125, 'max_power_w' => 190, 'socket' => 'LGA 1700', 'score' => 66, 'release_year' => 2021,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/134594/intel-core-i712700k-processor-25m-cache-up-to-5-00-ghz/specifications.html',
+		),
+		'core-i9-14900k' => array(
+			'name' => 'Intel Core i9-14900K', 'brand' => 'Intel', 'generation' => '14th Gen (Raptor Lake Refresh)',
+			'cores' => 24, 'threads' => 32, 'base_clock_ghz' => 3.2, 'boost_clock_ghz' => 6.0,
+			'tdp_w' => 125, 'max_power_w' => 253, 'socket' => 'LGA 1700', 'score' => 81, 'release_year' => 2023,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html',
+		),
+		'core-ultra-7-265k' => array(
+			'name' => 'Intel Core Ultra 7 265K', 'brand' => 'Intel', 'generation' => 'Arrow Lake (Core Ultra 200S)',
+			'cores' => 20, 'threads' => 20, 'base_clock_ghz' => 3.9, 'boost_clock_ghz' => 5.5,
+			'tdp_w' => 125, 'max_power_w' => 250, 'socket' => 'LGA 1851', 'score' => 75, 'release_year' => 2024,
+			'source_url' => 'https://www.intel.com/content/www/us/en/products/sku/241063/intel-core-ultra-7-processor-265k-30m-cache-up-to-5-50-ghz/specifications.html',
+		),
 	);
 
 	return $cpus;
@@ -502,5 +748,74 @@ function cs_get_bottleneck_pairs() {
 		array( 'cpu' => 'ryzen-7-9800x3d', 'gpu' => 'rtx-5070-ti' ),
 		array( 'cpu' => 'ryzen-7-9800x3d', 'gpu' => 'rtx-5080' ),
 		array( 'cpu' => 'ryzen-7-9800x3d', 'gpu' => 'rtx-5090' ),
+		// Batch 4 (D4, Oct 2026, deep audit 5.5): pairs people search for
+		// with the D4 parts: 5600X with current mid-range cards, X3D builds,
+		// and popular older GPUs (RTX 3060 Ti / 3070 / 2060, GTX 1660 Super,
+		// RX 6700 XT) with the budget CPUs they are usually paired with.
+		array( 'cpu' => 'ryzen-5-5600x', 'gpu' => 'rtx-5060' ),
+		array( 'cpu' => 'ryzen-5-5600x', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-5-5600x', 'gpu' => 'rx-9060-xt' ),
+		array( 'cpu' => 'ryzen-5-5600x', 'gpu' => 'rtx-3060-ti' ),
+		array( 'cpu' => 'ryzen-5-5600x', 'gpu' => 'rx-6700-xt' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rtx-3060-ti' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rtx-3070' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rx-6700-xt' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rx-6650-xt' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'arc-b580' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rtx-5050' ),
+		array( 'cpu' => 'ryzen-5-5600', 'gpu' => 'rtx-2060' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'rtx-3060-ti' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'rx-6700-xt' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'arc-b580' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'gtx-1660-super' ),
+		array( 'cpu' => 'core-i5-12400f', 'gpu' => 'rtx-4060-ti' ),
+		array( 'cpu' => 'core-i3-12100f', 'gpu' => 'gtx-1650' ),
+		array( 'cpu' => 'core-i3-12100f', 'gpu' => 'arc-a750' ),
+		array( 'cpu' => 'core-i3-12100f', 'gpu' => 'rtx-5050' ),
+		array( 'cpu' => 'ryzen-5-3600', 'gpu' => 'rtx-3060' ),
+		array( 'cpu' => 'ryzen-5-3600', 'gpu' => 'rtx-4060' ),
+		array( 'cpu' => 'ryzen-5-3600', 'gpu' => 'gtx-1660-super' ),
+		array( 'cpu' => 'ryzen-5-3600', 'gpu' => 'rx-6600' ),
+		array( 'cpu' => 'ryzen-7-5700x3d', 'gpu' => 'rtx-4070-super' ),
+		array( 'cpu' => 'ryzen-7-5700x3d', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-7-5700x3d', 'gpu' => 'rx-9070-xt' ),
+		array( 'cpu' => 'ryzen-7-5700x3d', 'gpu' => 'rx-6800' ),
+		array( 'cpu' => 'ryzen-7-5800x3d', 'gpu' => 'rtx-4080' ),
+		array( 'cpu' => 'ryzen-7-5800x3d', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'ryzen-7-5800x3d', 'gpu' => 'rtx-4090' ),
+		array( 'cpu' => 'ryzen-7-5800x', 'gpu' => 'rtx-3070' ),
+		array( 'cpu' => 'ryzen-7-5800x', 'gpu' => 'rtx-3080' ),
+		array( 'cpu' => 'ryzen-7-7800x3d', 'gpu' => 'rtx-4070-super' ),
+		array( 'cpu' => 'ryzen-7-7800x3d', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-7-7800x3d', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'ryzen-7-7800x3d', 'gpu' => 'rx-9070-xt' ),
+		array( 'cpu' => 'ryzen-7-7800x3d', 'gpu' => 'rtx-5080' ),
+		array( 'cpu' => 'ryzen-7-7800x3d', 'gpu' => 'rtx-4090' ),
+		array( 'cpu' => 'ryzen-5-7600x3d', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-5-7600x3d', 'gpu' => 'rx-9070' ),
+		array( 'cpu' => 'ryzen-5-9600x', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'ryzen-5-9600x', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'ryzen-5-9600x', 'gpu' => 'rx-9070' ),
+		array( 'cpu' => 'ryzen-5-7500f', 'gpu' => 'rtx-4060-ti' ),
+		array( 'cpu' => 'ryzen-5-7500f', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'ryzen-5-7500f', 'gpu' => 'rx-7800-xt' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rx-7600-xt' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rx-7900-gre' ),
+		array( 'cpu' => 'ryzen-5-7600', 'gpu' => 'rx-9070' ),
+		array( 'cpu' => 'core-i5-14400f', 'gpu' => 'rtx-4060-ti' ),
+		array( 'cpu' => 'core-i5-14400f', 'gpu' => 'rtx-5060-ti' ),
+		array( 'cpu' => 'core-i5-14400f', 'gpu' => 'rtx-5070' ),
+		array( 'cpu' => 'core-i5-14400f', 'gpu' => 'rx-9060-xt' ),
+		array( 'cpu' => 'core-i5-12600k', 'gpu' => 'rtx-3070' ),
+		array( 'cpu' => 'core-i5-12600k', 'gpu' => 'rtx-4070' ),
+		array( 'cpu' => 'core-i5-12600k', 'gpu' => 'rtx-4070-super' ),
+		array( 'cpu' => 'core-i7-12700k', 'gpu' => 'rtx-3080' ),
+		array( 'cpu' => 'core-i7-12700k', 'gpu' => 'rtx-4070-super' ),
+		array( 'cpu' => 'core-i9-14900k', 'gpu' => 'rtx-4090' ),
+		array( 'cpu' => 'core-i9-14900k', 'gpu' => 'rtx-5090' ),
+		array( 'cpu' => 'core-ultra-7-265k', 'gpu' => 'rtx-5070-ti' ),
+		array( 'cpu' => 'core-ultra-7-265k', 'gpu' => 'rtx-5080' ),
+		array( 'cpu' => 'ryzen-9-9900x', 'gpu' => 'rtx-5080' ),
+		array( 'cpu' => 'ryzen-9-9950x3d', 'gpu' => 'rtx-5090' ),
 	);
 }
