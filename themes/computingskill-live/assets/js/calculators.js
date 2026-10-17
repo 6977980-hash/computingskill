@@ -584,6 +584,10 @@
 	 * Calculator definitions
 	 * ---------------------------------------------------------------- */
 
+	// D2 (Oct 2026, audit 6.9): one wording for every result built on the
+	// hardware scores, so no tool implies the scores are measured in-house.
+	var SCORE_NOTE = 'the scores are ComputingSkill’s own gaming-performance index, placed from published third-party review averages. We don’t benchmark parts ourselves (<a href="/methodology/">how the scores work</a>).';
+
 	var RES_LABELS = { '1080p': '1080p (Full HD)', '1440p': '1440p (QHD)', '4k': '4K (UHD)' };
 
 	// Phase 2 audit fix (Oct 2026): per-resolution engine. Must stay identical
@@ -701,7 +705,7 @@
 				[ '1440p', bnLabel( all[ '1440p' ] ) ],
 				[ '4K', bnLabel( all[ '4k' ] ) ]
 			];
-			return bnVisual( all, v.resolution ) + resultBlock( verdict, rows, 'bottleneck estimates use relative specs-based performance scores, not per-game benchmarks.' );
+			return bnVisual( all, v.resolution ) + resultBlock( verdict, rows, 'this is a general estimate, not a per-game benchmark; ' + SCORE_NOTE );
 		}
 	};
 
@@ -770,7 +774,7 @@
 				[ 'GPU vendor’s own recommended PSU', manufacturerRec ? manufacturerRec + 'W' : '—' ],
 				[ 'CPU (' + cpu.name + ', max turbo/boost power)', cpu.max + 'W' ]
 			];
-			return resultBlock( 'Get at least a <strong>' + recommended + 'W</strong> power supply from a reputable brand with 80+ Bronze certification or better.', rows );
+			return resultBlock( 'Get at least a <strong>' + recommended + 'W</strong> power supply from a reputable brand with 80+ Bronze certification or better.', rows, 'the load is a tally of rated TDP, the CPU’s max turbo/boost power and fixed allowances for the rest of the system, not a wall-meter reading. Also check that the PSU has the power connectors your graphics card needs.' );
 		}
 	};
 
@@ -820,26 +824,72 @@
 	};
 
 	/* ---- 4. PC Build Cost Calculator ---- */
+	// D2 (Oct 2026, audit 1.14/1.15): the page promised a percentage
+	// breakdown and a budget comparison the tool didn't have. Shares are of
+	// the PC parts subtotal (the page's worked example: GPU $400 of $1,040 =
+	// 38%); peripherals and tax/shipping are added to the total but kept out
+	// of the split so they don't skew the part balance. No max caps: with a
+	// currency choice, a realistic ceiling in dollars is wrong in rupees.
+	var BUILD_PARTS = [
+		[ 'cpu', 'CPU' ], [ 'gpu', 'GPU' ], [ 'motherboard', 'Motherboard' ], [ 'ram', 'RAM' ],
+		[ 'storage', 'Storage' ], [ 'psu', 'PSU' ], [ 'caseP', 'Case' ], [ 'cooler', 'Cooler' ]
+	];
 	CS_DEFS['build-cost'] = {
 		fields: [
-			{ id: 'cpu', type: 'number', label: 'CPU price ($)', default: 0, min: 0, max: 5000, required: false },
-			{ id: 'gpu', type: 'number', label: 'GPU price ($)', default: 0, min: 0, max: 5000, required: false },
-			{ id: 'motherboard', type: 'number', label: 'Motherboard price ($)', default: 0, min: 0, max: 2000, required: false },
-			{ id: 'ram', type: 'number', label: 'RAM price ($)', default: 0, min: 0, max: 1500, required: false },
-			{ id: 'storage', type: 'number', label: 'Storage price ($)', default: 0, min: 0, max: 3000, required: false },
-			{ id: 'psu', type: 'number', label: 'PSU price ($)', default: 0, min: 0, max: 1000, required: false },
-			{ id: 'caseP', type: 'number', label: 'Case price ($)', default: 0, min: 0, max: 1000, required: false },
-			{ id: 'cooler', type: 'number', label: 'Cooler price ($)', default: 0, min: 0, max: 1000, required: false },
-			{ id: 'extras', type: 'number', label: 'Peripherals / monitor / other ($)', default: 0, min: 0, max: 10000, required: false }
+			{ id: 'currency', type: 'select', label: 'Currency', default: 'USD', options: [
+				{ value: 'USD', label: 'US dollar ($)' }, { value: 'EUR', label: 'Euro (€)' }, { value: 'GBP', label: 'British pound (£)' },
+				{ value: 'CAD', label: 'Canadian dollar (C$)' }, { value: 'AUD', label: 'Australian dollar (A$)' },
+				{ value: 'INR', label: 'Indian rupee (₹)' }, { value: 'PKR', label: 'Pakistani rupee (Rs)' }
+			], help: 'Only changes the symbol shown; the calculator doesn’t convert prices.' },
+			{ id: 'budget', type: 'number', label: 'Your total budget (optional)', min: 0, required: false, blankValue: 0, placeholder: 'e.g. 1200' },
+			{ id: 'cpu', type: 'number', label: 'CPU price', default: 0, min: 0, required: false },
+			{ id: 'gpu', type: 'number', label: 'GPU price', default: 0, min: 0, required: false },
+			{ id: 'motherboard', type: 'number', label: 'Motherboard price', default: 0, min: 0, required: false },
+			{ id: 'ram', type: 'number', label: 'RAM price', default: 0, min: 0, required: false },
+			{ id: 'storage', type: 'number', label: 'Storage price', default: 0, min: 0, required: false },
+			{ id: 'psu', type: 'number', label: 'PSU price', default: 0, min: 0, required: false },
+			{ id: 'caseP', type: 'number', label: 'Case price', default: 0, min: 0, required: false },
+			{ id: 'cooler', type: 'number', label: 'Cooler price', default: 0, min: 0, required: false },
+			{ id: 'extras', type: 'number', label: 'Peripherals / monitor / OS / other', default: 0, min: 0, required: false },
+			{ id: 'taxShipping', type: 'number', label: 'Tax and shipping', default: 0, min: 0, required: false }
 		],
 		compute: function ( v ) {
-			var total = v.cpu + v.gpu + v.motherboard + v.ram + v.storage + v.psu + v.caseP + v.cooler + v.extras;
-			var rows = [
-				[ 'CPU', '$' + fmt( v.cpu, 2 ) ], [ 'GPU', '$' + fmt( v.gpu, 2 ) ], [ 'Motherboard', '$' + fmt( v.motherboard, 2 ) ],
-				[ 'RAM', '$' + fmt( v.ram, 2 ) ], [ 'Storage', '$' + fmt( v.storage, 2 ) ], [ 'PSU', '$' + fmt( v.psu, 2 ) ],
-				[ 'Case', '$' + fmt( v.caseP, 2 ) ], [ 'Cooler', '$' + fmt( v.cooler, 2 ) ], [ 'Extras', '$' + fmt( v.extras, 2 ) ]
-			];
-			return resultBlock( 'Estimated total build cost: <strong>$' + fmt( total, 2 ) + '</strong>', rows, false );
+			var sym = { USD: '$', EUR: '€', GBP: '£', CAD: 'C$', AUD: 'A$', INR: '₹', PKR: 'Rs ' }[ v.currency ] || '$';
+			var money = function ( n ) { return sym + fmt( n, 2 ); };
+			var parts = BUILD_PARTS.reduce( function ( sum, p ) { return sum + v[ p[ 0 ] ]; }, 0 );
+			var total = parts + v.extras + v.taxShipping;
+			if ( total <= 0 ) {
+				throw { msg: 'Enter the price of at least one part to total your build.' };
+			}
+			var pct = function ( n ) { return parts > 0 ? n / parts * 100 : 0; };
+			var rows = BUILD_PARTS.map( function ( p ) {
+				var n = v[ p[ 0 ] ];
+				return [ p[ 1 ], money( n ) + ( parts > 0 ? ' (' + fmt( pct( n ), 0 ) + '%)' : '' ) ];
+			} );
+			rows.push( [ 'PC parts subtotal', money( parts ) + ' (100%)' ] );
+			if ( v.extras ) {
+				rows.push( [ 'Peripherals / other (not in the % split)', money( v.extras ) ] );
+			}
+			if ( v.taxShipping ) {
+				rows.push( [ 'Tax and shipping (not in the % split)', money( v.taxShipping ) ] );
+			}
+			rows.push( [ 'Total build cost', '<strong>' + money( total ) + '</strong>' ] );
+			if ( parts > 0 ) {
+				// The page's general guide: GPU about a quarter to a third of a
+				// gaming build, CPU + motherboard + RAM a comparable share.
+				var gpuShare = Math.round( pct( v.gpu ) );
+				var guide = gpuShare < 25 ? 'below' : gpuShare > 33 ? 'above' : 'within';
+				rows.push( [ 'GPU share vs the usual 25–33% gaming guide', fmt( gpuShare, 0 ) + '%, ' + guide + ' that range' ] );
+				rows.push( [ 'CPU + motherboard + RAM share', money( v.cpu + v.motherboard + v.ram ) + ' (' + fmt( pct( v.cpu + v.motherboard + v.ram ), 0 ) + '%)' ] );
+			}
+			var headline = 'Estimated total build cost: <strong>' + money( total ) + '</strong>';
+			if ( v.budget > 0 ) {
+				var left = v.budget - total;
+				rows.push( [ 'Your budget', money( v.budget ) ] );
+				rows.push( left >= 0 ? [ 'Left in your budget', money( left ) ] : [ 'Over your budget by', money( -left ) ] );
+				headline += left >= 0 ? ', leaving <strong>' + money( left ) + '</strong> of your ' + money( v.budget ) + ' budget.' : ', <strong>' + money( -left ) + ' over</strong> your ' + money( v.budget ) + ' budget.';
+			}
+			return resultBlock( headline, rows, 'the total only adds up the prices you enter (no live prices), and the 25–33% GPU range is a general guide for gaming builds, not a rule.' );
 		}
 	};
 
@@ -902,7 +952,7 @@
 				rows.push( [ game.name + ' — publisher recommended', escapeHtml( game.rec.cpu + ' · ' + game.rec.gpu + ' · ' + game.rec.ram + 'GB RAM' ) ] );
 				rows.push( [ 'Full requirements', '<a href="' + escapeHtml( game.url ) + '">' + escapeHtml( game.name ) + ' system requirements</a>' ] );
 			}
-			return resultBlock( 'Estimated average: <strong>' + Math.round( estimate ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( game ? ' — a general estimate for this hardware, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers.' );
+			return resultBlock( 'Estimated average: <strong>' + Math.round( estimate ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( game ? ' — a general estimate for this hardware, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers; ' + SCORE_NOTE );
 		}
 	};
 
@@ -936,7 +986,7 @@
 				[ 'Recommended RAM (kit size)', suggestedKit + ' GB' ],
 				[ 'Typical setup', ( suggestedKit / 2 ) + ' GB × 2 sticks (dual channel)' ]
 			];
-			return resultBlock( 'We recommend at least <strong>' + suggestedKit + 'GB</strong> of RAM for this use case.', rows );
+			return resultBlock( 'We recommend at least <strong>' + suggestedKit + 'GB</strong> of RAM for this use case.', rows, 'a general guideline for each use case, not measured memory use. Some games, mods and large projects need more.' );
 		}
 	};
 
@@ -1066,7 +1116,7 @@
 
 			var allPass = checks.every( function ( c ) { return c[ 1 ]; } );
 			var rows = checks.map( function ( c ) { return [ c[ 0 ], c[ 2 ] ]; } );
-			return resultBlock( allPass ? '<strong>✅ These components look compatible.</strong>' : '<strong>⚠ One or more compatibility issues found — see below.</strong>', rows );
+			return resultBlock( allPass ? '<strong>✅ These components look compatible.</strong>' : '<strong>⚠ One or more compatibility issues found — see below.</strong>', rows, 'only the checks listed above are made. Also confirm BIOS support for your CPU, cooler height, and the power connectors on the motherboard and PSU on each manufacturer’s spec page.' );
 		}
 	};
 
@@ -1110,7 +1160,7 @@
 			if ( comfy > needed && comfyMatches.length && comfyMatches.join() !== matches.join() ) {
 				rows.push( [ 'GPUs with comfortable headroom', comfyMatches.join( ', ' ) ] );
 			}
-			return resultBlock( 'You need at least <strong>' + needed + 'GB</strong> of VRAM for this scenario' + ( comfy > needed ? ', and <strong>' + comfy + 'GB</strong> gives comfortable headroom.' : ', which also gives comfortable headroom.' ), rows );
+			return resultBlock( 'You need at least <strong>' + needed + 'GB</strong> of VRAM for this scenario' + ( comfy > needed ? ', and <strong>' + comfy + 'GB</strong> gives comfortable headroom.' : ', which also gives comfortable headroom.' ), rows, 'based on typical VRAM use at these settings, not a measurement of a specific game. High-resolution texture packs and mods can use more.' );
 		}
 	};
 
@@ -1138,7 +1188,7 @@
 				var c = all[ '1080p' ].component;
 				headline = c === 'balanced' ? 'This pair is well matched at every resolution.' : ( c === 'cpu' ? 'The CPU is the more likely limit at every resolution.' : 'The GPU is the more likely limit at every resolution.' );
 			}
-			return resultBlock( 'For this pair: ' + headline + ' See the resolution breakdown below.', rows );
+			return resultBlock( 'For this pair: ' + headline + ' See the resolution breakdown below.', rows, 'a general estimate, not a per-game benchmark; ' + SCORE_NOTE );
 		}
 	};
 
@@ -1154,7 +1204,7 @@
 				[ 'Cores / Threads', cpu.cores + ' / ' + cpu.threads ], [ 'Base / Boost clock', cpu.base_clock_ghz + ' GHz / ' + cpu.boost_clock_ghz + ' GHz' ],
 				[ 'TDP', cpu.tdp_w + 'W' ], [ 'Socket', cpu.socket ]
 			];
-			return resultBlock( cpu.name + ' is a <strong>' + tier + '</strong> CPU.', rows, 'the score is a gaming-performance index; heavily multi-threaded work can rank CPUs differently.' );
+			return resultBlock( cpu.name + ' is a <strong>' + tier + '</strong> CPU.', rows, 'heavily multi-threaded work such as video export can rank CPUs differently; ' + SCORE_NOTE );
 		}
 	};
 
@@ -1168,7 +1218,7 @@
 				[ 'VRAM', gpu.vram_gb + 'GB ' + gpu.memory_type ], [ 'Memory bus', gpu.memory_bus + '-bit' ],
 				[ 'TDP', gpu.tdp_w + 'W' ], [ 'Recommended PSU', gpu.recommended_psu_w + 'W+' ]
 			];
-			return resultBlock( gpu.name + ' is rated as <strong>' + gpu.tier + '</strong>.', rows );
+			return resultBlock( gpu.name + ' is rated as <strong>' + gpu.tier + '</strong>.', rows, 'ray tracing, VRAM limits and per-game optimization can change how cards compare; ' + SCORE_NOTE );
 		}
 	};
 
@@ -1207,7 +1257,7 @@
 				[ 'Recommended CPU cooler', cpuCooler ],
 				[ 'Recommended case fan setup', caseFans ]
 			];
-			return resultBlock( 'Based on a combined heat load of <strong>' + fmt( totalTdp, 0 ) + 'W</strong>, here is what we recommend:', rows );
+			return resultBlock( 'Based on a combined heat load of <strong>' + fmt( totalTdp, 0 ) + 'W</strong>, here is what we recommend:', rows, 'sized from the CPU’s max turbo/boost power and the GPU’s rated TDP. Case airflow, room temperature and how quiet you want the PC change what is enough.' );
 		}
 	};
 
@@ -1246,7 +1296,7 @@
 				if ( 'full' === v.load && 'cpu' === source && part.max_power_w ) {
 					rows.push( [ 'Manufacturer’s max turbo/boost power spec', part.max_power_w + 'W' ] );
 				}
-				return resultBlock( 'At ' + v.load + ' load, the ' + part.name + ' draws roughly <strong>' + fmt( watts, 0 ) + 'W</strong>.', rows );
+				return resultBlock( 'At ' + v.load + ' load, the ' + part.name + ' draws roughly <strong>' + fmt( watts, 0 ) + 'W</strong>.', rows, 'cpu' === source ? 'idle and gaming are shares of the rated TDP, and full load uses the manufacturer’s max turbo/boost power. Real draw depends on board power limits, cooling and the workload.' : 'idle and gaming are shares of the rated board power, and full load adds about 8% for boost spikes. Real draw depends on the card model, power limits and the game.' );
 			}
 		};
 	}

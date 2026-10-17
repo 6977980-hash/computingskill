@@ -277,7 +277,7 @@ function cs_editorial_policy_html() {
 	printf( esc_html__( 'Hardware specifications come from manufacturers’ published information, and game requirements from the publishers’ official listings. Where a publisher gives only a minimum spec, the page labels any higher spec as our own suggestion. Each calculator’s formula and data sources are set out on the %s page.', 'computingskill' ), cs_policy_link( 'methodology', __( 'Methodology', 'computingskill' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 ?></p>
 <h2><?php esc_html_e( 'Estimates, clearly labelled', 'computingskill' ); ?></h2>
-<p><?php esc_html_e( 'We don’t run a hardware lab or benchmark physical parts. Results are estimates built from specifications and stated formulas, and we label them that way wherever a number appears. We don’t invent statistics, benchmark figures, user counts or reviews.', 'computingskill' ); ?></p>
+<p><?php esc_html_e( 'We don’t run a hardware lab or benchmark physical parts. Results are estimates built from manufacturer specifications and stated formulas, and we label them that way wherever a number appears. The CPU and GPU performance scores behind the bottleneck, FPS and performance calculators are our own gaming index, placed from publicly reported third-party review averages. We don’t invent statistics, benchmark figures, user counts or reviews.', 'computingskill' ); ?></p>
 <h2><?php esc_html_e( 'Independence', 'computingskill' ); ?></h2>
 <p><?php esc_html_e( 'The site carries no ads, affiliate links or sponsored placements, and it is not affiliated with any hardware maker. No company pays to appear in, or to be ranked by, a calculator or comparison.', 'computingskill' ); ?></p>
 <h2><?php esc_html_e( 'Original writing', 'computingskill' ); ?></h2>
