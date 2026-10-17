@@ -88,8 +88,11 @@ function cs_url_guards() {
 	}
 
 	// 2.5 Attachment URLs under the wrong parent.
-	if ( preg_match( '#^(.*)/attachment/[^/]+/?$#i', $path, $m ) && is_attachment() ) {
-		$parent = (int) get_post_field( 'post_parent', get_queried_object_id() );
+	// Live, /fps-calculator/attachment/1/ did not come out as an attachment
+	// query at all (yet still redirected), so any /attachment/ URL that is
+	// not the attachment of the page it sits under is a 404.
+	if ( preg_match( '#^(.*)/attachment/[^/]+/?$#i', $path, $m ) ) {
+		$parent = is_attachment() ? (int) get_post_field( 'post_parent', get_queried_object_id() ) : 0;
 		$expect = $parent ? untrailingslashit( (string) wp_parse_url( get_permalink( $parent ), PHP_URL_PATH ) ) : '';
 		if ( '' === $expect || strtolower( untrailingslashit( $m[1] ) ) !== strtolower( $expect ) ) {
 			cs_force_404();
