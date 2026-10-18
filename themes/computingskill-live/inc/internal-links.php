@@ -356,14 +356,25 @@ function cs_il_posts_for_cpu( $cpu_slug ) {
 /**
  * Combo page: links to the hardware explainers next to the spec lists.
  */
-function cs_il_combo_specs_links( $gpu ) {
+function cs_il_combo_specs_links( $gpu, $cpu_slug = '', $gpu_slug = '', $cpu = null ) {
 	$links = array(
 		'<a href="' . esc_url( home_url( '/cpu/' ) ) . '">' . esc_html__( 'what CPU cores, clocks and TDP mean', 'computingskill' ) . '</a>',
 		'<a href="' . esc_url( home_url( '/gpu/' ) ) . '">' . esc_html__( 'how a graphics card works', 'computingskill' ) . '</a>',
 		'<a href="' . esc_url( home_url( '/vram/' ) ) . '">' . esc_html( sprintf( __( 'what %dGB of VRAM is for', 'computingskill' ), (int) $gpu['vram_gb'] ) ) . '</a>',
 		'<a href="' . esc_url( home_url( '/psu/' ) ) . '">' . esc_html__( 'how PSU ratings work', 'computingskill' ) . '</a>',
 	);
-	return '<p class="cs-bn-learn">' . esc_html__( 'New to these specs? Read', 'computingskill' ) . ' ' . cs_bn_join( $links ) . '.</p>';
+	$html = '<p class="cs-bn-learn">' . esc_html__( 'New to these specs? Read', 'computingskill' ) . ' ' . cs_bn_join( $links ) . '.</p>';
+	// D10 (5.4): each part's own page.
+	if ( $cpu && function_exists( 'cs_pp_part_url' ) && ( cs_pp_part_url( $cpu_slug ) || cs_pp_part_url( $gpu_slug ) ) ) {
+		$parts = array();
+		foreach ( array( array( $cpu_slug, $cpu ), array( $gpu_slug, $gpu ) ) as $p ) {
+			if ( cs_pp_part_url( $p[0] ) ) {
+				$parts[] = cs_pp_part_link( $p[0], $p[1], sprintf( __( 'the %s page', 'computingskill' ), cs_bn_short_name( $p[1]['name'] ) ) );
+			}
+		}
+		$html .= '<p class="cs-bn-learn">' . esc_html__( 'Full specs, other pairings and PSU advice for each part:', 'computingskill' ) . ' ' . cs_bn_join( $parts ) . '.</p>';
+	}
+	return $html;
 }
 
 /**
@@ -453,6 +464,8 @@ function cs_il_game_combos_html( $slug, $g ) {
 		</div>
 		<p>
 			<a href="<?php echo esc_url( $fps ); ?>" rel="nofollow"><?php echo esc_html( sprintf( __( 'Estimate %s FPS for your own CPU and GPU', 'computingskill' ), $g['name'] ) ); ?></a>
+			&middot;
+			<a href="<?php echo esc_url( home_url( '/can-i-run-it/' ) ); ?>"><?php esc_html_e( 'Check every game against your PC', 'computingskill' ); ?></a>
 			&middot;
 			<a href="<?php echo esc_url( home_url( '/bottleneck/' ) ); ?>"><?php esc_html_e( 'All CPU + GPU comparisons', 'computingskill' ); ?></a>
 		</p>

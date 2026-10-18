@@ -38,6 +38,8 @@ require_once CS_THEME_DIR . '/inc/combo-pages.php';
 require_once CS_THEME_DIR . '/inc/blog.php';
 require_once CS_THEME_DIR . '/inc/internal-links.php';
 require_once CS_THEME_DIR . '/inc/tier-list.php';
+require_once CS_THEME_DIR . '/inc/part-pages.php';
+require_once CS_THEME_DIR . '/inc/d10-pages.php';
 require_once CS_THEME_DIR . '/inc/aeo.php';
 require_once CS_THEME_DIR . '/inc/contact-form.php';
 require_once CS_THEME_DIR . '/inc/redirects.php';

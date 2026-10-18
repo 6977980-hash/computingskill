@@ -36,7 +36,8 @@ function cs_content_index_groups() {
 				array( 'slug' => 'cpu-performance-calculator', 'title' => __( 'CPU Performance Calculator', 'computingskill' ), 'desc' => __( 'Estimate a CPU\'s relative performance tier from its cores, clock speeds, and generation to see where it stands for gaming or work.', 'computingskill' ) ),
 				array( 'slug' => 'cpu-power-consumption-calculator', 'title' => __( 'CPU Power Consumption Calculator', 'computingskill' ), 'desc' => __( 'Estimate how much power your CPU actually draws at idle, typical, and full load compared to its rated TDP.', 'computingskill' ) ),
 				array( 'slug' => 'cpu-vs-gpu-calculator', 'title' => __( 'CPU vs GPU Calculator', 'computingskill' ), 'desc' => __( 'Put a CPU\'s and a GPU\'s scores side by side with the balance at 1080p, 1440p and 4K, without game or settings inputs.', 'computingskill' ) ),
-				array( 'slug' => 'fps-calculator', 'title' => __( 'FPS Calculator', 'computingskill' ), 'desc' => __( 'Get an estimated frames-per-second range for a CPU and GPU pairing at your chosen resolution, settings and game type.', 'computingskill' ) ),
+				array( 'slug' => 'can-i-run-it', 'title' => __( 'Can I Run It?', 'computingskill' ), 'desc' => __( 'Pick your CPU, graphics card and RAM to see which games your PC runs, at which settings and roughly how many FPS.', 'computingskill' ) ),
+				array( 'slug' => 'fps-calculator', 'title' => __( 'FPS Calculator', 'computingskill' ), 'desc' => __( 'Get an estimated frames-per-second range for a CPU and GPU pairing at your chosen resolution, settings, game type, upscaling and frame generation.', 'computingskill' ) ),
 				array( 'slug' => 'gpu-performance-calculator', 'title' => __( 'GPU Performance Calculator', 'computingskill' ), 'desc' => __( 'Estimate a graphics card\'s relative performance tier from its cores, clock speed, and architecture to compare GPUs quickly.', 'computingskill' ) ),
 				array( 'slug' => 'gpu-power-consumption-calculator', 'title' => __( 'GPU Power Consumption Calculator', 'computingskill' ), 'desc' => __( 'Estimate how much power your graphics card actually draws at idle, typical gaming, and full load compared to its rated TDP.', 'computingskill' ) ),
 				array( 'slug' => 'gpu-vram-calculator', 'title' => __( 'GPU VRAM Calculator', 'computingskill' ), 'desc' => __( 'Estimate how much GPU VRAM you need for your resolution, settings, and ray tracing preferences before you buy a graphics card.', 'computingskill' ) ),
@@ -124,6 +125,8 @@ function cs_content_index_groups() {
 				array( 'slug' => 'how-to-choose-a-gaming-gpu', 'title' => __( 'How to Choose a Gaming GPU', 'computingskill' ), 'desc' => __( 'A balanced, practical framework for choosing a gaming GPU by budget, resolution, VRAM, and power needs, AMD vs NVIDIA.', 'computingskill' ) ),
 				array( 'slug' => 'how-to-choose-a-psu', 'title' => __( 'How to Choose a PSU', 'computingskill' ), 'desc' => __( 'How to choose a PC power supply: wattage headroom, 80+ efficiency ratings, modular cables, and modern GPU connectors.', 'computingskill' ) ),
 				array( 'slug' => 'how-to-improve-fps', 'title' => __( 'How to Improve FPS on Your PC', 'computingskill' ), 'desc' => __( 'Practical software and hardware fixes to improve FPS on your gaming PC, from graphics settings to component upgrades.', 'computingskill' ) ),
+				array( 'slug' => 'dlss-fsr-frame-generation-explained', 'title' => __( 'DLSS vs FSR vs XeSS: Upscaling and Frame Generation', 'computingskill' ), 'desc' => __( 'How upscaling and frame generation work, which cards support DLSS, FSR 4 and XeSS, how much FPS they add and when to turn them on.', 'computingskill' ) ),
+				array( 'slug' => 'low-gpu-usage-in-games', 'title' => __( 'Low GPU Usage in Games: Causes and Fixes', 'computingskill' ), 'desc' => __( 'Why GPU usage drops in games, how to tell a CPU bottleneck from a frame cap, and fixes for CPU at 100%, stutter and FPS drops.', 'computingskill' ) ),
 				array( 'slug' => 'how-to-upgrade-a-gaming-pc', 'title' => __( 'How to Upgrade a Gaming PC', 'computingskill' ), 'desc' => __( 'A step-by-step framework for upgrading a gaming PC: diagnosing bottlenecks, the right upgrade order, and compatibility checks.', 'computingskill' ) ),
 			),
 		),
@@ -175,6 +178,9 @@ function cs_get_blog_index() {
 		'no_found_rows'  => true,
 		'orderby'        => 'date',
 		'order'          => 'DESC',
+		// D10: the generated part and comparison pages (inc/part-pages.php)
+		// are listed on /hardware/ and /comparisons/, not on the blog hub.
+		'meta_query'     => array( array( 'key' => '_cs_generated', 'compare' => 'NOT EXISTS' ) ),
 	) );
 
 	if ( $live->have_posts() ) {

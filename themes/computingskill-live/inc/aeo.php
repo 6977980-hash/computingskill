@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'CS_AEO_REV' ) ) {
-	define( 'CS_AEO_REV', '2026-10-18-d8c' );
+	define( 'CS_AEO_REV', '2026-10-18-d10' );
 }
 
 /* ------------------------------------------------------------------ */
@@ -172,6 +172,7 @@ function cs_aeo_method_anchor( $type ) {
 	$map = array(
 		'bottleneck'         => 'm-bottleneck',
 		'fps'                => 'm-fps',
+		'canirun'            => 'm-canirun',
 		'psu'                => 'm-psu',
 		'ram'                => 'm-ram',
 		'power-consumption'  => 'm-power-consumption',
@@ -781,6 +782,8 @@ function cs_aeo_calc_reference( $type ) {
 function cs_aeo_methodology_sections() {
 	$t = cs_tl_gpu_targets();
 	return array(
+		'm-canirun'            => array( __( 'Can I Run It', 'computingskill' ), __( 'For each game in our database, compares your CPU’s and graphics card’s scores and your RAM with the publisher’s minimum and recommended specs. The publisher’s parts are placed on our score scale (the slower of the two named parts in each tier; parts not in our database positioned approximately from public review averages). It then runs the FPS Calculator formula for the game’s type (typical AAA, esports or CPU-heavy) at ultra, high, medium and low, and shows the highest preset that reaches your target frame rate. The FPS is typical for the type, not a per-game benchmark.', 'computingskill' ) ),
+		'm-parts'              => array( __( 'CPU, GPU and Comparison Pages', 'computingskill' ), __( 'Every number on the per-part and “X vs Y” pages comes from the same data and formulas as the calculators: estimated FPS from the FPS Calculator formula with the fastest CPU in our list (typical AAA game), pairing results from the bottleneck engine, VRAM verdicts from the GPU VRAM Calculator’s minimums, and PSU sizes from the PSU Calculator with its default extras. “Best CPU” is the most modest CPU from the last four release years that keeps a card under a noticeable (15%) CPU bottleneck; “best GPU” is the fastest card a CPU runs under that line.', 'computingskill' ) ),
 		'm-cpu-vs-gpu'         => array( __( 'CPU vs GPU Calculator', 'computingskill' ), __( 'Shows each part’s score next to the highest score in our list, and the bottleneck engine’s result at 1080p, 1440p and 4K for a typical AAA game at high settings. The headline comes from that engine, never from comparing the raw CPU and GPU scores, which are separate scales.', 'computingskill' ) ),
 		'm-part-performance'   => array( __( 'CPU and GPU Performance Calculators, and the Tier Lists', 'computingskill' ), sprintf( __( 'The CPU Performance Calculator labels a CPU’s gaming score: Flagship 77 or more, High-end 66–76, Mid-range 54–65, Entry-level below 54. The GPU Performance Calculator shows the card’s score (RTX 4090 = 100) and its tier label from our hardware data, which names the resolution it is built for. Cores, clocks, VRAM, bus width, TDP and the maker’s recommended PSU are published specs. The GPU tier list uses the PC Upgrade Calculator’s targets as its lines (S 85+, A %3$d+, B %2$d+, C %1$d+, D below) and the CPU tier list the same lines as the CPU Performance Calculator (S 85+, A 77+, B 66+, C 54+); their FPS columns use the FPS Calculator formula above.', 'computingskill' ), (int) $t['1080p'], (int) $t['1440p'], (int) $t['4k'] ) ),
 		'm-upgrade'            => array( __( 'PC Upgrade Calculator', 'computingskill' ), sprintf( __( 'Lists upgrades biggest gain first. The GPU is flagged when its score is under the target for your goal (1080p %1$d, 1440p %2$d, 4K %3$d, creative work 55), ranked by how far below it is in percent. For gaming, the CPU is flagged when the bottleneck engine shows a CPU bottleneck of 15% or more at your target resolution (typical AAA game, high settings); for creative work, when its score is under 59. A hard disk as the main drive ranks at 30, RAM at 8GB or less at 40 and under 16GB at 20.', 'computingskill' ), (int) $t['1080p'], (int) $t['1440p'], (int) $t['4k'] ) ),
@@ -1018,6 +1021,33 @@ function cs_llms_txt() {
 		}
 		foreach ( $games as $p ) {
 			$out .= cs_llms_line( get_the_title( $p ), get_permalink( $p ) );
+		}
+	}
+
+	// D10: one page per CPU / GPU and the head-to-head comparisons.
+	if ( function_exists( 'cs_pp_urls' ) ) {
+		$urls = cs_pp_urls();
+		foreach ( array( 'gpu' => __( 'Graphics card pages', 'computingskill' ), 'cpu' => __( 'Processor pages', 'computingskill' ) ) as $type => $label ) {
+			$lines = '';
+			foreach ( cs_tl_sorted( cs_pp_data( $type ) ) as $slug => $p ) {
+				if ( isset( $urls[ 'cs_hardware|' . $slug ] ) ) {
+					$lines .= cs_llms_line( cs_pp_short( $p ), $urls[ 'cs_hardware|' . $slug ], sprintf( __( 'specs, gaming score %d, estimated FPS, best pairing, PSU', 'computingskill' ), (int) $p['score'] ) );
+				}
+			}
+			if ( $lines ) {
+				$out .= "\n## " . $label . "\n\n" . $lines;
+			}
+		}
+		$lines = '';
+		foreach ( cs_pp_vs_pairs() as $vp ) {
+			$data = cs_pp_data( $vp[0] );
+			$key  = 'cs_comparison|' . cs_pp_vs_slug( $vp[1], $vp[2] );
+			if ( isset( $urls[ $key ], $data[ $vp[1] ], $data[ $vp[2] ] ) ) {
+				$lines .= cs_llms_line( cs_pp_short( $data[ $vp[1] ] ) . ' vs ' . cs_pp_short( $data[ $vp[2] ] ), $urls[ $key ] );
+			}
+		}
+		if ( $lines ) {
+			$out .= "\n## " . __( 'Head-to-head comparisons', 'computingskill' ) . "\n\n" . $lines;
 		}
 	}
 

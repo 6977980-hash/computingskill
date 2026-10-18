@@ -115,7 +115,7 @@ add_action( 'init', 'cs_combo_pages_sync', 30 );
  * pages, so the date stays honest.
  */
 if ( ! defined( 'CS_GENERATED_CONTENT_REV' ) ) {
-	define( 'CS_GENERATED_CONTENT_REV', '2026-10-18-d7-merge' );
+	define( 'CS_GENERATED_CONTENT_REV', '2026-10-18-d10' );
 }
 
 function cs_generated_pages_touch() {

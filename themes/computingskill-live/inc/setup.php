@@ -97,7 +97,7 @@ function cs_enqueue_calculators( $type = '' ) {
 	$no_hardware = array( 'ram', 'ssd-lifespan', 'ssd-tbw', 'storage', 'storage-converter', 'download-time', 'upload-time', 'file-transfer-time', 'mbps-to-mbs', 'mbs-to-mbps', 'bandwidth', 'data-usage', 'ppi', 'pixel-density', 'dpi', 'screen-size', 'monitor-size', 'aspect-ratio', 'resolution', 'refresh-rate' );
 	$wants = array(
 		'hardware' => '' === $type || ! in_array( $type, $no_hardware, true ),
-		'games'    => '' === $type || 'fps' === $type,
+		'games'    => '' === $type || in_array( $type, array( 'fps', 'canirun' ), true ),
 		'combos'   => '' === $type || in_array( $type, array( 'bottleneck', 'fps' ), true ),
 	);
 
@@ -107,7 +107,8 @@ function cs_enqueue_calculators( $type = '' ) {
 	if ( $wants['hardware'] && empty( $added['hardware'] ) ) {
 		$added['hardware'] = true;
 		$data = array(
-			'gpu' => function_exists( 'cs_get_gpu_data' ) ? cs_get_gpu_data() : array(),
+			// D10: plus each card's upscaler / frame generation (FPS Calculator).
+			'gpu' => function_exists( 'cs_get_gpu_data' ) ? ( function_exists( 'cs_pp_hardware_upscaler' ) ? cs_pp_hardware_upscaler( cs_get_gpu_data() ) : cs_get_gpu_data() ) : array(),
 			'cpu' => function_exists( 'cs_get_cpu_data' ) ? cs_get_cpu_data() : array(),
 		);
 		wp_add_inline_script( 'computingskill-calculators', 'window.csHardwareData = ' . wp_json_encode( $data ) . ';', 'before' );
@@ -126,6 +127,7 @@ function cs_enqueue_calculators( $type = '' ) {
 					'profile' => isset( $g['profile'] ) ? $g['profile'] : 'aaa',
 					'min'     => array( 'cpu' => $g['min']['cpu'], 'gpu' => $g['min']['gpu'], 'ram' => $g['min']['ram'] ),
 					'rec'     => array( 'cpu' => $g['rec']['cpu'], 'gpu' => $g['rec']['gpu'], 'ram' => $g['rec']['ram'] ),
+					'req'     => isset( $g['req'] ) ? $g['req'] : null, // D10: Can I Run It.
 				);
 			}
 		}

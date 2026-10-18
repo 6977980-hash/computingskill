@@ -16,6 +16,17 @@
  * 'publisher' (D6, Oct 2026): the publisher named on each game's store
  * page, used in the VideoGame schema.
  *
+ * 'req' (D10, Oct 2026): the publisher's minimum and recommended CPU and
+ * GPU placed on ComputingSkill's own score scale (data/hardware-data.php),
+ * so Can I Run It can say whether a PC meets them. Where a tier lists two
+ * parts, the slower one is used (either meets the publisher's bar). Parts
+ * that aren't in our database are positioned the same way as our scores,
+ * from publicly reported review averages relative to listed parts, e.g.
+ * GTX 1060 6GB ~20 (between the GTX 1650 at 17 and GTX 1660 Super at 25),
+ * GTX 1070 ~25, RTX 2060 Super ~34 (RTX 3060 class), RTX 2080 ~41, Ryzen 5
+ * 1600 ~28, Core i7-8700K ~40 (Ryzen 5 3600 is 42). They are approximate
+ * bars, not benchmarks.
+ *
  * 'profile' (D3, Oct 2026): the game type the FPS Calculator applies when
  * the game is picked ('esports' or 'cpu-heavy', see
  * cs_bottleneck_game_profiles() in inc/bottleneck.php). Games without it
@@ -47,6 +58,7 @@ function cs_get_games_data() {
 			'genre' => 'Open-World Action',
 			'min'  => array( 'cpu' => 'Intel Core i7-4770 / AMD FX-9590', 'gpu' => 'NVIDIA GTX 1630 4GB / AMD RX 6400 4GB', 'ram' => 8, 'storage_gb' => 105, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-9600K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA RTX 3060 8GB / AMD RX 6600XT 8GB', 'ram' => 16, 'storage_gb' => 105, 'os' => 'Windows 11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 22, 'gpu' => 7 ), 'rec' => array( 'cpu' => 40, 'gpu' => 31 ) ),
 			'source_url' => 'https://support.rockstargames.com/articles/lMQXeP2Z1mN3g9oZiBZFR/grand-theft-auto-v-pc-system-requirements',
 		),
 		// Corrected during Sep 2026 audit: only the recommended-tier OS field
@@ -58,6 +70,7 @@ function cs_get_games_data() {
 			'genre' => 'Open-World RPG',
 			'min'  => array( 'cpu' => 'Intel Core i7-6700 / AMD Ryzen 5 1600', 'gpu' => 'NVIDIA GTX 1060 6GB / AMD RX 580 8GB', 'ram' => 12, 'storage_gb' => 70, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-12700 / AMD Ryzen 7 7800X3D', 'gpu' => 'NVIDIA RTX 2060 SUPER / AMD RX 5700 XT', 'ram' => 16, 'storage_gb' => 70, 'os' => 'Windows 10 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 28, 'gpu' => 20 ), 'rec' => array( 'cpu' => 64, 'gpu' => 34 ) ),
 			'source_url' => 'https://store.steampowered.com/app/1091500/Cyberpunk_2077/',
 		),
 		// Corrected during Sep 2026 audit against Riot's own published specs
@@ -76,6 +89,7 @@ function cs_get_games_data() {
 			'genre' => 'Tactical Shooter', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-540 / AMD Athlon 200G', 'gpu' => 'Intel HD 4000 / AMD Radeon R5 220', 'ram' => 4, 'storage_gb' => 25, 'os' => 'Windows 10/11 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i3-4150 / AMD Ryzen 3 1200', 'gpu' => 'NVIDIA GeForce GT 730 / AMD Radeon R7 240', 'ram' => 8, 'storage_gb' => 25, 'os' => 'Windows 10/11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 10, 'gpu' => 1 ), 'rec' => array( 'cpu' => 20, 'gpu' => 2 ) ),
 			'source_url' => 'https://support.riotgames.com/en-us/valorant/support-tools/minimum-recommended-pc-specs',
 		),
 		// Sep 2026 audit note: Valve's own Steam listing for CS2
@@ -90,6 +104,7 @@ function cs_get_games_data() {
 			'genre' => 'Tactical Shooter', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i5-750 / AMD equivalent', 'gpu' => 'NVIDIA GTX 660 / AMD equivalent, 1GB VRAM', 'ram' => 8, 'storage_gb' => 85, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-9600K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA GTX 1650 / AMD RX 570', 'ram' => 16, 'storage_gb' => 85, 'os' => 'Windows 11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 12, 'gpu' => 6 ), 'rec' => array( 'cpu' => 40, 'gpu' => 15 ) ),
 			// Oct 2026: shown as our suggestion, not Valve's (Steam API checked
 			// 13 Oct 2026 still lists a minimum tier only). See cs_game_rec_official().
 			'rec_official' => false,
@@ -107,6 +122,7 @@ function cs_get_games_data() {
 			'genre' => 'Battle Royale', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-3225', 'gpu' => 'Intel HD 4000', 'ram' => 8, 'storage_gb' => 40, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-7300U / AMD Ryzen 3 3300U', 'gpu' => 'NVIDIA GTX 960 / AMD R9 280', 'ram' => 16, 'storage_gb' => 40, 'os' => 'Windows 10/11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 15, 'gpu' => 1 ), 'rec' => array( 'cpu' => 20, 'gpu' => 11 ) ),
 			'source_url' => 'https://www.epicgames.com/help/en-US/fortnite-c75/pc-support-c80/what-are-the-system-requirements-for-fortnite-on-pc-and-mac-a3332',
 		),
 		// Corrected during Sep 2026 audit: Mojang raised Java Edition's official
@@ -129,6 +145,7 @@ function cs_get_games_data() {
 			'genre' => 'Sandbox / Survival', 'profile' => 'cpu-heavy',
 			'min'  => array( 'cpu' => 'Intel Core i3-10100 / AMD Ryzen 3 3100', 'gpu' => 'Vulkan 1.3-compatible, 2GB VRAM (e.g. NVIDIA GTX 950 / AMD RX 460)', 'ram' => 8, 'storage_gb' => 4, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-12400 / AMD Ryzen 5 5600', 'gpu' => 'NVIDIA RTX 2060 / AMD RX 5600 XT 6GB', 'ram' => 16, 'storage_gb' => 4, 'os' => 'Windows 11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 34, 'gpu' => 9 ), 'rec' => array( 'cpu' => 52, 'gpu' => 30 ) ),
 			'source_url' => 'https://www.minecraft.net/en-us/article/minecraft-java-edition-system-requirements',
 		),
 		// Corrected during Sep 2026 audit against Respawn/EA's own Steam listing
@@ -144,6 +161,7 @@ function cs_get_games_data() {
 			'genre' => 'Battle Royale', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-6300 / AMD FX-4350', 'gpu' => 'NVIDIA GTX 950 / AMD Radeon HD 7790 2GB', 'ram' => 6, 'storage_gb' => 75, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'AMD Ryzen 5 or equivalent', 'gpu' => 'NVIDIA GTX 970 / AMD R9 290', 'ram' => 8, 'storage_gb' => 75, 'os' => 'Windows 10 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 14, 'gpu' => 6 ), 'rec' => array( 'cpu' => 28, 'gpu' => 17 ) ),
 			'source_url' => 'https://store.steampowered.com/app/1172470/Apex_Legends/',
 		),
 		// Corrected during Sep 2026 audit against Activision Support's official
@@ -159,6 +177,7 @@ function cs_get_games_data() {
 			'genre' => 'Battle Royale',
 			'min'  => array( 'cpu' => 'Intel Core i5-6600 / AMD Ryzen 5 1400', 'gpu' => 'NVIDIA GTX 970/1060 / AMD RX 470 / Intel Arc A580', 'ram' => 8, 'storage_gb' => 116, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-6700K / AMD Ryzen 5 1600X', 'gpu' => 'NVIDIA RTX 3060 / AMD RX 6600XT / Intel Arc B580', 'ram' => 12, 'storage_gb' => 116, 'os' => 'Windows 11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 24, 'gpu' => 15 ), 'rec' => array( 'cpu' => 29, 'gpu' => 34 ) ),
 			'source_url' => 'https://support.activision.com/warzone-2/articles/pc-system-requirements-for-warzone-2',
 		),
 		// Corrected during Sep 2026 audit against Steam's official listing
@@ -171,6 +190,7 @@ function cs_get_games_data() {
 			'genre' => 'Battle Royale',
 			'min'  => array( 'cpu' => 'Intel Core i5-4430 / AMD FX-6300', 'gpu' => 'NVIDIA GTX 960 2GB / AMD R7 370 2GB', 'ram' => 8, 'storage_gb' => 40, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-6600K / AMD Ryzen 5 1600', 'gpu' => 'NVIDIA GTX 1060 3GB / AMD RX 580 4GB', 'ram' => 16, 'storage_gb' => 50, 'os' => 'Windows 10 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 15, 'gpu' => 11 ), 'rec' => array( 'cpu' => 28, 'gpu' => 18 ) ),
 			'source_url' => 'https://store.steampowered.com/app/578080/PUBG_BATTLEGROUNDS/',
 		),
 		// Corrected during Sep 2026 audit against Riot's own official support
@@ -185,6 +205,7 @@ function cs_get_games_data() {
 			'genre' => 'MOBA', 'profile' => 'esports',
 			'min'  => array( 'cpu' => 'Intel Core i3-530', 'gpu' => 'NVIDIA GeForce 400 series / AMD Radeon HD 6570 / Intel HD 4600', 'ram' => 2, 'storage_gb' => 16, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-8250 / AMD Ryzen 3 1200', 'gpu' => 'NVIDIA GTX 560 / AMD Radeon HD 6950', 'ram' => 4, 'storage_gb' => 16, 'os' => 'Windows 11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 10, 'gpu' => 2 ), 'rec' => array( 'cpu' => 22, 'gpu' => 4 ) ),
 			'source_url' => 'https://support.riotgames.com/en-us/league-of-legends/performance/minimum-and-recommended-system-requirements-league-of-legends',
 		),
 		'elden-ring' => array(
@@ -192,6 +213,7 @@ function cs_get_games_data() {
 			'genre' => 'Action RPG',
 			'min'  => array( 'cpu' => 'Intel Core i5-8400 / AMD Ryzen 3 3300X', 'gpu' => 'NVIDIA GTX 1060 3GB / AMD RX 580 4GB', 'ram' => 12, 'storage_gb' => 60, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-8700K / AMD Ryzen 5 3600X', 'gpu' => 'NVIDIA GTX 1070 8GB / AMD RX Vega 56 8GB', 'ram' => 16, 'storage_gb' => 60, 'os' => 'Windows 10/11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 33, 'gpu' => 18 ), 'rec' => array( 'cpu' => 40, 'gpu' => 25 ) ),
 			'source_url' => 'https://store.steampowered.com/app/1245620/ELDEN_RING/',
 		),
 		// Corrected during Sep 2026 audit (citation pass) against Steam's official
@@ -204,6 +226,7 @@ function cs_get_games_data() {
 			'genre' => 'Role-Playing', 'profile' => 'cpu-heavy',
 			'min'  => array( 'cpu' => 'Intel Core i5-4690 / AMD FX-8350', 'gpu' => 'NVIDIA GTX 970 4GB / AMD RX 480 4GB', 'ram' => 8, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-8700K / AMD Ryzen 5 3600', 'gpu' => 'NVIDIA RTX 2060 Super / AMD RX 5700 XT', 'ram' => 16, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 18, 'gpu' => 17 ), 'rec' => array( 'cpu' => 40, 'gpu' => 34 ) ),
 			'source_url' => 'https://store.steampowered.com/app/1086940/Baldurs_Gate_3/',
 		),
 		'red-dead-redemption-2' => array(
@@ -211,6 +234,7 @@ function cs_get_games_data() {
 			'genre' => 'Open-World Action',
 			'min'  => array( 'cpu' => 'Intel Core i5-2500K / AMD FX-6300', 'gpu' => 'NVIDIA GTX 770 2GB / AMD R9 280 3GB', 'ram' => 8, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-4770K / AMD Ryzen 5 1500X', 'gpu' => 'NVIDIA GTX 1060 6GB / AMD RX 480 4GB', 'ram' => 12, 'storage_gb' => 150, 'os' => 'Windows 10 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 15, 'gpu' => 9 ), 'rec' => array( 'cpu' => 25, 'gpu' => 17 ) ),
 			'source_url' => 'https://store.steampowered.com/app/1174180/Red_Dead_Redemption_2/',
 		),
 		// Corrected during Sep 2026 audit against Blizzard's own Steam listing
@@ -224,6 +248,7 @@ function cs_get_games_data() {
 			'genre' => 'Hero Shooter',
 			'min'  => array( 'cpu' => 'Intel Core i3 or AMD Phenom X3 8650', 'gpu' => 'NVIDIA GTX 600 series / AMD Radeon HD 7000 series', 'ram' => 6, 'storage_gb' => 50, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7 / AMD Ryzen 5', 'gpu' => 'NVIDIA GTX 1060/1650 / AMD R9 380/RX 6400', 'ram' => 8, 'storage_gb' => 50, 'os' => 'Windows 10 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 10, 'gpu' => 5 ), 'rec' => array( 'cpu' => 28, 'gpu' => 9 ) ),
 			'source_url' => 'https://store.steampowered.com/app/2357570/Overwatch/',
 		),
 		// Corrected during Sep 2026 audit against Steam's official listing
@@ -236,6 +261,7 @@ function cs_get_games_data() {
 			'genre' => 'Open-World RPG',
 			'min'  => array( 'cpu' => 'Intel Core i7-6800K / AMD Ryzen 5 2600X', 'gpu' => 'NVIDIA GTX 1070 Ti / AMD RX 5700', 'ram' => 16, 'storage_gb' => 125, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-10600K / AMD Ryzen 5 3600X', 'gpu' => 'NVIDIA RTX 2080 / AMD RX 6800 XT', 'ram' => 16, 'storage_gb' => 125, 'os' => 'Windows 10/11 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 30, 'gpu' => 28 ), 'rec' => array( 'cpu' => 43, 'gpu' => 41 ) ),
 			'source_url' => 'https://store.steampowered.com/app/1716740/Starfield/',
 		),
 		// Corrected during Sep 2026 audit against Arrowhead's own Steam listing
@@ -250,6 +276,7 @@ function cs_get_games_data() {
 			'genre' => 'Co-op Shooter',
 			'min'  => array( 'cpu' => 'Intel Core i7-4790K / AMD Ryzen 5 1500X', 'gpu' => 'NVIDIA GTX 1050 Ti / AMD RX 470', 'ram' => 8, 'storage_gb' => 135, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-9700K / AMD Ryzen 7 3700X', 'gpu' => 'NVIDIA RTX 2060 / AMD RX 6600XT', 'ram' => 16, 'storage_gb' => 40, 'os' => 'Windows 10 64-bit' ),
+			'req'  => array( 'min' => array( 'cpu' => 25, 'gpu' => 9 ), 'rec' => array( 'cpu' => 43, 'gpu' => 30 ) ),
 			'source_url' => 'https://store.steampowered.com/app/553850/HELLDIVERS_2/',
 		),
 	);

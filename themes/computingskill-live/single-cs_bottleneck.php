@@ -119,7 +119,7 @@ while ( have_posts() ) :
 						array( 'name' => $gpu['name'], 'source_url' => isset( $gpu['source_url'] ) ? $gpu['source_url'] : null ),
 					) );
 					// D7 (2.16): combo pages linked to no hardware page.
-					echo cs_il_combo_specs_links( $gpu ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+					echo cs_il_combo_specs_links( $gpu, $cpu_slug, $gpu_slug, $cpu ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 					?>
 				</section>
 

@@ -307,7 +307,7 @@ function cs_tl_gpu_html() {
 	$i = 0;
 	foreach ( $gpus as $slug => $g ) {
 		$i++;
-		$html .= '<tr><td>' . $i . '</td><td>' . esc_html( cs_bn_short_name( $g['name'] ) ) . '</td><td><strong class="cs-tier cs-tier-' . esc_attr( strtolower( cs_tl_tier_of( $g['score'], $tiers ) ) ) . '">' . esc_html( cs_tl_tier_of( $g['score'], $tiers ) ) . '</strong></td><td>' . (int) $g['score'] . '</td><td>' . esc_html( $g['vram_gb'] . 'GB ' . $g['memory_type'] ) . '</td>';
+		$html .= '<tr><td>' . $i . '</td><td>' . ( function_exists( 'cs_pp_part_link' ) ? cs_pp_part_link( $slug, $g ) : esc_html( cs_bn_short_name( $g['name'] ) ) ) . '</td><td><strong class="cs-tier cs-tier-' . esc_attr( strtolower( cs_tl_tier_of( $g['score'], $tiers ) ) ) . '">' . esc_html( cs_tl_tier_of( $g['score'], $tiers ) ) . '</strong></td><td>' . (int) $g['score'] . '</td><td>' . esc_html( $g['vram_gb'] . 'GB ' . $g['memory_type'] ) . '</td>';
 		foreach ( array_keys( $res_l ) as $res ) {
 			list( $fps, $lim ) = cs_tl_fps( $top_cpu, $g, $res );
 			$html .= '<td>' . (int) round( $fps ) . ( 'cpu' === $lim ? '*' : '' ) . '</td>';
@@ -423,7 +423,7 @@ function cs_tl_cpu_html() {
 		if ( $g && isset( $pairs[ $slug . '|' . $g_slug ] ) ) {
 			$gpu_cell = '<a href="' . esc_url( $pairs[ $slug . '|' . $g_slug ] ) . '">' . $gpu_cell . '</a>';
 		}
-		$html .= '<tr><td>' . $i . '</td><td>' . esc_html( cs_bn_short_name( $c['name'] ) ) . '</td><td><strong class="cs-tier cs-tier-' . esc_attr( strtolower( $letter ) ) . '">' . esc_html( $letter ) . '</strong></td><td>' . (int) $c['score'] . '</td><td>' . (int) $c['cores'] . ' / ' . (int) $c['threads'] . '</td><td>' . esc_html( $c['socket'] ) . '</td><td>' . (int) round( $base * $profiles['aaa']['cpu'] ) . '</td><td>' . (int) round( $base * $profiles['esports']['cpu'] ) . '</td><td>' . $gpu_cell . '</td><td>' . (int) $c['release_year'] . '</td></tr>';
+		$html .= '<tr><td>' . $i . '</td><td>' . ( function_exists( 'cs_pp_part_link' ) ? cs_pp_part_link( $slug, $c ) : esc_html( cs_bn_short_name( $c['name'] ) ) ) . '</td><td><strong class="cs-tier cs-tier-' . esc_attr( strtolower( $letter ) ) . '">' . esc_html( $letter ) . '</strong></td><td>' . (int) $c['score'] . '</td><td>' . (int) $c['cores'] . ' / ' . (int) $c['threads'] . '</td><td>' . esc_html( $c['socket'] ) . '</td><td>' . (int) round( $base * $profiles['aaa']['cpu'] ) . '</td><td>' . (int) round( $base * $profiles['esports']['cpu'] ) . '</td><td>' . $gpu_cell . '</td><td>' . (int) $c['release_year'] . '</td></tr>';
 	}
 	$html .= '</tbody></table></div>';
 

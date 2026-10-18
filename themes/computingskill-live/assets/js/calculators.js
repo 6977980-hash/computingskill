@@ -1092,6 +1092,58 @@
 	};
 
 	/* ---- 5. FPS Calculator ---- */
+
+	// Phase 2 (Oct 2026): uses the bottleneck engine's own resolution
+	// factors and CPU parity, so at "high" settings the FPS calculator's
+	// limiting part always matches the bottleneck calculator's. The CPU
+	// ceiling no longer rises with resolution (it used to be 2.4x / 3.0x /
+	// 4.2x the CPU score, which let the GPU be the limit almost
+	// everywhere): a CPU prepares the same frames per second whatever the
+	// resolution. FPS_PER_POINT (2.5 FPS per GPU score point at 1080p
+	// high, was 1.8) re-anchors the scale to published 1080p averages,
+	// e.g. an RTX 4070 at roughly 135-140 FPS when nothing else limits it.
+	// D3 (Oct 2026, audit 1.9): same preset, game-type and VRAM /
+	// memory-bus factors as the bottleneck engine, so the limiting part
+	// matches it at every setting. Presets now span about 2.1x (low vs
+	// ultra), and the esports profile lifts the ceiling from about 200 FPS
+	// (9800X3D, AAA) to several hundred.
+	// D10: shared by the FPS Calculator and Can I Run It. PHP mirror:
+	// cs_tl_fps() in inc/tier-list.php (keep the two in sync).
+	var FPS_PER_POINT = 2.5;
+	function fpsCeilings( cpu, gpu, res, preset, gameType ) {
+		var profile = BN_GAME_PROFILE[ gameType ] || BN_GAME_PROFILE.aaa;
+		return {
+			gpu: gpu.score * FPS_PER_POINT * BN_GPU_RES_FACTOR[ res ] * BN_PRESET_FACTOR[ preset ] * profile.gpu * bnMemoryFactor( gpu, res, preset, gameType ),
+			cpu: cpu.score * BN_CPU_PARITY * FPS_PER_POINT * profile.cpu
+		};
+	}
+
+	// D10 (audit 5.7): upscaling (DLSS / FSR / XeSS) renders fewer pixels,
+	// so it lifts only the GPU's ceiling; a CPU-limited PC gains little.
+	// Typical uplifts from published DLSS / FSR tests, bigger at higher
+	// output resolutions where the GPU does more of the work. Frame
+	// generation inserts generated frames between rendered ones: shown FPS
+	// rises, but responsiveness follows the rendered (base) frame rate.
+	// FG_COST: the generated-frame pass takes about 10% of the base rate.
+	var UPSCALE_GAIN = {
+		quality: { '1080p': 1.25, '1440p': 1.35, '4k': 1.4 },
+		balanced: { '1080p': 1.35, '1440p': 1.5, '4k': 1.6 },
+		performance: { '1080p': 1.5, '1440p': 1.7, '4k': 1.85 }
+	};
+	var FG_COST = 0.9;
+	var UPSCALE_OPTIONS = [
+		{ value: 'off', label: 'Off (native resolution)' },
+		{ value: 'quality', label: 'Quality' },
+		{ value: 'balanced', label: 'Balanced' },
+		{ value: 'performance', label: 'Performance' }
+	];
+	var FRAMEGEN_OPTIONS = [
+		{ value: 'off', label: 'Off' },
+		{ value: '2', label: '2x (DLSS 3 / FSR 3 / XeSS 2 frame generation)' },
+		{ value: '3', label: '3x (RTX 50 Multi Frame Generation)' },
+		{ value: '4', label: '4x (RTX 50 Multi Frame Generation)' }
+	];
+
 	CS_DEFS.fps = {
 		share: true,
 		comboLink: true,
@@ -1103,32 +1155,21 @@
 			] },
 			{ id: 'preset', type: 'select', label: 'Graphics settings', default: 'high', options: PRESET_OPTIONS },
 			{ id: 'gametype', type: 'select', label: 'Game type', default: 'aaa', options: GAME_TYPE_OPTIONS, help: 'Esports titles run at several hundred FPS on fast hardware; strategy and simulation games load the CPU much more.' },
-			{ id: 'game', type: 'select', label: 'Game (optional)', default: '', options: gameOptions(), help: 'Adds that game\'s officially published minimum/recommended specs next to the estimate, and uses its game type.' }
+			{ id: 'game', type: 'select', label: 'Game (optional)', default: '', options: gameOptions(), help: 'Adds that game\'s officially published minimum/recommended specs next to the estimate, and uses its game type.' },
+			{ id: 'upscaling', type: 'select', label: 'Upscaling (DLSS / FSR / XeSS)', default: 'off', options: UPSCALE_OPTIONS, help: 'Renders at a lower resolution and upscales. Only works in games that support it.' },
+			{ id: 'framegen', type: 'select', label: 'Frame generation', default: 'off', options: FRAMEGEN_OPTIONS, help: 'Adds generated frames: smoother motion, but input feel follows the base frame rate.' }
 		],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
-			// Phase 2 (Oct 2026): uses the bottleneck engine's own resolution
-			// factors and CPU parity, so at "high" settings the FPS calculator's
-			// limiting part always matches the bottleneck calculator's. The CPU
-			// ceiling no longer rises with resolution (it used to be 2.4x / 3.0x /
-			// 4.2x the CPU score, which let the GPU be the limit almost
-			// everywhere): a CPU prepares the same frames per second whatever the
-			// resolution. FPS_PER_POINT (2.5 FPS per GPU score point at 1080p
-			// high, was 1.8) re-anchors the scale to published 1080p averages,
-			// e.g. an RTX 4070 at roughly 135-140 FPS when nothing else limits it.
-			var FPS_PER_POINT = 2.5;
-			// D3 (Oct 2026, audit 1.9): same preset, game-type and VRAM /
-			// memory-bus factors as the bottleneck engine, so the limiting part
-			// matches it at every setting. Presets now span about 2.1x (low vs
-			// ultra), and the esports profile lifts the ceiling from about 200 FPS
-			// (9800X3D, AAA) to several hundred. A picked game with a known type
-			// (data/games-data.php 'profile') sets the game type.
+			// A picked game with a known type (data/games-data.php 'profile')
+			// sets the game type.
 			var game = v.game && GAMES[ v.game ] ? GAMES[ v.game ] : null;
 			var gameType = game && BN_GAME_PROFILE[ game.profile ] ? game.profile : ( BN_GAME_PROFILE[ v.gametype ] ? v.gametype : 'aaa' );
-			var profile = BN_GAME_PROFILE[ gameType ];
 			var preset = BN_PRESET_FACTOR[ v.preset ] ? v.preset : 'high';
-			var gpuFps = gpu.score * FPS_PER_POINT * BN_GPU_RES_FACTOR[ v.resolution ] * BN_PRESET_FACTOR[ preset ] * profile.gpu * bnMemoryFactor( gpu, v.resolution, preset, gameType );
-			var cpuCap = cpu.score * BN_CPU_PARITY * FPS_PER_POINT * profile.cpu;
+			var c = fpsCeilings( cpu, gpu, v.resolution, preset, gameType );
+			var upscale = UPSCALE_GAIN[ v.upscaling ] ? v.upscaling : 'off';
+			var gpuFps = c.gpu * ( upscale !== 'off' ? UPSCALE_GAIN[ upscale ][ v.resolution ] : 1 );
+			var cpuCap = c.cpu;
 			var estimate = Math.min( gpuFps, cpuCap );
 			// The FPS calculator page says the range is wider when CPU and GPU
 			// both matter and narrower when one part clearly dominates; it used to
@@ -1136,13 +1177,21 @@
 			// each other, ±15% otherwise (still "roughly ±18%" as /methodology/ says).
 			var closeness = Math.min( gpuFps, cpuCap ) / Math.max( gpuFps, cpuCap );
 			var spread = closeness >= 0.85 ? 0.22 : 0.15;
-			var low = Math.round( estimate * ( 1 - spread ) );
-			var high = Math.round( estimate * ( 1 + spread ) );
+			// Frame generation: 3x/4x is RTX 50 only; other cards top out at 2x.
+			var fg = v.framegen === '2' || v.framegen === '3' || v.framegen === '4' ? Number( v.framegen ) : 1;
+			var fgNote = '';
+			if ( fg > 2 && gpu.fg !== 'mfg' ) {
+				fgNote = gpu.name + ' supports up to 2x frame generation, so 2x is used.';
+				fg = 2;
+			}
+			var shown = fg > 1 ? estimate * FG_COST * fg : estimate;
+			var low = Math.round( shown * ( 1 - spread ) );
+			var high = Math.round( shown * ( 1 + spread ) );
 			// Same "under 6% = balanced" rule as the bottleneck calculator.
 			var limiter = Math.round( ( 1 - closeness ) * 100 ) < 6 ? 'Balanced (CPU and GPU about even)' : ( gpuFps < cpuCap ? gpu.name + ' (GPU-bound)' : cpu.name + ' (CPU-bound)' );
 			var rows = [
 				[ 'Estimated FPS range', low + ' – ' + high + ' FPS' ],
-				[ 'Midpoint estimate', Math.round( estimate ) + ' FPS' ],
+				[ 'Midpoint estimate', Math.round( shown ) + ' FPS' ],
 				[ 'Likely limiting part', limiter ]
 			];
 			// Game selection (Sep 2026 audit): shows the publisher's own
@@ -1150,12 +1199,114 @@
 			// estimate. The FPS number is scaled only by the game's broad type
 			// (D3), never by a per-game multiplier we haven't measured.
 			rows.push( [ 'Game type used', escapeHtml( GAME_TYPE_OPTIONS.filter( function ( o ) { return o.value === gameType; } )[ 0 ].label ) ] );
+			var tech = gpu.upscaler ? gpu.upscaler : 'FSR';
+			if ( upscale !== 'off' ) {
+				var native = Math.min( c.gpu, cpuCap );
+				rows.push( [ 'Upscaling', escapeHtml( tech + ' ' + upscale.charAt( 0 ).toUpperCase() + upscale.slice( 1 ) ) + ': about ' + Math.round( native ) + ' FPS at native resolution' + ( gpuFps >= cpuCap ? ', and the CPU limits the gain' : '' ) ] );
+			}
+			if ( fg > 1 ) {
+				rows.push( [ 'Frame generation', fg + 'x: about ' + Math.round( estimate * FG_COST ) + ' rendered FPS, ' + Math.round( shown ) + ' shown. Input feel follows the rendered rate' + ( estimate * FG_COST < 50 ? ', which is low enough to feel sluggish (makers suggest about 60 before turning it on)' : '' ) + '.' ] );
+				if ( fgNote ) {
+					rows.push( [ 'Note', escapeHtml( fgNote ) ] );
+				}
+			}
 			if ( game ) {
 				rows.push( [ game.name + ' — publisher minimum', escapeHtml( game.min.cpu + ' · ' + game.min.gpu + ' · ' + game.min.ram + 'GB RAM' ) ] );
 				rows.push( [ game.name + ' — publisher recommended', escapeHtml( game.rec.cpu + ' · ' + game.rec.gpu + ' · ' + game.rec.ram + 'GB RAM' ) ] );
 				rows.push( [ 'Full requirements', '<a href="' + escapeHtml( game.url ) + '">' + escapeHtml( game.name ) + ' system requirements</a>' ] );
 			}
-			return resultBlock( 'Estimated average: <strong>' + Math.round( estimate ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( game ? ' — a general estimate for this type of game, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers. Ray tracing, upscaling and frame generation aren’t modelled; ' + SCORE_NOTE );
+			var extras = upscale !== 'off' || fg > 1;
+			return resultBlock( 'Estimated average: <strong>' + Math.round( shown ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( extras ? ' with ' + [ upscale !== 'off' ? escapeHtml( tech ) + ' ' + upscale : '', fg > 1 ? fg + 'x frame generation' : '' ].filter( Boolean ).join( ' and ' ) : '' ) + ( game ? ' — a general estimate for this type of game, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers. Ray tracing isn’t modelled, and upscaling and frame generation gains are typical averages that need game support (<a href="/dlss-fsr-frame-generation-explained/">how they work</a>); ' + SCORE_NOTE );
+		}
+	};
+
+	/* ---- 5b. Can I Run It (D10, audit 5.2) ---- */
+	// Every game in data/games-data.php against the visitor's own PC: the
+	// highest preset that reaches the target frame rate (same formula as
+	// the FPS Calculator, by game type), plus RAM against the publisher's
+	// minimum and recommended. Server-side mirror of the example table:
+	// cs_cir_best() in inc/can-i-run.php.
+	var CIR_PRESETS = [ 'ultra', 'high', 'medium', 'low' ];
+	function cirBest( cpu, gpu, res, target, gameType ) {
+		var fps = 0;
+		for ( var i = 0; i < CIR_PRESETS.length; i++ ) {
+			var c = fpsCeilings( cpu, gpu, res, CIR_PRESETS[ i ], gameType );
+			fps = Math.min( c.gpu, c.cpu );
+			if ( fps >= target ) {
+				return { preset: CIR_PRESETS[ i ], fps: fps };
+			}
+		}
+		return { preset: '', fps: fps };
+	}
+
+	// Publisher tier the PC meets: 'rec', 'min' or 'below', and which parts
+	// fall short of the next tier up. Mirror: cs_cir_level() in PHP.
+	function cirLevel( cpu, gpu, ram, g ) {
+		var req = g.req || { min: { cpu: 0, gpu: 0 }, rec: { cpu: 0, gpu: 0 } };
+		var below = [], under = [];
+		if ( cpu.score < req.min.cpu ) { below.push( 'CPU' ); } else if ( cpu.score < req.rec.cpu ) { under.push( 'CPU' ); }
+		if ( gpu.score < req.min.gpu ) { below.push( 'GPU' ); } else if ( gpu.score < req.rec.gpu ) { under.push( 'GPU' ); }
+		if ( ram < g.min.ram ) { below.push( 'RAM' ); } else if ( ram < g.rec.ram ) { under.push( 'RAM' ); }
+		if ( below.length ) {
+			return { level: 'below', short: below };
+		}
+		return { level: under.length ? 'min' : 'rec', short: under };
+	}
+
+	CS_DEFS.canirun = {
+		fields: [
+			{ id: 'cpu', type: 'select-hardware', source: 'cpu', other: true, label: 'Your CPU', icon: 'cpu' },
+			{ id: 'gpu', type: 'select-hardware', source: 'gpu', other: true, label: 'Your GPU', icon: 'gpu' },
+			{ id: 'ram', type: 'select', label: 'Your RAM', icon: 'ram', default: '16', options: [
+				{ value: '8', label: '8GB' }, { value: '12', label: '12GB' }, { value: '16', label: '16GB' }, { value: '24', label: '24GB' }, { value: '32', label: '32GB' }, { value: '64', label: '64GB or more' }
+			] },
+			{ id: 'resolution', type: 'select', label: 'Resolution', icon: 'resolution', default: '1080p', options: [
+				{ value: '1080p', label: '1080p (Full HD)' }, { value: '1440p', label: '1440p (QHD)' }, { value: '4k', label: '4K (UHD)' }
+			] },
+			{ id: 'target', type: 'select', label: 'Smooth enough for you', default: '60', options: [
+				{ value: '30', label: '30 FPS (console-like)' }, { value: '60', label: '60 FPS (smooth)' }, { value: '120', label: '120 FPS (high refresh)' }, { value: '144', label: '144 FPS (competitive)' }
+			] }
+		],
+		compute: function ( v, hw ) {
+			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
+			var ram = Number( v.ram ) || 16;
+			var target = Number( v.target ) || 60;
+			var keys = Object.keys( GAMES );
+			if ( ! keys.length ) {
+				throw { msg: 'The games list didn’t load. Please refresh the page.' };
+			}
+			var label = { ultra: 'Ultra', high: 'High', medium: 'Medium', low: 'Low' };
+			var count = { rec: 0, min: 0, below: 0 }, playable = 0;
+			var rows = keys.map( function ( key ) {
+				var g = GAMES[ key ];
+				var type = BN_GAME_PROFILE[ g.profile ] ? g.profile : 'aaa';
+				var lvl = cirLevel( cpu, gpu, ram, g );
+				count[ lvl.level ]++;
+				var req = lvl.level === 'rec' ? '<strong>Meets recommended</strong>' : ( lvl.level === 'min' ? 'Meets minimum' + ( lvl.short.length ? ' (' + lvl.short.join( ', ' ) + ' below recommended)' : '' ) : '<strong>Below minimum</strong> (' + lvl.short.join( ', ' ) + ')' );
+				var best = cirBest( cpu, gpu, v.resolution, target, type );
+				var cell;
+				if ( best.preset ) {
+					playable++;
+					cell = label[ best.preset ] + ' · ~' + Math.round( best.fps ) + ' FPS';
+					// The estimate is for the game's type; a publisher asking for a
+					// faster card than yours marks a heavier-than-typical game.
+					if ( lvl.short.indexOf( 'GPU' ) !== -1 || lvl.short.indexOf( 'CPU' ) !== -1 ) {
+						cell += ' <small>(typical for its type; this game asks for more, so expect lower)</small>';
+					}
+				} else {
+					cell = 'Under ' + target + ' FPS at Low (~' + Math.round( best.fps ) + ')';
+				}
+				return [ '<a href="' + escapeHtml( g.url ) + '">' + escapeHtml( g.name ) + '</a>', req, cell ];
+			} );
+			var html = '<div class="cs-result-block">';
+			html += '<p class="cs-result-headline">Your PC meets the <strong>recommended specs of ' + count.rec + ' of ' + keys.length + ' games</strong>' + ( count.min ? ' and the minimum of ' + count.min + ' more' : '' ) + ( count.below ? ', and is below the minimum for ' + count.below : '' ) + '. ' + playable + ' reach ' + target + '+ FPS at ' + RES_LABELS[ v.resolution ] + ' at some preset.</p>';
+			html += '<div class="cs-table-wrap"><table class="cs-result-table cs-cir-table"><thead><tr><th scope="col">Game</th><th scope="col">Publisher specs</th><th scope="col">Highest settings at ' + target + '+ FPS</th></tr></thead><tbody>';
+			rows.forEach( function ( r ) {
+				html += '<tr><th scope="row">' + r[ 0 ] + '</th><td>' + r[ 1 ] + '</td><td>' + r[ 2 ] + '</td></tr>';
+			} );
+			html += '</tbody></table></div>';
+			html += '<p class="cs-disclaimer"><strong>Estimate only:</strong> the publisher’s minimum and recommended parts are placed on our score scale (approximate where a part isn’t in our database). FPS is estimated by game type (typical AAA, esports or CPU-heavy) with the FPS Calculator’s formula, not a per-game benchmark, so a demanding game in a class can run slower than shown. Ray tracing is off; ' + ( gpu.upscaler ? escapeHtml( gpu.upscaler ) + ' upscaling' : 'upscaling' ) + ' can add more; ' + SCORE_NOTE + '</p>';
+			return html + '</div>';
 		}
 	};
 

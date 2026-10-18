@@ -97,7 +97,8 @@ function cs_perf_calc_heights() {
 		'download-time'      => array( 300, 140, null ),
 		'dpi'                => array( 140, 60, null ),
 		'file-transfer-time' => array( 490, 220, null ),
-		'fps'                => array( 660, 330, array( 790, 500 ) ),
+		'fps'                => array( 910, 460, array( 790, 500 ) ), // D10: + upscaling and frame generation.
+		'canirun'            => array( 480, 275, null ),
 		'gpu-performance'    => array( 60, 60, null ),
 		'gpu-power'          => array( 140, 60, null ),
 		'mbps-to-mbs'        => array( 60, 60, null ),

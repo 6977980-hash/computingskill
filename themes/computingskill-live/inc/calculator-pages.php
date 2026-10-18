@@ -89,6 +89,15 @@ function cs_calculator_page_fixes() {
 				__( 'Take an RTX 4070 Super paired with a Ryzen 5 7600 at 1440p on high settings. The calculator puts the graphics card’s ceiling at about 105 FPS and the CPU’s at about 142 FPS, so the GPU is the limit: the estimated average is 105 FPS, shown as a range of roughly 90–121 FPS. Lighter or more CPU-friendly titles can run above that range, and the most GPU-demanding titles sit toward the lower end. Pick Esports as the game type (or a game such as Valorant) and the same parts are estimated at about 316 FPS, because competitive shooters ask far less of the graphics card per frame.', 'computingskill' ),
 			),
 			array( 'This estimate is based on component specs', 'general scaling patterns', __( 'This estimate is based on the gaming-performance scores and general scaling patterns', 'computingskill' ) ),
+			// D10 (audit 5.7): the tool now has upscaling and frame generation.
+			array(
+				'This calculator also does not account for upscaling', 'beyond a single FPS number.',
+				sprintf(
+					/* translators: %s: link */
+					__( 'Upscaling (DLSS, FSR, XeSS) and frame generation are optional inputs: they apply typical gains, need the game to support them, and frame generation raises the frame rate you see without making the game respond faster (%s). The calculator does not account for ray tracing, monitor refresh rate caps, or frame-time consistency (which affects how smooth a given average FPS actually feels), all of which meaningfully affect the experience beyond a single FPS number.', 'computingskill' ),
+					'<a href="' . esc_url( home_url( '/dlss-fsr-frame-generation-explained/' ) ) . '">' . esc_html__( 'how they work', 'computingskill' ) . '</a>'
+				),
+			),
 			// D3 (audit 1.9): presets, game type and memory now change the result.
 			array(
 				'and then applies scaling factors for resolution and settings level', 'how much work the GPU does per frame)',
@@ -285,7 +294,7 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-17-d5' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-18-d10' );
 }
 
 function cs_calc_pages_changed() {
