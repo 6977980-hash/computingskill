@@ -361,3 +361,52 @@ function cs_d10_low_gpu_html() {
 	) );
 	return $html;
 }
+
+/* ------------------------------------------------------------------ */
+/* Published post rewrite                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * slug => [ file in data/post-rewrites/, text only the old version has ].
+ */
+function cs_d10_post_rewrite_list() {
+	return array(
+		'best-gpu-for-ryzen-5-5600' => array( 'best-gpu-for-ryzen-5-5600.php', 'means the graphics card is the likely limit by roughly that much' ),
+	);
+}
+
+/**
+ * Replaces a published post's content once, only while it still holds the
+ * old text (an edit Ali makes in wp-admin is never overwritten). The old
+ * version stays as a revision.
+ */
+function cs_d10_post_rewrites() {
+	if ( wp_installing() ) {
+		return;
+	}
+	$done = (array) get_option( 'cs_d10_post_rewrites', array() );
+	$todo = array_diff( array_keys( cs_d10_post_rewrite_list() ), $done );
+	if ( empty( $todo ) || ! add_option( 'cs_d10_post_rewrites_lock', time(), '', 'no' ) ) {
+		if ( $todo && time() - (int) get_option( 'cs_d10_post_rewrites_lock' ) > 300 ) {
+			delete_option( 'cs_d10_post_rewrites_lock' );
+		}
+		return;
+	}
+	foreach ( $todo as $slug ) {
+		list( $file, $marker ) = cs_d10_post_rewrite_list()[ $slug ];
+		$post = get_page_by_path( $slug, OBJECT, 'post' );
+		if ( ! $post ) {
+			continue; // Not there (yet); checked again on a later request.
+		}
+		if ( false !== strpos( $post->post_content, $marker ) ) {
+			$content = include CS_THEME_DIR . '/data/post-rewrites/' . $file;
+			if ( is_string( $content ) && '' !== $content ) {
+				wp_update_post( array( 'ID' => $post->ID, 'post_content' => wp_slash( $content ) ) );
+			}
+		}
+		$done[] = $slug;
+	}
+	update_option( 'cs_d10_post_rewrites', array_values( array_unique( $done ) ), false );
+	delete_option( 'cs_d10_post_rewrites_lock' );
+}
+add_action( 'init', 'cs_d10_post_rewrites', 33 );
