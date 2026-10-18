@@ -759,7 +759,6 @@ function cs_il_hub_guides() {
 			'outro' => __( 'Upload speed is often a fraction of download speed on home plans, so check the upload figure on your plan before timing a backup.', 'computingskill' ),
 		),
 		'display-tools'  => array(
-			'#the Screen Size and Monitor Size Calculators can help you compare#u' => __( 'the Monitor Size Calculator can help you compare', 'computingskill' ),
 			'intro' => __( 'Which display tool answers your question:', 'computingskill' ),
 			'items' => array(
 				'ppi-calculator'          => __( 'How sharp is a screen at its size and resolution?', 'computingskill' ),
@@ -818,6 +817,7 @@ function cs_il_hub_guides() {
 function cs_il_hub_text_fixes() {
 	return array(
 		'display-tools'  => array(
+			'#the Screen Size and Monitor Size Calculators can help you compare#u' => __( 'the Monitor Size Calculator can help you compare', 'computingskill' ),
 			'#Eight tools live in this section\..*?perceived motion smoothness\.#su' => __( 'Six tools live in this section. The PPI Calculator measures screen sharpness (pixels per inch), while the DPI Calculator covers print resolution (dots per inch), which is a different question. The Monitor Size Calculator works out a screen’s real width and height from its diagonal and aspect ratio. The Aspect Ratio Calculator and Resolution Calculator handle the relationship between a display’s width-to-height ratio and its pixel resolution, useful when comparing a 16:9 monitor to a 21:9 ultrawide. And the Refresh Rate Calculator turns refresh rate (Hz) into frame time and shows how it relates to motion smoothness.', 'computingskill' ),
 		),
 		'storage-tools'  => array(
