@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'CS_AEO_REV' ) ) {
-	define( 'CS_AEO_REV', '2026-10-18-d8' );
+	define( 'CS_AEO_REV', '2026-10-18-d8b' );
 }
 
 /* ------------------------------------------------------------------ */
@@ -867,6 +867,8 @@ function cs_aeo_quick_answers() {
 		'hardware'       => __( 'The Hardware section has one plain-English page per PC component (CPU, GPU, RAM, VRAM, SSD, HDD, PSU, motherboard, CPU cooler and case), explaining what each part does and which specs matter before you buy. Ranked lists are on the GPU and CPU tier lists.', 'computingskill' ),
 		'guides'         => __( 'The guides answer the bigger PC questions step by step: how much RAM and VRAM you need, how to choose a gaming GPU and a PSU, how to upgrade a gaming PC, how to improve FPS, and what CPU and GPU bottlenecks really are.', 'computingskill' ),
 		'comparisons'    => __( 'The comparisons put two options side by side and recommend one by use case: SSD vs HDD, NVMe vs SATA, DDR4 vs DDR5 and 1080p vs 1440p vs 4K, plus ranked GPU and CPU tier lists.', 'computingskill' ),
+		'home'           => __( 'ComputingSkill is a free set of PC hardware calculators: check whether your CPU or GPU limits your frame rate at 1080p, 1440p and 4K, estimate FPS, PSU wattage, RAM and VRAM needs, and compare parts on our GPU and CPU tier lists. Results are estimates from manufacturer specs and documented formulas, not lab benchmarks.', 'computingskill' ),
+		'games'          => __( 'Pick a game to see its publisher’s official minimum and recommended CPU, GPU, RAM and storage, then check your own CPU and GPU against it in the FPS Calculator. The FPS figure is a general estimate for that type of game, not a benchmark of the game itself.', 'computingskill' ),
 		'blog'           => __( 'The ComputingSkill blog collects our articles, guides and comparisons on building, upgrading and choosing PC parts. Calculators, tools and part explainers have their own hubs, linked above.', 'computingskill' ),
 	);
 }

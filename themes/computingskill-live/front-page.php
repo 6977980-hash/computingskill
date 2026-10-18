@@ -55,6 +55,7 @@ get_header();
 	<div class="cs-container">
 
 		<section class="cs-home-section cs-home-intro">
+			<?php echo function_exists( 'cs_aeo_quick_answer_html' ) ? cs_aeo_quick_answer_html( 'home' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 			<p>
 				<?php
 				printf(

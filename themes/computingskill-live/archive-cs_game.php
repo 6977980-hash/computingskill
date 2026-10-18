@@ -32,6 +32,7 @@ $total_games = count( $games_data );
 				);
 				?>
 			</p>
+			<?php echo function_exists( 'cs_aeo_quick_answer_html' ) ? cs_aeo_quick_answer_html( 'games' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 			<form class="cs-games-search-form" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
 				<label class="screen-reader-text" for="cs-games-search-input"><?php esc_html_e( 'Search games', 'computingskill' ); ?></label>
 				<input type="search" id="cs-games-search-input" name="s" placeholder="<?php esc_attr_e( 'Search for a game…', 'computingskill' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" />
