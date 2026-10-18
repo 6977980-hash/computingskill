@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'CS_AEO_REV' ) ) {
-	define( 'CS_AEO_REV', '2026-10-18-d8b' );
+	define( 'CS_AEO_REV', '2026-10-18-d8c' );
 }
 
 /* ------------------------------------------------------------------ */
@@ -1051,7 +1051,19 @@ function cs_llms_txt() {
 			$out .= cs_llms_line( get_the_title( get_page_by_path( $slug ) ), $url );
 		}
 	}
-	return $out;
+	return str_replace( '](' . untrailingslashit( home_url() ) . '/', '](' . cs_llms_canonical_home() . '/', $out );
+}
+
+/**
+ * The site's real address. The first live run of the job happened on a
+ * request through Hostinger's temporary domain, and home_url() followed
+ * that host into every llms.txt link, so the stored "home" option is read
+ * straight from the database (no WP_HOME / filter can change it).
+ */
+function cs_llms_canonical_home() {
+	global $wpdb;
+	$home = (string) $wpdb->get_var( "SELECT option_value FROM {$wpdb->options} WHERE option_name = 'home' LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	return untrailingslashit( $home ? $home : home_url() );
 }
 
 function cs_il_lc_safe( $text ) {
@@ -1065,6 +1077,9 @@ function cs_il_lc_safe( $text ) {
 function cs_llms_write() {
 	$file = ABSPATH . 'llms.txt';
 	$text = cs_llms_txt();
+	if ( false === strpos( $text, '](' . cs_llms_canonical_home() . '/' ) ) {
+		return false;
+	}
 	if ( file_exists( $file ) && file_get_contents( $file ) === $text ) { // phpcs:ignore WordPress.WP.AlternativeFunctions
 		return true;
 	}
