@@ -102,6 +102,8 @@ while ( have_posts() ) :
 						array( 'name' => $cpu['name'], 'source_url' => isset( $cpu['source_url'] ) ? $cpu['source_url'] : null ),
 						array( 'name' => $gpu['name'], 'source_url' => isset( $gpu['source_url'] ) ? $gpu['source_url'] : null ),
 					) );
+					// D7 (2.16): combo pages linked to no hardware page.
+					echo cs_il_combo_specs_links( $gpu ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 					?>
 				</section>
 
@@ -139,11 +141,21 @@ while ( have_posts() ) :
 						</table>
 					</div>
 
-					<p class="cs-bn-meaning"><?php esc_html_e( 'How to read this: a CPU bottleneck % is the share of the graphics card left idle because the CPU can’t keep up (roughly 100 minus the GPU usage a monitoring overlay would show): under 6% is balanced, 6–14% mild, 15–29% noticeable and 30% or more severe. GPU-limited is normal for gaming; there the % is how much spare headroom the CPU has. Estimates assume a typical AAA game at high settings.', 'computingskill' ); ?></p>
+					<?php // D7 (2.20): shortened; this paragraph was the longest text every combo page repeated word for word. The full explanation is on /methodology/. ?>
+					<p class="cs-bn-meaning"><?php printf(
+						/* translators: %s: methodology link */
+						esc_html__( 'How to read this: a CPU bottleneck %% is the share of the graphics card left idle (under 6%% balanced, 6–14%% mild, 15–29%% noticeable, 30%%+ severe). GPU-limited is normal; there the %% is spare CPU headroom. Typical AAA game, high settings (%s).', 'computingskill' ),
+						'<a href="' . esc_url( home_url( '/methodology/' ) ) . '">' . esc_html__( 'how we estimate', 'computingskill' ) . '</a>'
+					); ?></p>
 					<?php foreach ( $results as $res => $r ) : ?>
 						<p><strong><?php echo esc_html( $labels[ $res ] ); ?>:</strong> <?php echo wp_kses_post( cs_bottleneck_sentence( $cpu['name'], $gpu['name'], $labels[ $res ], $r ) ); ?></p>
 					<?php endforeach; ?>
 				</section>
+
+				<?php
+				// D7 (2.16 / 2.20): the same pair per game type, linking the game pages.
+				echo cs_il_combo_game_types_html( $cpu_slug, $gpu_slug, $cpu, $gpu ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+				?>
 
 				<section class="cs-bn-recommend">
 					<h2><?php esc_html_e( 'Recommended Settings & Upgrade Path', 'computingskill' ); ?></h2>
@@ -180,6 +192,9 @@ while ( have_posts() ) :
 						<li><a href="<?php echo esc_url( home_url( '/ram-calculator/' ) ); ?>"><?php esc_html_e( 'Is 16GB or 32GB of RAM enough for this build?', 'computingskill' ); ?></a></li>
 						<li><a href="<?php echo esc_url( home_url( '/psu-calculator/' ) ); ?>"><?php esc_html_e( 'Does your power supply have enough headroom?', 'computingskill' ); ?></a></li>
 						<li><a href="<?php echo esc_url( home_url( '/gpu-vram-calculator/' ) ); ?>"><?php esc_html_e( 'Is ' . $gpu['vram_gb'] . 'GB of VRAM enough at your target resolution?', 'computingskill' ); ?></a></li>
+						<?php foreach ( cs_il_posts_for_cpu( $cpu_slug ) as $cs_post ) : ?>
+							<li><a href="<?php echo esc_url( $cs_post[1] ); ?>"><?php echo esc_html( $cs_post[0] ); ?></a></li>
+						<?php endforeach; ?>
 					</ul>
 				</section>
 
@@ -189,6 +204,11 @@ while ( have_posts() ) :
 						<p><?php echo esc_html( $para ); ?></p>
 					<?php endforeach; ?>
 				</section>
+
+				<?php
+				// D7 (2.20): near-twin CPUs on this GPU, e.g. 5600 vs 5600X.
+				echo cs_il_combo_twin_html( $cpu_slug, $gpu_slug, $cpu, $gpu ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+				?>
 
 				<?php
 				// Oct 2026: same-CPU / same-GPU comparison tables from the

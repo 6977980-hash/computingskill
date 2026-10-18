@@ -243,7 +243,11 @@ function cs_title_length( $title ) {
 function cs_title_overrides() {
 	return array(
 		'about-us'                  => __( 'About Computing Skill: Who Makes These PC Tools', 'computingskill' ),
-		'blog'                      => __( 'All PC Calculators, Tools & Guides - Computing Skill', 'computingskill' ),
+		'blog'                      => __( 'PC Building Blog: Guides, Comparisons & Articles', 'computingskill' ),
+		'cpu-vs-gpu-calculator'     => __( 'CPU vs GPU Calculator: Side-by-Side Score Comparison', 'computingskill' ),
+		'ram'                       => __( 'What Is RAM? How Memory Works & Which Specs Matter', 'computingskill' ),
+		'psu'                       => __( 'What Is a PSU? How Power Supplies Work & Their Ratings', 'computingskill' ),
+		'gpu'                       => __( 'What Is a GPU? How Graphics Cards Work & Key Specs', 'computingskill' ),
 		'comparisons'               => __( 'PC Hardware Comparisons: SSD vs HDD, DDR4 vs DDR5', 'computingskill' ),
 		'contact'                   => __( 'Contact Computing Skill: Questions & Spec Corrections', 'computingskill' ),
 		'disclaimer'                => __( 'Disclaimer: Estimates & Trademarks - Computing Skill', 'computingskill' ),

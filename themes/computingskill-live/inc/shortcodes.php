@@ -136,7 +136,7 @@ function cs_related_shortcode( $atts ) {
 	foreach ( $slugs as $slug ) {
 		$page = get_page_by_path( $slug );
 		if ( ! $page ) {
-			$page = get_page_by_path( $slug, OBJECT, array( 'cs_calculator', 'cs_tool', 'cs_hardware', 'cs_guide', 'cs_comparison', 'cs_resource', 'cs_game' ) );
+			$page = get_page_by_path( $slug, OBJECT, array( 'cs_calculator', 'cs_tool', 'cs_hardware', 'cs_guide', 'cs_comparison', 'cs_resource', 'cs_game', 'post' ) );
 		}
 		if ( $page && 'publish' === $page->post_status ) {
 			$items[] = $page;
@@ -321,7 +321,7 @@ function cs_maybe_print_games_crosslink() {
 	}
 	$eligible_slugs = array(
 		'pc-bottleneck-calculator',
-		'fps-calculator',
+		// fps-calculator: lists every game page instead (D7, inc/internal-links.php).
 		'cpu-vs-gpu-calculator',
 		'gpu-vram-calculator',
 		'gpu-performance-calculator',

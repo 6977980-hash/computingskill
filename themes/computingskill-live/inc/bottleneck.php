@@ -397,27 +397,69 @@ function cs_maybe_print_bottleneck_index() {
 		return;
 	}
 
-	$posts = get_posts( array(
-		'post_type'      => 'cs_bottleneck',
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'orderby'        => 'title',
-		'order'          => 'ASC',
-	) );
-
-	if ( empty( $posts ) ) {
+	// D7 (audit 2.20/2.21): the calculator and both guides printed the same
+	// 135-link list as /bottleneck/, which made up most of the text those
+	// pages shared. /bottleneck/ now shows every pair as a results table,
+	// grouped by CPU; the other pages show a sample across budgets.
+	if ( 'bottleneck' !== $slug ) {
+		$sample = function_exists( 'cs_il_combo_sample' ) ? cs_il_combo_sample( 12, $slug ) : array();
+		if ( ! $sample ) {
+			return;
+		}
+		$cpus = cs_get_cpu_data();
+		$gpus = cs_get_gpu_data();
+		echo '<div class="cs-related cs-bottleneck-index">';
+		echo '<h2>' . esc_html__( 'Example CPU + GPU Combinations', 'computingskill' ) . '</h2>';
+		echo '<ul class="cs-related-grid">';
+		foreach ( $sample as $key => $url ) {
+			list( $c, $g ) = explode( '|', $key );
+			echo '<li><a href="' . esc_url( $url ) . '">' . esc_html( cs_bn_short_name( $cpus[ $c ]['name'] ) . ' + ' . cs_bn_short_name( $gpus[ $g ]['name'] ) ) . '</a></li>';
+		}
+		echo '</ul>';
+		echo '<p class="cs-related-more"><a href="' . esc_url( home_url( '/bottleneck/' ) ) . '">' . esc_html( sprintf( __( 'All %d bottleneck comparisons, with results →', 'computingskill' ), count( cs_bn_published_pairs() ) ) ) . '</a></p>';
+		echo '</div>';
 		return;
 	}
 
-	echo '<div class="cs-related cs-bottleneck-index">';
-	echo '<h2>' . esc_html__( 'Browse Every CPU + GPU Combination', 'computingskill' ) . '</h2>';
-	echo '<ul class="cs-related-grid">';
-	foreach ( $posts as $post ) {
-		echo '<li><a href="' . esc_url( get_permalink( $post ) ) . '">' . esc_html( get_the_title( $post ) ) . '</a></li>';
+	$cpus   = cs_get_cpu_data();
+	$gpus   = cs_get_gpu_data();
+	$by_cpu = array();
+	foreach ( cs_bn_published_pairs() as $key => $url ) {
+		list( $c, $g ) = explode( '|', $key );
+		if ( isset( $cpus[ $c ], $gpus[ $g ] ) ) {
+			$by_cpu[ $c ][ $g ] = $url;
+		}
 	}
-	echo '</ul>';
-	if ( 'bottleneck' !== $slug ) {
-		echo '<p class="cs-related-more"><a href="' . esc_url( home_url( '/bottleneck/' ) ) . '">' . esc_html__( 'All bottleneck comparisons →', 'computingskill' ) . '</a></p>';
+	if ( ! $by_cpu ) {
+		return;
+	}
+	uksort( $by_cpu, function ( $a, $b ) use ( $cpus ) {
+		return $cpus[ $a ]['score'] - $cpus[ $b ]['score'] ?: strcmp( $cpus[ $a ]['name'], $cpus[ $b ]['name'] );
+	} );
+	$short = cs_bn_res_short();
+
+	echo '<div class="cs-bottleneck-index cs-bottleneck-table-index">';
+	echo '<h2>' . esc_html__( 'Every CPU + GPU Combination at a Glance', 'computingskill' ) . '</h2>';
+	echo '<p>' . esc_html__( 'Grouped by CPU, slowest first; within each CPU the graphics cards go from slowest to fastest. Typical AAA game at high settings, as on each page.', 'computingskill' ) . '</p>';
+	foreach ( $by_cpu as $c => $rows ) {
+		uksort( $rows, function ( $a, $b ) use ( $gpus ) {
+			return $gpus[ $a ]['score'] - $gpus[ $b ]['score'];
+		} );
+		echo '<h3>' . esc_html( $cpus[ $c ]['name'] ) . '</h3>';
+		echo '<div class="cs-table-wrap"><table class="cs-hardware-table cs-bn-index-table"><thead><tr><th>' . esc_html__( 'Graphics card', 'computingskill' ) . '</th>';
+		foreach ( $short as $label ) {
+			echo '<th>' . esc_html( $label ) . '</th>';
+		}
+		echo '</tr></thead><tbody>';
+		foreach ( $rows as $g => $url ) {
+			$r = cs_calculate_bottleneck( $cpus[ $c ], $gpus[ $g ] );
+			echo '<tr><td><a href="' . esc_url( $url ) . '">' . esc_html( cs_bn_short_name( $cpus[ $c ]['name'] ) . ' + ' . cs_bn_short_name( $gpus[ $g ]['name'] ) ) . '</a></td>';
+			foreach ( array_keys( $short ) as $res ) {
+				echo '<td>' . esc_html( cs_bn_cell( $r[ $res ] ) ) . '</td>';
+			}
+			echo '</tr>';
+		}
+		echo '</tbody></table></div>';
 	}
 	echo '</div>';
 }

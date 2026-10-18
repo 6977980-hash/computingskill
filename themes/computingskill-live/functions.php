@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CS_THEME_VERSION', '1.0.43' );
+define( 'CS_THEME_VERSION', '1.0.44' );
 define( 'CS_THEME_DIR', get_template_directory() );
 define( 'CS_THEME_URI', get_template_directory_uri() );
 
@@ -36,6 +36,7 @@ require_once CS_THEME_DIR . '/inc/bottleneck-content.php';
 require_once CS_THEME_DIR . '/inc/calculator-pages.php';
 require_once CS_THEME_DIR . '/inc/combo-pages.php';
 require_once CS_THEME_DIR . '/inc/blog.php';
+require_once CS_THEME_DIR . '/inc/internal-links.php';
 require_once CS_THEME_DIR . '/inc/contact-form.php';
 require_once CS_THEME_DIR . '/inc/redirects.php';
 require_once CS_THEME_DIR . '/inc/technical-seo.php';

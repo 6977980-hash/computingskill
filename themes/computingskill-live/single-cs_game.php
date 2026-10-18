@@ -87,6 +87,8 @@ while ( have_posts() ) :
 
 				<?php echo cs_game_compare_section( $slug, $g ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 
+				<?php echo cs_il_game_combos_html( $slug, $g ); // phpcs:ignore WordPress.Security.EscapeOutput -- D7 (2.16): game pages linked to no combo page; escaped inside. ?>
+
 				<?php echo cs_game_faq_section( $g ); // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped sub-output only, see cs_game_faq_section(). ?>
 				<?php endif; ?>
 

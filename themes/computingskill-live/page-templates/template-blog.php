@@ -3,15 +3,12 @@
  * Template Name: Blog / Articles Hub
  * Template Post Type: page
  *
- * A dedicated "blog"-style hub: a search bar, a hand-picked "Featured
- * Articles" grid (10 items spanning every category -- never framed as
- * fake "trending" or "most popular" data), then every calculator, tool,
- * hardware page, guide and comparison on the site grouped into its own
- * category section, exactly matching how each piece of content was
- * actually authored (see inc/content-index.php). Uses the shared site
- * header/footer for branding, navigation and SEO continuity, but the
- * content area is deliberately laid out as its own magazine-style
- * interface rather than a plain article page.
+ * D7 (Oct 2026, audit 2.22): /blog/ used to repeat every hub ("56
+ * resources": calculators, tools, hardware pages, guides, comparisons).
+ * It now lists what is actually read as an article: the published posts
+ * first, then the guides and comparisons (cs_blog_article_groups() in
+ * inc/internal-links.php). Calculators, tools and hardware pages keep
+ * their own hubs, linked once from the intro.
  *
  * @package ComputingSkill
  */
@@ -21,21 +18,9 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 
-	$groups         = cs_get_blog_index();
-	$flat           = cs_get_blog_index_flat();
-	$flat_by_slug   = array();
-	foreach ( $flat as $item ) {
-		$flat_by_slug[ $item['slug'] ] = $item;
-	}
-
-	$featured = array();
-	foreach ( cs_get_blog_featured_slugs() as $slug ) {
-		if ( isset( $flat_by_slug[ $slug ] ) ) {
-			$featured[] = $flat_by_slug[ $slug ];
-		}
-	}
-
-	$total_count = count( $flat );
+	$groups      = cs_blog_article_groups();
+	$total_count = count( cs_blog_article_items() );
+	$hub_links   = cs_blog_hub_links();
 	?>
 	<main id="cs-main" class="cs-main cs-blog-hub">
 
@@ -46,16 +31,19 @@ while ( have_posts() ) :
 				<p class="cs-blog-intro">
 					<?php
 					printf(
-						/* translators: %d: total number of calculators, tools and guides */
-						esc_html__( 'Every calculator, tool, hardware page, guide and comparison on ComputingSkill in one place — %d free resources and counting. Search for something specific, jump to a category, or browse the featured picks below.', 'computingskill' ),
+						/* translators: %d: number of articles */
+						esc_html__( 'Articles on choosing, building and upgrading a gaming PC: new posts first, then our step-by-step guides and side-by-side comparisons (%d in all).', 'computingskill' ),
 						(int) $total_count
 					);
 					?>
 				</p>
+				<?php if ( $hub_links ) : ?>
+					<p class="cs-blog-intro"><?php echo wp_kses_post( sprintf( __( 'Looking for a calculator, a tool or a part explainer instead? See %s.', 'computingskill' ), cs_bn_join( $hub_links ) ) ); ?></p>
+				<?php endif; ?>
 
 				<form class="cs-blog-search-form" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
 					<label class="screen-reader-text" for="cs-blog-search-input"><?php esc_html_e( 'Search ComputingSkill', 'computingskill' ); ?></label>
-					<input type="search" id="cs-blog-search-input" name="s" placeholder="<?php esc_attr_e( 'Search calculators, tools, hardware, guides…', 'computingskill' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" />
+					<input type="search" id="cs-blog-search-input" name="s" placeholder="<?php esc_attr_e( 'Search guides, tools and calculators…', 'computingskill' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" />
 					<button type="submit"><?php esc_html_e( 'Search', 'computingskill' ); ?></button>
 				</form>
 
@@ -69,23 +57,7 @@ while ( have_posts() ) :
 
 		<div class="cs-container">
 
-			<?php echo cs_latest_posts_section( 12 ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
-
-			<?php if ( ! empty( $featured ) ) : ?>
-			<section class="cs-blog-featured" aria-labelledby="cs-blog-featured-heading">
-				<h2 id="cs-blog-featured-heading"><?php esc_html_e( 'Featured Articles', 'computingskill' ); ?></h2>
-				<p class="cs-blog-section-desc"><?php esc_html_e( 'A hand-picked starting point spanning calculators, hardware guides and comparisons.', 'computingskill' ); ?></p>
-				<div class="cs-card-grid cs-blog-featured-grid">
-					<?php foreach ( $featured as $item ) : ?>
-						<a class="cs-card cs-blog-card" href="<?php echo esc_url( home_url( '/' . $item['slug'] . '/' ) ); ?>">
-							<span class="cs-blog-card-tag"><?php echo esc_html( $item['group_label'] ); ?></span>
-							<span class="cs-card-title"><?php echo esc_html( $item['title'] ); ?></span>
-							<span class="cs-card-desc"><?php echo esc_html( wp_trim_words( $item['desc'], 22 ) ); ?></span>
-						</a>
-					<?php endforeach; ?>
-				</div>
-			</section>
-			<?php endif; ?>
+			<?php echo cs_latest_posts_section( 12, __( 'Latest Posts', 'computingskill' ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 
 			<?php foreach ( $groups as $key => $group ) : ?>
 				<?php if ( empty( $group['items'] ) ) continue; ?>

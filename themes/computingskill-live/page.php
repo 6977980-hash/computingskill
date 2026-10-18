@@ -28,6 +28,7 @@ get_header();
 				<?php endif; ?>
 				<?php if ( function_exists( 'cs_maybe_print_bottleneck_index' ) ) : ?>
 					<?php cs_maybe_print_bottleneck_index(); ?>
+					<?php if ( function_exists( 'cs_maybe_print_context_links' ) ) { cs_maybe_print_context_links(); } ?>
 				<?php endif; ?>
 			</article>
 		<?php endwhile; ?>

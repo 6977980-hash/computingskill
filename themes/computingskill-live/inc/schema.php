@@ -110,8 +110,8 @@ function cs_print_schema() {
 	// of the "always safe" default list in cs_schema_should_emit() checks
 	// below since it's specific to this one page rather than structural
 	// site-wide data.
-	if ( is_page( 'blog' ) && cs_schema_should_emit( 'ItemList' ) && function_exists( 'cs_get_blog_index_flat' ) ) {
-		$flat = cs_get_blog_index_flat();
+	if ( is_page( 'blog' ) && cs_schema_should_emit( 'ItemList' ) && function_exists( 'cs_blog_article_items' ) ) {
+		$flat = cs_blog_article_items(); // D7 (2.22): the articles the page shows.
 		if ( ! empty( $flat ) ) {
 			$list_items = array();
 			$position   = 0;
@@ -120,8 +120,8 @@ function cs_print_schema() {
 				$list_items[] = array(
 					'@type'    => 'ListItem',
 					'position' => $position,
-					'url'      => home_url( '/' . $entry['slug'] . '/' ),
-					'name'     => $entry['title'],
+					'url'      => $entry['url'],
+					'name'     => wp_strip_all_tags( $entry['title'] ),
 				);
 			}
 			$graphs[] = array(

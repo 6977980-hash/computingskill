@@ -33,6 +33,7 @@ while ( have_posts() ) :
 
 				<?php cs_maybe_print_extra_faq(); ?>
 				<?php cs_maybe_print_bottleneck_index(); ?>
+				<?php if ( function_exists( 'cs_maybe_print_context_links' ) ) { cs_maybe_print_context_links(); } ?>
 				<?php cs_maybe_print_games_crosslink(); ?>
 			</article>
 		</div>
