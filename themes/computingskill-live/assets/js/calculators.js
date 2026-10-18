@@ -655,6 +655,9 @@
 				calculate();
 			}
 		}
+		// D9: the result area's reserved height (data-shared, fixes.css) is
+		// only for the share-link result on load, never after Reset.
+		container.removeAttribute( 'data-shared' );
 	}
 
 	/* ----------------------------------------------------------------

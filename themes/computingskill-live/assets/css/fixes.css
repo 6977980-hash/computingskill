@@ -54,3 +54,14 @@
 .cs-calc-ref .cs-calc-ref-note, .cs-calc-ref .cs-calc-sources { font-size: 0.9rem; color: var(--cs-text-muted); }
 .cs-calc-ref .cs-calc-sources a { color: var(--cs-primary); }
 .cs-hub-meta { margin: 0 0 1em; }
+
+/* D9 (audit 4.2): calculators.js builds the fields after the first paint,
+   which pushed everything below the tool down. While the field area (and,
+   on a share link, the result area) is still empty it keeps the height it
+   will have, set per tool in inc/performance.php (cs_perf_calc_heights). */
+.cs-calc-fields:empty { min-height: var(--cs-reserve, 0); }
+.cs-calculator[data-shared="1"] .cs-calc-result:empty { display: block; min-height: var(--cs-reserve, 0); }
+@media (min-width: 640px) {
+	.cs-calc-fields:empty,
+	.cs-calculator[data-shared="1"] .cs-calc-result:empty { min-height: var(--cs-reserve-wide, var(--cs-reserve, 0)); }
+}

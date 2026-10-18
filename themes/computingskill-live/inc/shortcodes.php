@@ -85,20 +85,24 @@ function cs_calculator_shortcode( $atts ) {
 		return '';
 	}
 
-	cs_enqueue_calculators();
+	cs_enqueue_calculators( $type );
+
+	// D9 (audit 4.2): a share link fills in and calculates on load, so the
+	// result area reserves its height too (fixes.css).
+	$shared = in_array( $type, array( 'bottleneck', 'fps', 'psu' ), true ) && function_exists( 'cs_share_param_keys' ) && array_intersect( array_keys( $_GET ), cs_share_param_keys() ); // phpcs:ignore WordPress.Security.NonceVerification
 
 	ob_start();
 	?>
-	<div class="cs-calculator" id="cs-calculator-<?php echo esc_attr( $type ); ?>" data-calc="<?php echo esc_attr( $type ); ?>" role="group" aria-label="<?php echo esc_attr( $atts['title'] ); ?>">
+	<div class="cs-calculator" id="cs-calculator-<?php echo esc_attr( $type ); ?>" data-calc="<?php echo esc_attr( $type ); ?>"<?php echo $shared ? ' data-shared="1"' : ''; ?> role="group" aria-label="<?php echo esc_attr( $atts['title'] ); ?>">
 		<noscript>
 			<p class="cs-noscript-notice"><?php esc_html_e( 'This calculator requires JavaScript to be enabled in your browser.', 'computingskill' ); ?></p>
 		</noscript>
-		<div class="cs-calc-fields" data-role="fields"></div>
+		<div class="cs-calc-fields" data-role="fields"<?php echo function_exists( 'cs_perf_calc_reserve_style' ) ? cs_perf_calc_reserve_style( $type, 'fields' ) : ''; ?>></div>
 		<div class="cs-calc-actions">
 			<button type="button" class="cs-calc-submit" data-role="submit"><?php esc_html_e( 'Calculate', 'computingskill' ); ?></button>
 			<button type="button" class="cs-calc-reset" data-role="reset"><?php esc_html_e( 'Reset', 'computingskill' ); ?></button>
 		</div>
-		<div class="cs-calc-result" data-role="result" aria-live="polite"></div>
+		<div class="cs-calc-result" data-role="result" aria-live="polite"<?php echo $shared && function_exists( 'cs_perf_calc_reserve_style' ) ? cs_perf_calc_reserve_style( $type, 'result' ) : ''; ?>></div>
 	</div>
 	<?php
 	// D8 (audit 3.2/3.3): numbers in the raw HTML, with sources and formula.

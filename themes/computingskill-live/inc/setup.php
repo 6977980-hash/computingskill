@@ -73,68 +73,92 @@ add_action( 'wp_enqueue_scripts', 'cs_scripts' );
 
 /**
  * Conditionally enqueue the calculators bundle. Called from the
- * [cs_calculator] shortcode handler in inc/shortcodes.php the first time
- * that shortcode renders on a request, so pages with no calculator never
- * load the extra JS.
+ * [cs_calculator] shortcode handler in inc/shortcodes.php each time that
+ * shortcode renders, so pages with no calculator never load the extra JS.
+ *
+ * D9 (audit 4.4): the data blocks are added per tool type. The hardware
+ * list (about 15KB) only goes to tools with a CPU/GPU picker, the games
+ * list only to the FPS calculator, and the combo page links only to the
+ * two tools that show them (bottleneck and FPS, `comboLink` in
+ * calculators.js). calculators.js falls back to empty data, so a tool that
+ * gets none works as before.
+ *
+ * @param string $type Calculator type (data-calc), '' = add everything.
  */
-function cs_enqueue_calculators() {
-	static $done = false;
-	if ( $done ) {
-		return;
-	}
-	$done          = true;
+function cs_enqueue_calculators( $type = '' ) {
+	static $added = array();
 	$theme_version = wp_get_theme()->get( 'Version' );
-	wp_enqueue_script( 'computingskill-calculators', get_template_directory_uri() . '/assets/js/calculators.js', array(), $theme_version, true );
+	if ( empty( $added ) ) {
+		wp_enqueue_script( 'computingskill-calculators', get_template_directory_uri() . '/assets/js/calculators.js', array(), $theme_version, true );
+		$added['script'] = true;
+	}
+
+	// Tools whose fields never read window.csHardwareData.
+	$no_hardware = array( 'ram', 'ssd-lifespan', 'ssd-tbw', 'storage', 'storage-converter', 'download-time', 'upload-time', 'file-transfer-time', 'mbps-to-mbs', 'mbs-to-mbps', 'bandwidth', 'data-usage', 'ppi', 'pixel-density', 'dpi', 'screen-size', 'monitor-size', 'aspect-ratio', 'resolution', 'refresh-rate' );
+	$wants = array(
+		'hardware' => '' === $type || ! in_array( $type, $no_hardware, true ),
+		'games'    => '' === $type || 'fps' === $type,
+		'combos'   => '' === $type || in_array( $type, array( 'bottleneck', 'fps' ), true ),
+	);
 
 	// Hand the verified hardware dataset to the browser so calculators
 	// (bottleneck, PSU, VRAM, power) never hard-code specs in JS — single
 	// source of truth is data/hardware-data.php.
-	$data = array(
-		'gpu' => function_exists( 'cs_get_gpu_data' ) ? cs_get_gpu_data() : array(),
-		'cpu' => function_exists( 'cs_get_cpu_data' ) ? cs_get_cpu_data() : array(),
-	);
-	wp_add_inline_script( 'computingskill-calculators', 'window.csHardwareData = ' . wp_json_encode( $data ) . ';', 'before' );
+	if ( $wants['hardware'] && empty( $added['hardware'] ) ) {
+		$added['hardware'] = true;
+		$data = array(
+			'gpu' => function_exists( 'cs_get_gpu_data' ) ? cs_get_gpu_data() : array(),
+			'cpu' => function_exists( 'cs_get_cpu_data' ) ? cs_get_cpu_data() : array(),
+		);
+		wp_add_inline_script( 'computingskill-calculators', 'window.csHardwareData = ' . wp_json_encode( $data ) . ';', 'before' );
+	}
 
 	// Game requirements for the FPS calculator's optional game picker —
 	// only the fields it displays, straight from data/games-data.php.
-	$games = array();
-	if ( function_exists( 'cs_get_games_data' ) ) {
-		foreach ( cs_get_games_data() as $slug => $g ) {
-			$games[ $slug ] = array(
-				'name'    => $g['name'],
-				'url'     => home_url( '/games/' . $slug . '/' ),
-				'profile' => isset( $g['profile'] ) ? $g['profile'] : 'aaa',
-				'min'     => array( 'cpu' => $g['min']['cpu'], 'gpu' => $g['min']['gpu'], 'ram' => $g['min']['ram'] ),
-				'rec'     => array( 'cpu' => $g['rec']['cpu'], 'gpu' => $g['rec']['gpu'], 'ram' => $g['rec']['ram'] ),
-			);
+	if ( $wants['games'] && empty( $added['games'] ) ) {
+		$added['games'] = true;
+		$games = array();
+		if ( function_exists( 'cs_get_games_data' ) ) {
+			foreach ( cs_get_games_data() as $slug => $g ) {
+				$games[ $slug ] = array(
+					'name'    => $g['name'],
+					'url'     => home_url( '/games/' . $slug . '/' ),
+					'profile' => isset( $g['profile'] ) ? $g['profile'] : 'aaa',
+					'min'     => array( 'cpu' => $g['min']['cpu'], 'gpu' => $g['min']['gpu'], 'ram' => $g['min']['ram'] ),
+					'rec'     => array( 'cpu' => $g['rec']['cpu'], 'gpu' => $g['rec']['gpu'], 'ram' => $g['rec']['ram'] ),
+				);
+			}
 		}
+		wp_add_inline_script( 'computingskill-calculators', 'window.csGamesData = ' . wp_json_encode( $games ) . ';', 'before' );
 	}
-	wp_add_inline_script( 'computingskill-calculators', 'window.csGamesData = ' . wp_json_encode( $games ) . ';', 'before' );
 
 	// Published /bottleneck/{cpu}-{gpu}/ pages, keyed "cpu|gpu", so the
 	// bottleneck and FPS results can link to a pair's static page when one
 	// exists (Phase 5, Oct 2026). Read from the posts themselves, so a link
 	// is never shown for a page that isn't live.
-	$combos = array();
-	$posts  = get_posts( array(
-		'post_type'      => 'cs_bottleneck',
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'fields'         => 'ids',
-		'no_found_rows'  => true,
-	) );
-	foreach ( $posts as $post_id ) {
-		$cpu = get_post_meta( $post_id, 'cs_cpu', true );
-		$gpu = get_post_meta( $post_id, 'cs_gpu', true );
-		if ( $cpu && $gpu ) {
-			$combos[ $cpu . '|' . $gpu ] = get_permalink( $post_id );
+	if ( $wants['combos'] && empty( $added['combos'] ) ) {
+		$added['combos'] = true;
+		$combos = array();
+		$posts  = get_posts( array(
+			'post_type'      => 'cs_bottleneck',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		) );
+		foreach ( $posts as $post_id ) {
+			$cpu = get_post_meta( $post_id, 'cs_cpu', true );
+			$gpu = get_post_meta( $post_id, 'cs_gpu', true );
+			if ( $cpu && $gpu ) {
+				$combos[ $cpu . '|' . $gpu ] = get_permalink( $post_id );
+			}
 		}
+		// D7: merged near-twin pairs link to the page they were merged into.
+		if ( function_exists( 'cs_merged_combo_links' ) ) {
+			$combos = cs_merged_combo_links( $combos );
+		}
+		wp_add_inline_script( 'computingskill-calculators', 'window.csComboPages = ' . wp_json_encode( $combos ) . ';', 'before' );
 	}
-	// D7: merged near-twin pairs link to the page they were merged into.
-	if ( function_exists( 'cs_merged_combo_links' ) ) {
-		$combos = cs_merged_combo_links( $combos );
-	}
-	wp_add_inline_script( 'computingskill-calculators', 'window.csComboPages = ' . wp_json_encode( $combos ) . ';', 'before' );
 }
 
 /**

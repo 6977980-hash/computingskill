@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CS_THEME_VERSION', '1.0.46' );
+define( 'CS_THEME_VERSION', '1.0.47' );
 define( 'CS_THEME_DIR', get_template_directory() );
 define( 'CS_THEME_URI', get_template_directory_uri() );
 
@@ -44,6 +44,7 @@ require_once CS_THEME_DIR . '/inc/redirects.php';
 require_once CS_THEME_DIR . '/inc/technical-seo.php';
 require_once CS_THEME_DIR . '/inc/analytics.php';
 require_once CS_THEME_DIR . '/inc/legal.php';
+require_once CS_THEME_DIR . '/inc/performance.php';
 require_once CS_THEME_DIR . '/inc/fixes-loader.php';
 
 /**
