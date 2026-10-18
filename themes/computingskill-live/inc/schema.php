@@ -237,6 +237,9 @@ function cs_print_schema() {
 		}
 	}
 
+	// D8: extra nodes from other files (tier list Dataset).
+	$graphs = apply_filters( 'cs_schema_graphs', $graphs );
+
 	if ( empty( $graphs ) ) {
 		return;
 	}
@@ -556,8 +559,8 @@ function cs_org_schema_id() {
 }
 
 /**
- * The site's own official profiles (not the author's). Empty until Ali
- * gives them (deep audit 3.9, phase D8); add the URLs here.
+ * The site's own official profiles (not the author's), deep audit 3.9.
+ * Only profiles Ali has confirmed belong in this list.
  */
 function cs_org_same_as() {
 	return array();

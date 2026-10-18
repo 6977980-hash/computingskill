@@ -28,6 +28,7 @@ while ( have_posts() ) :
 			<div class="cs-container cs-narrow">
 				<?php cs_breadcrumbs(); ?>
 				<h1 class="cs-blog-title"><?php the_title(); ?></h1>
+				<?php if ( function_exists( 'cs_hub_meta' ) ) { cs_hub_meta( array( 'post', 'page' ) ); } ?>
 				<p class="cs-blog-intro">
 					<?php
 					printf(
@@ -40,6 +41,7 @@ while ( have_posts() ) :
 				<?php if ( $hub_links ) : ?>
 					<p class="cs-blog-intro"><?php echo wp_kses_post( sprintf( __( 'Looking for a calculator, a tool or a part explainer instead? See %s.', 'computingskill' ), cs_bn_join( $hub_links ) ) ); ?></p>
 				<?php endif; ?>
+				<?php echo function_exists( 'cs_aeo_quick_answer_html' ) ? cs_aeo_quick_answer_html( 'blog' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 
 				<form class="cs-blog-search-form" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
 					<label class="screen-reader-text" for="cs-blog-search-input"><?php esc_html_e( 'Search ComputingSkill', 'computingskill' ); ?></label>

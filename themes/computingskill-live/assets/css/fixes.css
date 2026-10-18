@@ -40,3 +40,17 @@
 .cs-field-other { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--cs-border); }
 .cs-field-other[hidden] { display: none; }
 .cs-field-other label { font-size: 0.9rem; }
+
+/* GPU/CPU tier lists and calculator reference tables (deep audit 3.2/3.7, D8). */
+.cs-tier { display: inline-block; min-width: 1.8em; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--cs-border); font-family: var(--cs-font-display, inherit); text-align: center; color: var(--cs-text); }
+.cs-tier-s { border-color: var(--cs-cpu, var(--cs-primary)); color: var(--cs-cpu, var(--cs-primary)); }
+.cs-tier-a { border-color: var(--cs-gpu, var(--cs-primary)); color: var(--cs-gpu, var(--cs-primary)); }
+.cs-tier-b { border-color: var(--cs-primary); color: var(--cs-primary); }
+.cs-tier-c { border-color: var(--cs-accent); color: var(--cs-accent); }
+.cs-tier-d { color: var(--cs-text-muted); }
+.cs-tier-ranking td, .cs-tier-ranking th, .cs-ref-table td, .cs-ref-table th { white-space: nowrap; }
+.cs-tier-table caption, .cs-tier-ranking caption, .cs-ref-table caption { caption-side: top; text-align: left; font-weight: 600; padding: 0 0 6px; color: var(--cs-text); }
+.cs-calc-ref { margin: 1.5em 0; }
+.cs-calc-ref .cs-calc-ref-note, .cs-calc-ref .cs-calc-sources { font-size: 0.9rem; color: var(--cs-text-muted); }
+.cs-calc-ref .cs-calc-sources a { color: var(--cs-primary); }
+.cs-hub-meta { margin: 0 0 1em; }

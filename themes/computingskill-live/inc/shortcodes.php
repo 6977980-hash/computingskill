@@ -101,7 +101,8 @@ function cs_calculator_shortcode( $atts ) {
 		<div class="cs-calc-result" data-role="result" aria-live="polite"></div>
 	</div>
 	<?php
-	return ob_get_clean();
+	// D8 (audit 3.2/3.3): numbers in the raw HTML, with sources and formula.
+	return ob_get_clean() . ( function_exists( 'cs_aeo_calc_reference' ) ? cs_aeo_calc_reference( $type ) : '' );
 }
 add_shortcode( 'cs_calculator', 'cs_calculator_shortcode' );
 

@@ -549,8 +549,10 @@ function cs_il_topic_box_html( $slug ) {
  */
 function cs_il_context_links() {
 	return array(
-		'cpu'             => array( __( 'Put It to Use', 'computingskill' ), 'pc-bottleneck-calculator,cpu-performance-calculator,cpu-bottleneck-explained,motherboard,cpu-cooler', 'combos' ),
-		'gpu'             => array( __( 'Put It to Use', 'computingskill' ), 'how-to-choose-a-gaming-gpu,best-gpu-for-ryzen-5-5600,gpu-bottleneck-explained,cyberpunk-2077,red-dead-redemption-2,starfield', 'combos' ),
+		'cpu'             => array( __( 'Put It to Use', 'computingskill' ), 'pc-bottleneck-calculator,cpu-tier-list,cpu-performance-calculator,cpu-bottleneck-explained,motherboard,cpu-cooler', 'combos' ),
+		'gpu'             => array( __( 'Put It to Use', 'computingskill' ), 'how-to-choose-a-gaming-gpu,gpu-tier-list,best-gpu-for-ryzen-5-5600,gpu-bottleneck-explained,cyberpunk-2077,red-dead-redemption-2,starfield', 'combos' ),
+		'gpu-tier-list'   => array( __( 'Check a Card in Your PC', 'computingskill' ), 'fps-calculator,pc-bottleneck-calculator,gpu-performance-calculator,how-to-choose-a-gaming-gpu,how-much-vram-do-i-need,cpu-tier-list', 'combos' ),
+		'cpu-tier-list'   => array( __( 'Check a CPU in Your PC', 'computingskill' ), 'pc-bottleneck-calculator,fps-calculator,cpu-performance-calculator,pc-compatibility-checker,cpu-bottleneck-explained,gpu-tier-list', 'combos' ),
 		'vram'            => array( __( 'VRAM in Practice', 'computingskill' ), 'how-much-vram-do-i-need,gpu-vram-calculator,cyberpunk-2077,starfield,elden-ring,gta-5-enhanced' ),
 		'ram'             => array( __( 'RAM in Practice', 'computingskill' ), 'ddr4-vs-ddr5,call-of-duty-warzone,baldurs-gate-3,helldivers-2' ),
 		'psu'             => array( __( 'Power in Practice', 'computingskill' ), 'pc-power-consumption-calculator,gpu-power-consumption-calculator,pc-compatibility-checker' ),
@@ -783,6 +785,8 @@ function cs_il_hub_guides() {
 			'intro' => __( 'Each page explains one part. If you have a buying question rather than a “what is it” question, these pages answer it directly:', 'computingskill' ),
 			'items' => array(
 				'how-to-choose-a-gaming-gpu' => __( 'Which graphics card should I buy?', 'computingskill' ),
+				'gpu-tier-list'              => __( 'Which graphics cards are fastest for gaming?', 'computingskill' ),
+				'cpu-tier-list'              => __( 'Which CPUs are fastest for gaming?', 'computingskill' ),
 				'how-to-choose-a-psu'        => __( 'Which power supply should I buy?', 'computingskill' ),
 				'how-much-ram-do-i-need'     => __( 'How much RAM should I get?', 'computingskill' ),
 				'how-much-vram-do-i-need'    => __( 'How much VRAM do I need?', 'computingskill' ),
@@ -811,6 +815,8 @@ function cs_il_hub_guides() {
 				'ddr4-vs-ddr5'          => __( 'Your CPU and motherboard decide it: AM5 and Intel Core Ultra boards take DDR5 only, AM4 takes DDR4, and Intel 12th-14th gen boards come in either version.', 'computingskill' ),
 				'1080p-vs-1440p-vs-4k'  => __( 'Match the resolution to the graphics card you can afford to drive it.', 'computingskill' ),
 				'cpu-vs-gpu-calculator' => __( 'For a specific pair of parts, compare their scores directly.', 'computingskill' ),
+				'gpu-tier-list'         => __( 'Every graphics card ranked from S to D tier, with the best cards for 1080p, 1440p and 4K.', 'computingskill' ),
+				'cpu-tier-list'         => __( 'Every gaming CPU ranked from S to D tier, with the fastest graphics card each one drives.', 'computingskill' ),
 			),
 			'outro' => __( 'For CPU and GPU pairings by name, the bottleneck comparisons cover every pair we have estimated.', 'computingskill' ),
 		),

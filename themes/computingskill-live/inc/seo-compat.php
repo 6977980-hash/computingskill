@@ -111,7 +111,7 @@ function cs_schema_should_emit( $type ) {
 	// same reason on individual /games/{slug}/ pages: it's built from
 	// our own verified data/games-data.php, not something an SEO plugin
 	// infers from plain spec-table markup.
-	$always_safe = array( 'BreadcrumbList', 'SoftwareApplication', 'FAQPage', 'ItemList', 'VideoGame' );
+	$always_safe = array( 'BreadcrumbList', 'SoftwareApplication', 'FAQPage', 'ItemList', 'VideoGame', 'Dataset' );
 	return in_array( $type, $always_safe, true );
 }
 
@@ -256,6 +256,8 @@ function cs_title_overrides() {
 		'methodology'               => __( 'Methodology: How Our PC Calculators Work', 'computingskill' ),
 		'ssd-vs-hdd'                => __( 'SSD vs HDD: Speed, Durability, Price & Which to Pick', 'computingskill' ),
 		'best-gpu-for-ryzen-5-5600' => __( 'Best GPU for Ryzen 5 5600 & 5600X (2026, No Bottleneck)', 'computingskill' ),
+		'gpu-tier-list'             => __( 'GPU Tier List 2026: Graphics Cards Ranked for Gaming', 'computingskill' ),
+		'cpu-tier-list'             => __( 'CPU Tier List 2026: Best Gaming Processors Ranked', 'computingskill' ),
 		'archive:cs_game'           => __( 'PC Game System Requirements: Can Your PC Run It?', 'computingskill' ),
 		'term:buying-guides'        => __( 'PC Buying Guides: Articles - Computing Skill', 'computingskill' ),
 	);
@@ -327,6 +329,8 @@ add_filter( 'rank_math/frontend/description', 'cs_games_archive_description' );
  */
 function cs_page_description_overrides() {
 	return array(
+		'gpu-tier-list' => __( 'Every gaming GPU ranked in S to D tiers by score, with estimated FPS at 1080p, 1440p and 4K, VRAM, power and the best graphics cards for each resolution.', 'computingskill' ),
+		'cpu-tier-list' => __( 'Every gaming CPU ranked in S to D tiers by score, with FPS ceilings, cores, socket, the fastest GPU each drives at 1440p and the best CPU per platform.', 'computingskill' ),
 		'fps-calculator' => __( 'Estimate FPS for any CPU and GPU pairing at 1080p, 1440p or 4K and your graphics preset, see which part limits frame rate, and compare a game\'s official specs.', 'computingskill' ),
 		'hdd' => __( 'How hard drives work, the specs that matter (capacity, RPM, cache), how HDDs compare to SSDs, and when an HDD is still the smart choice for bulk storage.', 'computingskill' ),
 		'mb-s-to-mbps-converter' => __( 'Convert MB/s to Mbps instantly (multiply by 8) to compare a measured download or copy speed against your internet plan\'s advertised megabit speed.', 'computingskill' ),

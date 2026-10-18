@@ -22,6 +22,7 @@ $total_games = count( $games_data );
 		<div class="cs-container cs-narrow">
 			<?php cs_breadcrumbs(); ?>
 			<h1 class="cs-games-title"><?php esc_html_e( 'Can I Run This Game?', 'computingskill' ); ?></h1>
+			<?php if ( function_exists( 'cs_hub_meta' ) ) { cs_hub_meta( array( 'cs_game' ) ); } ?>
 			<p class="cs-games-intro">
 				<?php
 				printf(

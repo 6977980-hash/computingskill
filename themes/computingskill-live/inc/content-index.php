@@ -136,6 +136,8 @@ function cs_content_index_groups() {
 				array( 'slug' => '1080p-vs-1440p-vs-4k', 'title' => __( '1080p vs 1440p vs 4K', 'computingskill' ), 'desc' => __( '1080p vs 1440p vs 4K compared honestly — visual difference, GPU power needed, ideal monitor size, and which resolution fits your setup.', 'computingskill' ) ),
 				array( 'slug' => 'ddr4-vs-ddr5', 'title' => __( 'DDR4 vs DDR5', 'computingskill' ), 'desc' => __( 'DDR4 vs DDR5 RAM compared honestly — bandwidth, latency, price, platform compatibility, and whether DDR5 is worth it today.', 'computingskill' ) ),
 				array( 'slug' => 'nvme-vs-sata', 'title' => __( 'NVMe vs SATA', 'computingskill' ), 'desc' => __( 'NVMe vs SATA SSDs compared honestly — real-world speed differences, where they actually matter, and compatibility basics like M.2 slots.', 'computingskill' ) ),
+				array( 'slug' => 'gpu-tier-list', 'title' => __( 'GPU Tier List', 'computingskill' ), 'desc' => __( 'Every graphics card in our database ranked for gaming, in S to D tiers, with estimated FPS at 1080p, 1440p and 4K and the best cards for each resolution.', 'computingskill' ) ),
+				array( 'slug' => 'cpu-tier-list', 'title' => __( 'CPU Tier List', 'computingskill' ), 'desc' => __( 'Every processor in our database ranked for gaming, in S to D tiers, with FPS ceilings, the fastest GPU each one drives at 1440p and the best CPU per socket.', 'computingskill' ) ),
 				array( 'slug' => 'ssd-vs-hdd', 'title' => __( 'SSD vs HDD', 'computingskill' ), 'desc' => __( 'A practical, technical comparison of SSDs and HDDs covering speed, price per GB, durability, and which one actually fits your use case.', 'computingskill' ) ),
 			),
 		),

@@ -15,6 +15,7 @@ get_header();
 				<p class="cs-eyebrow"><?php esc_html_e( 'PC hardware calculators', 'computingskill' ); ?></p>
 				<h1><?php esc_html_e( 'Free PC Hardware Calculators & Computer Tools', 'computingskill' ); ?></h1>
 				<p class="cs-hero-sub"><?php esc_html_e( 'Calculate, compare and optimize your PC before you buy, build or upgrade.', 'computingskill' ); ?></p>
+				<?php if ( function_exists( 'cs_hub_meta' ) ) { cs_hub_meta(); } ?>
 				<ul class="cs-hero-facts">
 					<li><?php esc_html_e( 'Free', 'computingskill' ); ?></li>
 					<li><?php esc_html_e( 'No sign-up', 'computingskill' ); ?></li>
