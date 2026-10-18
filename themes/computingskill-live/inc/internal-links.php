@@ -230,14 +230,29 @@ function cs_il_cpu_pct( $r ) {
  * which resolutions and game types the two give a different result.
  */
 function cs_il_combo_twin_html( $cpu_slug, $gpu_slug, $cpu, $gpu ) {
+	// Pages merged into this one come first: this page is now their answer.
+	$merged = function_exists( 'cs_il_merged_twins' ) ? cs_il_merged_twins( $cpu_slug . '-' . $gpu_slug ) : array();
+	if ( $merged ) {
+		$html = '';
+		foreach ( $merged as $twin_slug ) {
+			$html .= cs_il_combo_twin_section( $cpu_slug, $gpu_slug, $cpu, $gpu, $twin_slug, '' );
+		}
+		return $html;
+	}
 	$twin_slug = cs_il_twin_cpu( $cpu_slug, $gpu_slug );
 	if ( '' === $twin_slug ) {
 		return '';
 	}
+	$pairs = cs_bn_published_pairs();
+	return cs_il_combo_twin_section( $cpu_slug, $gpu_slug, $cpu, $gpu, $twin_slug, $pairs[ $twin_slug . '|' . $gpu_slug ] );
+}
+
+/**
+ * One "X or Y for this GPU?" section; $url '' when Y's page was merged here.
+ */
+function cs_il_combo_twin_section( $cpu_slug, $gpu_slug, $cpu, $gpu, $twin_slug, $url ) {
 	$cpus   = cs_get_cpu_data();
 	$twin   = $cpus[ $twin_slug ];
-	$pairs  = cs_bn_published_pairs();
-	$url    = $pairs[ $twin_slug . '|' . $gpu_slug ];
 	$short  = cs_bn_res_short();
 	$labels = cs_il_game_type_labels();
 
@@ -305,7 +320,15 @@ function cs_il_combo_twin_html( $cpu_slug, $gpu_slug, $cpu, $gpu ) {
 				) ); ?></p>
 			<?php endif; ?>
 		<?php endif; ?>
-		<p><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( sprintf( __( 'See the full %1$s + %2$s estimate', 'computingskill' ), $twin['name'], $gpu['name'] ) ); ?></a></p>
+		<?php if ( $url ) : ?>
+			<p><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( sprintf( __( 'See the full %1$s + %2$s estimate', 'computingskill' ), $twin['name'], $gpu['name'] ) ); ?></a></p>
+		<?php else : ?>
+			<p><?php echo esc_html( sprintf(
+				/* translators: 1: other CPU, 2: GPU */
+				__( 'The %1$s + %2$s lands within a few points of this page’s estimates in every game type and resolution, so this page covers both pairings.', 'computingskill' ),
+				$twin['name'], $gpu['name']
+			) ); ?></p>
+		<?php endif; ?>
 	</section>
 	<?php
 	return ob_get_clean();
@@ -1003,3 +1026,124 @@ function cs_links_rev_run() {
 	delete_option( 'cs_links_rev_lock' );
 }
 add_action( 'init', 'cs_links_rev_run', 32 );
+
+/* ------------------------------------------------------------------ */
+/* Merged near-twin combo pages (2.20, Ali 18 Oct 2026)                */
+/* ------------------------------------------------------------------ */
+
+if ( ! defined( 'CS_COMBO_MERGE_REV' ) ) {
+	define( 'CS_COMBO_MERGE_REV', '2026-10-18-d7-merge' );
+}
+
+/**
+ * Combo pages folded into a near-identical page: merged slug => kept slug.
+ * Chosen from the live crawl: same GPU, CPUs of the same maker and socket,
+ * 73%+ shared text, and no game type or resolution where the two CPUs'
+ * bottleneck differs by more than 6 points. The kept page is the CPU with
+ * more combo pages (tie: the longer-standing page). The merged posts become
+ * drafts (kept in the database) and their URLs 301 to the kept page, which
+ * names the merged CPU (cs_il_merged_twin()). To undo one, remove its line
+ * and publish the post again.
+ */
+function cs_merged_combo_map() {
+	return array(
+		'core-i5-14400f-rtx-5060-ti'   => 'core-i5-13400f-rtx-5060-ti',
+		'ryzen-5-7500f-rtx-5060-ti'    => 'ryzen-5-7600-rtx-5060-ti',
+		'core-i7-14700k-rtx-4090'      => 'core-i9-13900k-rtx-4090',
+		'ryzen-5-7500f-rx-7800-xt'     => 'ryzen-5-7600-rx-7800-xt',
+		'ryzen-5-7600x-rx-7800-xt'     => 'ryzen-5-7600-rx-7800-xt',
+		'core-i5-13600k-rtx-4070-super' => 'core-i5-14600k-rtx-4070-super',
+		'core-i5-14400f-rtx-5070'      => 'core-i5-13400f-rtx-5070',
+		'ryzen-5-5600x-rtx-4060'       => 'ryzen-5-5600-rtx-4060',
+		'ryzen-7-9700x-rtx-5070'       => 'ryzen-7-7700x-rtx-5070',
+	);
+}
+
+/**
+ * CPU slugs merged into the kept page $kept_slug (a kept page can absorb
+ * two, e.g. Ryzen 5 7500F and 7600X into 7600 + RX 7800 XT).
+ */
+function cs_il_merged_twins( $kept_slug ) {
+	$out = array();
+	foreach ( cs_merged_combo_map() as $from => $to ) {
+		if ( $to !== $kept_slug ) {
+			continue;
+		}
+		$post = get_page_by_path( $from, OBJECT, 'cs_bottleneck' );
+		$cpu  = $post ? get_post_meta( $post->ID, 'cs_cpu', true ) : '';
+		if ( $cpu && isset( cs_get_cpu_data()[ $cpu ] ) ) {
+			$out[] = $cpu;
+		}
+	}
+	return $out;
+}
+
+/**
+ * 301 for the merged URLs, both /bottleneck/{cpu}-{gpu}/ and the nested
+ * /bottleneck/{cpu}/{gpu}/ form, before the D6 URL guards would 404 them.
+ */
+function cs_merged_combo_redirect() {
+	$path = isset( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+	if ( ! is_string( $path ) || ! preg_match( '#^/bottleneck/([a-z0-9-]+)(?:/([a-z0-9-]+))?/?$#i', $path, $m ) ) {
+		return;
+	}
+	$slug = strtolower( $m[1] . ( empty( $m[2] ) ? '' : '-' . $m[2] ) );
+	$map  = cs_merged_combo_map();
+	if ( isset( $map[ $slug ] ) ) {
+		wp_safe_redirect( home_url( '/bottleneck/' . $map[ $slug ] . '/' ), 301 );
+		exit;
+	}
+}
+add_action( 'wp', 'cs_merged_combo_redirect', 0 );
+
+/**
+ * The calculators link a result to its combo page (window.csComboPages):
+ * a merged pair links to the kept page.
+ */
+function cs_merged_combo_links( $combos ) {
+	foreach ( cs_merged_combo_map() as $from => $to ) {
+		$post = get_page_by_path( $from, OBJECT, 'cs_bottleneck' );
+		if ( ! $post ) {
+			continue;
+		}
+		$key = get_post_meta( $post->ID, 'cs_cpu', true ) . '|' . get_post_meta( $post->ID, 'cs_gpu', true );
+		if ( '|' !== $key && ! isset( $combos[ $key ] ) ) {
+			$combos[ $key ] = home_url( '/bottleneck/' . $to . '/' );
+		}
+	}
+	return $combos;
+}
+
+/**
+ * One-time job: merged posts to draft (only if still published), sitemap
+ * and page cache cleared, llms.txt rewritten without them.
+ */
+function cs_combo_merge_run() {
+	if ( wp_installing() || get_option( 'cs_combo_merge_rev' ) === CS_COMBO_MERGE_REV ) {
+		return;
+	}
+	if ( ! add_option( 'cs_combo_merge_lock', time(), '', 'no' ) ) {
+		if ( time() - (int) get_option( 'cs_combo_merge_lock' ) > 300 ) {
+			delete_option( 'cs_combo_merge_lock' );
+		}
+		return;
+	}
+	global $wpdb;
+	foreach ( array_keys( cs_merged_combo_map() ) as $slug ) {
+		$post = get_page_by_path( $slug, OBJECT, 'cs_bottleneck' );
+		if ( $post && 'publish' === $post->post_status ) {
+			$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post->ID ), array( '%s' ), array( '%d' ) );
+			clean_post_cache( $post->ID );
+		}
+	}
+	if ( class_exists( '\RankMath\Sitemap\Cache' ) && method_exists( '\RankMath\Sitemap\Cache', 'invalidate_storage' ) ) {
+		\RankMath\Sitemap\Cache::invalidate_storage();
+	}
+	if ( function_exists( 'cs_llms_write' ) ) {
+		cs_llms_write();
+	}
+	do_action( 'litespeed_purge_all' );
+	update_option( 'cs_combo_merge_rev', CS_COMBO_MERGE_REV, false );
+	delete_option( 'cs_combo_merge_lock' );
+}
+add_action( 'init', 'cs_combo_merge_run', 33 );

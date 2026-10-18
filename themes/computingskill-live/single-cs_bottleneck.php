@@ -56,6 +56,22 @@ while ( have_posts() ) :
 						);
 						?>
 					</p>
+					<?php
+					// D7: pages merged into this one (cs_merged_combo_map()).
+					$cs_merged = cs_il_merged_twins( $cpu_slug . '-' . $gpu_slug );
+					if ( $cs_merged ) :
+						$cs_names = array();
+						foreach ( $cs_merged as $cs_m ) {
+							$cs_names[] = $cpus[ $cs_m ]['name'];
+						}
+						?>
+						<p class="cs-lede"><?php echo esc_html( sprintf(
+							/* translators: 1: other CPU name(s), 2: GPU name */
+							__( 'Also covers the %1$s with the %2$s, which lands within a few points of these results.', 'computingskill' ),
+							cs_bn_join( $cs_names ),
+							$gpu['name']
+						) ); ?></p>
+					<?php endif; ?>
 				</header>
 
 				<section class="cs-bn-summary">

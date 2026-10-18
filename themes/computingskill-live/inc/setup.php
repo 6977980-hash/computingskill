@@ -130,6 +130,10 @@ function cs_enqueue_calculators() {
 			$combos[ $cpu . '|' . $gpu ] = get_permalink( $post_id );
 		}
 	}
+	// D7: merged near-twin pairs link to the page they were merged into.
+	if ( function_exists( 'cs_merged_combo_links' ) ) {
+		$combos = cs_merged_combo_links( $combos );
+	}
 	wp_add_inline_script( 'computingskill-calculators', 'window.csComboPages = ' . wp_json_encode( $combos ) . ';', 'before' );
 }
 
