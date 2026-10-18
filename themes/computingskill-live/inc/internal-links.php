@@ -1147,3 +1147,19 @@ function cs_combo_merge_run() {
 	delete_option( 'cs_combo_merge_lock' );
 }
 add_action( 'init', 'cs_combo_merge_run', 33 );
+
+/**
+ * Links written into post content (e.g. the Ryzen 5 5600 GPU post links
+ * the 5600X + RTX 4060 page) point straight at the kept page, not through
+ * the 301.
+ */
+function cs_merged_combo_content_links( $content ) {
+	if ( false === strpos( $content, '/bottleneck/' ) ) {
+		return $content;
+	}
+	foreach ( cs_merged_combo_map() as $from => $to ) {
+		$content = str_replace( '/bottleneck/' . $from . '/', '/bottleneck/' . $to . '/', $content );
+	}
+	return $content;
+}
+add_filter( 'the_content', 'cs_merged_combo_content_links', 21 );

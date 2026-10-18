@@ -64,7 +64,7 @@ return array(
 <p>With every card up to the RTX 5080, our engine puts the limit on the GPU at 4K, so the Ryzen 5 5600 is not what holds 4K back. But a card fast enough for good 4K frame rates (RTX 5070 Ti, RX 9070 XT and up) is 43% or more CPU-limited at 1080p and 17% or more at 1440p. If 4K is the goal, plan the CPU upgrade together with the GPU.</p>
 
 <h2>What about the Ryzen 5 5600X?</h2>
-<p>The <a href="/bottleneck/ryzen-5-5600x-rtx-4060/">Ryzen 5 5600X</a> is the same 6-core Zen 3 chip with slightly higher clocks, and our gaming score puts it just above the Ryzen 5 5600 (54 vs 52). The picks above stay the same, with marginally better 1080p numbers:</p>
+<p>The <a href="/bottleneck/ryzen-5-5600-rtx-4060/">Ryzen 5 5600X</a> is the same 6-core Zen 3 chip with slightly higher clocks, and our gaming score puts it just above the Ryzen 5 5600 (54 vs 52). The picks above stay the same, with marginally better 1080p numbers:</p>
 <ul>
 <li>RTX 5060: balanced at 1080p, GPU 33% at 1440p.</li>
 <li>RX 9060 XT 16GB: balanced at 1080p (the Ryzen 5 5600 shows CPU 6%), GPU 30% at 1440p.</li>
