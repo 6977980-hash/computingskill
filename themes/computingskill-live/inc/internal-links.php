@@ -185,7 +185,11 @@ function cs_il_combo_game_types_html( $cpu_slug, $gpu_slug, $cpu, $gpu ) {
 				</tbody>
 			</table>
 		</div>
-		<p class="cs-disclaimer"><?php esc_html_e( 'High settings throughout. Game types are rough classes, not per-game benchmarks: the linked pages list each game’s official requirements.', 'computingskill' ); ?></p>
+		<p class="cs-disclaimer"><?php echo wp_kses_post( sprintf(
+			/* translators: %s: link to the games archive */
+			__( 'High settings throughout. Game types are rough classes, not per-game benchmarks: the linked pages list each game’s official requirements (%s).', 'computingskill' ),
+			'<a href="' . esc_url( home_url( '/games/' ) ) . '">' . esc_html__( 'all games we cover', 'computingskill' ) . '</a>'
+		) ); ?></p>
 	</section>
 	<?php
 	return ob_get_clean();
@@ -565,6 +569,10 @@ function cs_il_context_links() {
 		'pc-build-cost-calculator'   => array( '', '', 'combos' ),
 		'refresh-rate-calculator'    => array( __( 'Matching FPS to Your Monitor', 'computingskill' ), 'fps-calculator,how-to-improve-fps,1080p-vs-1440p-vs-4k' ),
 		'dpi-calculator'             => array( __( 'Screen Sharpness', 'computingskill' ), 'ppi-calculator,resolution-calculator' ),
+		'ppi-calculator'             => array( __( 'More Screen Maths', 'computingskill' ), 'dpi-calculator,monitor-size-calculator,refresh-rate-calculator' ),
+		'how-to-improve-fps'         => array( __( 'Check Your Numbers', 'computingskill' ), 'fps-calculator,refresh-rate-calculator,pc-bottleneck-calculator' ),
+		'1080p-vs-1440p-vs-4k'       => array( __( 'Size Up Your Monitor', 'computingskill' ), 'ppi-calculator,monitor-size-calculator,refresh-rate-calculator,dpi-calculator' ),
+		'download-time-calculator'   => array( __( 'Unit Converters', 'computingskill' ), 'mbps-to-mb-s-converter,mb-s-to-mbps-converter,internet-data-usage-calculator' ),
 		'how-much-ram-do-i-need'     => array( __( 'Games and Their RAM Needs', 'computingskill' ), 'call-of-duty-warzone,baldurs-gate-3,cyberpunk-2077,minecraft' ),
 	);
 }
