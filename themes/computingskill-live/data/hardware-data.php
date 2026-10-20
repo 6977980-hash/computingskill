@@ -817,5 +817,8 @@ function cs_get_bottleneck_pairs() {
 		array( 'cpu' => 'core-ultra-7-265k', 'gpu' => 'rtx-5080' ),
 		array( 'cpu' => 'ryzen-9-9900x', 'gpu' => 'rtx-5080' ),
 		array( 'cpu' => 'ryzen-9-9950x3d', 'gpu' => 'rtx-5090' ),
+		// K4 (GSC keyword gap, 20 Oct 2026): searched in GSC ("i5 13th
+		// 13600k rtx 5070 ti") with no page for it.
+		array( 'cpu' => 'core-i5-13600k', 'gpu' => 'rtx-5070-ti' ),
 	);
 }

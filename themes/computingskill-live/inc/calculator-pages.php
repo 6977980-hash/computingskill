@@ -336,22 +336,15 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-k3' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-k4' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// K3 sections, titles and FAQ (inc/k3-pages.php). K2, K1, D2, D3,
-		// D5 and D10 ran with earlier revs; their pages are dated already.
-		'aspect-ratio-calculator',
-		'download-time-calculator',
-		'monitor-size-calculator',
-		'ppi-calculator',
-		'dpi-calculator',
-		'cpu-power-consumption-calculator',
-		'pc-power-consumption-calculator',
-		'pc-compatibility-checker',
-		'cpu-bottleneck-explained',
+		// K4 8GB vs 16GB section, title and FAQ (inc/k4-pages.php). K3, K2,
+		// K1, D2, D3, D5 and D10 ran with earlier revs; their pages are
+		// dated already.
+		'how-much-vram-do-i-need',
 	);
 }
 

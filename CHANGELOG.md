@@ -2,6 +2,15 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.56 (20 Oct 2026) — K4 new keyword content
+From the 20 Oct GSC keyword-gap report (K4 in `audit/handoff/K-phases-handoff.md`). New code in `inc/k4-pages.php`; posts are created as WordPress **drafts** for Ali to review and publish.
+- New draft posts (`data/blog-drafts/`): "Best AM4 CPU for Gaming (2026): Ryzen 5600 to 5800X3D" (7 AM4 CPUs, 5600 → 5700X3D/5800X3D upgrade table, AM4 vs AM5), "Best CPU for RTX 5060: How Much Processor Is Enough?" (34 CPUs), "Best GPU for Ryzen 7 7800X3D at 1080p, 1440p and 4K" (37 GPUs). Every number generated from `cs_calculate_bottleneck()`, `cs_tl_fps()` and `cs_aeo_psu()`.
+- Draft "Best CPU for RTX 5070" rebuilt with the D3/D4 engine and all 34 CPUs (it still had theme 1.0.36 numbers). The sync replaces it only while the draft is untouched.
+- Comparison pages (published automatically, like the other 54): RTX 5060 vs RTX 5060 Ti 16GB, RTX 5070 vs RTX 5070 Ti (`cs_pp_vs_pairs()`).
+- Combo page Core i5-13600K + RTX 5070 Ti (`cs_get_bottleneck_pairs()`).
+- /how-much-vram-do-i-need/: H2 "8GB vs 16GB: RTX 5060 Ti and RX 9060 XT" (maker specs for both memory sizes, estimated FPS 8GB vs 16GB at 1080p-4K high/ultra), 2 FAQ in FAQPage schema, title "How Much VRAM Do I Need? 8GB vs 16GB for 1080p to 4K" (52) and a new meta description. `CS_CALC_PAGES_REV` 2026-10-20-k4 dates the page today.
+- `CS_GENERATED_CONTENT_REV` unchanged (no existing combo/game page text changed).
+
 ## 1.0.55 (20 Oct 2026) — K3 tool titles and answers
 From the 20 Oct GSC keyword-gap report (tools with search volume but no Search Console presence). New code in `inc/k3-pages.php`; sections, tables and links reuse the K1 helpers.
 - Title tags (≤60) for 9 pages: Aspect Ratio Calculator (16:9, 21:9), Download Time Calculator (How Long Will It Take?), Monitor Size Calculator (Screen Dimensions in Inches & cm), PPI Calculator (Pixel Density), DPI Calculator (Print vs Mouse DPI), CPU Wattage Calculator, PC Power Consumption Calculator (Wattage & Electricity Cost), PC Part Compatibility Checker, What Is a CPU Bottleneck? Signs & How to Fix It. H1s unchanged.

@@ -66,6 +66,9 @@ function cs_pp_vs_pairs() {
 		array( 'gpu', 'rx-7600', 'rx-9060-xt' ),
 		array( 'gpu', 'rx-7900-xt', 'rx-9070-xt' ),
 		array( 'gpu', 'rx-9070', 'rx-9070-xt' ),
+		// K4 (GSC keyword gap, 20 Oct 2026): same-generation tier steps.
+		array( 'gpu', 'rtx-5060', 'rtx-5060-ti' ),
+		array( 'gpu', 'rtx-5070', 'rtx-5070-ti' ),
 		// CPUs.
 		array( 'cpu', 'ryzen-5-5600', 'core-i5-12400f' ),
 		array( 'cpu', 'ryzen-5-5600', 'ryzen-5-5600x' ),

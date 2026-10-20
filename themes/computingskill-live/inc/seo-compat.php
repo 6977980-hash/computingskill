@@ -255,6 +255,8 @@ function cs_title_overrides() {
 		'ram'                       => __( 'What Is RAM? How Memory Works & Which Specs Matter', 'computingskill' ),
 		'psu'                       => __( 'What Is a PSU? How Power Supplies Work & Their Ratings', 'computingskill' ),
 		'vram'                      => __( 'What Is VRAM? VRAM vs RAM & How to Check Your VRAM', 'computingskill' ),
+		// K4 (inc/k4-pages.php): "8gb vs 16gb" searches.
+		'how-much-vram-do-i-need'   => __( 'How Much VRAM Do I Need? 8GB vs 16GB for 1080p to 4K', 'computingskill' ),
 		'gpu'                       => __( 'What Is a GPU? How Graphics Cards Work & Key Specs', 'computingskill' ),
 		'comparisons'               => __( 'PC Hardware Comparisons: SSD vs HDD, DDR4 vs DDR5', 'computingskill' ),
 		'contact'                   => __( 'Contact Computing Skill: Questions & Spec Corrections', 'computingskill' ),
@@ -380,6 +382,8 @@ function cs_page_description_overrides() {
 		'dpi-calculator' => __( 'Print DPI calculator: a 12MP photo (4000 × 3000) prints sharp up to 13.3 × 10 in at 300 DPI. Check any image and print size, plus print DPI vs mouse DPI.', 'computingskill' ),
 		'pc-power-consumption-calculator' => __( 'How many watts does a gaming PC use? About 278W to 762W from the wall while gaming in our example builds. Estimate your PC\'s wattage and electricity cost.', 'computingskill' ),
 		'cpu-bottleneck-explained' => __( 'A CPU bottleneck is when the CPU can\'t feed the GPU fast enough: GPU usage drops and FPS stops rising at lower resolutions. The signs, how to test, and 7 fixes.', 'computingskill' ),
+		// K4 (inc/k4-pages.php).
+		'how-much-vram-do-i-need' => __( 'How much VRAM do you need? 8GB for 1080p, 10-12GB for 1440p, 16GB for 4K, plus RTX 5060 Ti and RX 9060 XT 8GB vs 16GB and where 8GB starts to lose FPS.', 'computingskill' ),
 		// K2 (inc/k2-pages.php).
 		'vram' => __( 'VRAM (video RAM) is your graphics card\'s own memory. See VRAM vs RAM, dedicated vs shared GPU memory, and how to check how much VRAM you have.', 'computingskill' ),
 		'storage-tools' => __( 'Free storage calculators: SSD lifespan and TBW/DWPD endurance, drive space planning, and storage unit conversions, plus SSD, HDD and NVMe background guides.', 'computingskill' ),
