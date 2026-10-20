@@ -437,6 +437,10 @@ function cs_build_breadcrumb_schema_items() {
 			'cs_bottleneck' => array( __( 'Bottleneck Comparisons', 'computingskill' ), '/bottleneck/' ),
 			'cs_game'       => array( __( 'Games', 'computingskill' ), '/games/' ),
 		);
+		if ( 'cs_bottleneck' === $post_type ) {
+			// U4 (U-38): same trail as the visible one (inc/breadcrumbs.php).
+			$trail[] = array( 'name' => __( 'Comparisons', 'computingskill' ), 'url' => home_url( '/comparisons/' ) );
+		}
 		if ( isset( $archive_map[ $post_type ] ) ) {
 			$trail[] = array( 'name' => $archive_map[ $post_type ][0], 'url' => home_url( $archive_map[ $post_type ][1] ) );
 		} elseif ( function_exists( 'cs_breadcrumb_parent' ) && ( $parent = cs_breadcrumb_parent() ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition

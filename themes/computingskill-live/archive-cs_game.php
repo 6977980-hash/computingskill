@@ -25,13 +25,14 @@ $total_games = count( $games_data );
 	<section class="cs-games-hero">
 		<div class="cs-container cs-narrow">
 			<?php cs_breadcrumbs(); ?>
-			<h1 class="cs-games-title"><?php esc_html_e( 'Can I Run This Game?', 'computingskill' ); ?></h1>
+			<?php // U4 (U-23): was "Can I Run This Game?", which competed with the Can I Run It checker; now matches the page title. ?>
+			<h1 class="cs-games-title"><?php esc_html_e( 'PC Game System Requirements', 'computingskill' ); ?></h1>
 			<?php if ( function_exists( 'cs_hub_meta' ) ) { cs_hub_meta( array( 'cs_game' ) ); } ?>
 			<p class="cs-games-intro">
 				<?php
 				printf(
 					/* translators: %d: number of games covered */
-					esc_html__( 'Minimum and recommended PC specs for %d popular games, plus a one-click link to check your exact CPU and GPU pairing against each title with our bottleneck calculator.', 'computingskill' ),
+					esc_html__( 'Minimum and recommended PC specs for %d popular games, each with a one-click FPS estimate for your own CPU and graphics card in that game.', 'computingskill' ),
 					(int) $total_games
 				);
 				?>
@@ -46,6 +47,11 @@ $total_games = count( $games_data );
 	</section>
 
 	<div class="cs-container">
+		<a class="cs-games-cir" href="<?php echo esc_url( home_url( '/can-i-run-it/' ) ); ?>">
+			<span class="cs-games-cir-title"><?php esc_html_e( 'Can I Run It? Check every game at once', 'computingskill' ); ?></span>
+			<span class="cs-games-cir-desc"><?php esc_html_e( 'Pick your CPU, graphics card and RAM to see which of these games your PC runs, at which settings and roughly how many FPS.', 'computingskill' ); ?></span>
+			<span class="cs-games-cir-go" aria-hidden="true">→</span>
+		</a>
 		<?php if ( have_posts() ) : ?>
 			<div class="cs-card-grid cs-games-grid">
 				<?php while ( have_posts() ) : the_post();

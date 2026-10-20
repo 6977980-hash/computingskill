@@ -8,11 +8,28 @@
 	document.addEventListener( 'DOMContentLoaded', function () {
 		var toggle = document.querySelector( '.cs-menu-toggle' );
 		var nav = document.getElementById( 'cs-primary-nav' );
+		var masthead = document.getElementById( 'cs-masthead' );
+
+		// U4 (U-19): anchors and keyboard focus stop below the sticky header
+		// (html scroll-padding-top in fixes.css reads this). Measured with the
+		// menu closed, since the open menu is part of the header.
+		var setHeaderOffset = function () {
+			if ( ! masthead || ( nav && nav.classList.contains( 'is-open' ) ) ) {
+				return;
+			}
+			var sticky = window.getComputedStyle( masthead ).position;
+			var h = ( 'sticky' === sticky || 'fixed' === sticky ) ? masthead.getBoundingClientRect().height : 0;
+			document.documentElement.style.setProperty( '--cs-header-offset', Math.round( h + 16 ) + 'px' );
+		};
+		setHeaderOffset();
+		window.addEventListener( 'resize', setHeaderOffset );
+		window.addEventListener( 'load', setHeaderOffset );
 
 		if ( toggle && nav ) {
 			var setOpen = function ( open ) {
 				toggle.setAttribute( 'aria-expanded', String( open ) );
 				nav.classList.toggle( 'is-open', open );
+				setHeaderOffset();
 			};
 			var isOpen = function () {
 				return toggle.getAttribute( 'aria-expanded' ) === 'true';
@@ -54,12 +71,19 @@
 			return text ? text + ' (table)' : 'Table';
 		};
 		var update = function () {
+			var used = {};
 			document.querySelectorAll( '.cs-table-wrap' ).forEach( function ( wrap ) {
 				if ( wrap.scrollWidth > wrap.clientWidth + 1 ) {
 					wrap.setAttribute( 'tabindex', '0' );
 					wrap.setAttribute( 'role', 'region' );
 					if ( ! wrap.hasAttribute( 'aria-label' ) ) {
-						wrap.setAttribute( 'aria-label', labelFor( wrap ) );
+						// U4: two tables under one heading (/cpu/) got the same
+						// name; regions need different ones.
+						var label = labelFor( wrap );
+						used[ label ] = ( used[ label ] || 0 ) + 1;
+						wrap.setAttribute( 'aria-label', used[ label ] > 1 ? label.replace( / \(table\)$/, '' ) + ' (table ' + used[ label ] + ')' : label );
+					} else {
+						used[ wrap.getAttribute( 'aria-label' ) ] = ( used[ wrap.getAttribute( 'aria-label' ) ] || 0 ) + 1;
 					}
 					wrap.classList.add( 'is-scrollable' );
 				} else {

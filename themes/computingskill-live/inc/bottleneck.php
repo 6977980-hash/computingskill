@@ -485,13 +485,14 @@ function cs_maybe_print_bottleneck_index() {
 	$short = cs_bn_res_short();
 
 	echo '<div class="cs-bottleneck-index cs-bottleneck-table-index">';
-	echo '<h2>' . esc_html__( 'Every CPU + GPU Combination at a Glance', 'computingskill' ) . '</h2>';
+	// U4 (U-22): ids for the CPU jump list near the top (cs_bn_cpu_jump_nav()).
+	echo '<h2 id="bn-index">' . esc_html__( 'Every CPU + GPU Combination at a Glance', 'computingskill' ) . '</h2>';
 	echo '<p>' . esc_html__( 'Grouped by CPU, slowest first; within each CPU the graphics cards go from slowest to fastest. Typical AAA game at high settings, as on each page.', 'computingskill' ) . '</p>';
 	foreach ( $by_cpu as $c => $rows ) {
 		uksort( $rows, function ( $a, $b ) use ( $gpus ) {
 			return $gpus[ $a ]['score'] - $gpus[ $b ]['score'];
 		} );
-		echo '<h3>' . esc_html( $cpus[ $c ]['name'] ) . '</h3>';
+		echo '<h3 id="' . esc_attr( cs_bn_cpu_anchor( $c ) ) . '">' . esc_html( $cpus[ $c ]['name'] ) . '</h3>';
 		echo '<div class="cs-table-wrap"><table class="cs-hardware-table cs-bn-index-table"><thead><tr><th>' . esc_html__( 'Graphics card', 'computingskill' ) . '</th>';
 		foreach ( $short as $label ) {
 			echo '<th>' . esc_html( $label ) . '</th>';

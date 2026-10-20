@@ -28,7 +28,7 @@ get_header();
 				</ul>
 				<form class="cs-search-form cs-hero-search" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
 					<label class="screen-reader-text" for="cs-hero-search-input"><?php esc_html_e( 'Search ComputingSkill', 'computingskill' ); ?></label>
-					<input type="search" id="cs-hero-search-input" name="s" placeholder="<?php esc_attr_e( 'Search calculators, tools, guides…', 'computingskill' ); ?>" />
+					<input type="search" id="cs-hero-search-input" name="s" placeholder="<?php esc_attr_e( 'Search tools, parts, guides…', 'computingskill' ); ?>" />
 					<button type="submit"><?php esc_html_e( 'Search', 'computingskill' ); ?></button>
 				</form>
 			</div>
@@ -45,13 +45,15 @@ get_header();
 				?>
 				<div class="cs-telemetry">
 					<p class="cs-telemetry-label"><?php esc_html_e( 'Bottleneck check · example', 'computingskill' ); ?></p>
-					<div class="cs-telemetry-pair">
-						<div class="cs-telemetry-part"><small><?php esc_html_e( 'CPU', 'computingskill' ); ?></small><strong><?php echo esc_html( $hero_cpu['name'] ); ?></strong></div>
+					<?php // U4 (U-30): the parts are plain text (they looked like inputs), with a scale for the bars. ?>
+					<p class="cs-telemetry-pair">
+						<span class="cs-telemetry-part"><small><?php esc_html_e( 'CPU', 'computingskill' ); ?></small><strong><?php echo esc_html( $hero_cpu['name'] ); ?></strong></span>
 						<span class="cs-telemetry-plus" aria-hidden="true">+</span>
-						<div class="cs-telemetry-part"><small><?php esc_html_e( 'GPU', 'computingskill' ); ?></small><strong><?php echo esc_html( $hero_gpu['name'] ); ?></strong></div>
-					</div>
+						<span class="cs-telemetry-part"><small><?php esc_html_e( 'GPU', 'computingskill' ); ?></small><strong><?php echo esc_html( $hero_gpu['name'] ); ?></strong></span>
+					</p>
 					<?php echo cs_bn_load_bars( cs_calculate_bottleneck( $hero_cpu, $hero_gpu ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
-					<p class="cs-telemetry-note"><?php esc_html_e( 'Estimate from our gaming-performance scores. Try your own parts in the full calculator.', 'computingskill' ); ?></p>
+					<p class="cs-lb-scale" aria-hidden="true"><span></span><span class="cs-lb-ticks"><span>0%</span><span>30%</span><span>60%</span></span><span></span></p>
+					<p class="cs-telemetry-note"><?php esc_html_e( 'A fixed example, not your PC. An orange bar is a CPU bottleneck (share of the graphics card left idle); a faded bar means GPU-limited, the normal case, and shows how much CPU headroom is left. Try your own parts in the full calculator.', 'computingskill' ); ?></p>
 					<a class="cs-btn" href="<?php echo esc_url( home_url( '/pc-bottleneck-calculator/' ) ); ?>"><?php esc_html_e( 'Open Bottleneck Calculator', 'computingskill' ); ?> →</a>
 				</div>
 			<?php endif; ?>
@@ -61,7 +63,12 @@ get_header();
 	<div class="cs-container">
 
 		<section class="cs-home-section cs-home-intro">
-			<?php echo function_exists( 'cs_aeo_quick_answer_html' ) ? cs_aeo_quick_answer_html( 'home' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
+			<?php
+			// U4 (U-21): the quick answer names the tier lists; link them.
+			$home_answer = function_exists( 'cs_aeo_quick_answer_html' ) ? cs_aeo_quick_answer_html( 'home' ) : '';
+			$home_answer = preg_replace( '#\bGPU and CPU tier lists\b#', '<a href="' . esc_url( home_url( '/gpu-tier-list/' ) ) . '">' . esc_html__( 'GPU', 'computingskill' ) . '</a> ' . esc_html__( 'and', 'computingskill' ) . ' <a href="' . esc_url( home_url( '/cpu-tier-list/' ) ) . '">' . esc_html__( 'CPU tier lists', 'computingskill' ) . '</a>', $home_answer, 1 );
+			echo $home_answer; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+			?>
 			<p>
 				<?php
 				printf(
@@ -131,6 +138,26 @@ get_header();
 			<p class="cs-section-more"><a href="<?php echo esc_url( home_url( '/hardware/' ) ); ?>"><?php esc_html_e( 'View all hardware pages →', 'computingskill' ); ?></a></p>
 		</section>
 
+		<?php
+		// U4 (U-21, U-37): the tier lists and the head-to-head comparisons had
+		// no link in the homepage body.
+		$vs_urls  = function_exists( 'cs_pp_urls' ) ? cs_pp_urls() : array();
+		$vs_cards = array(
+			array( 'title' => __( 'GPU Tier List', 'computingskill' ), 'url' => home_url( '/gpu-tier-list/' ), 'desc' => __( 'Every graphics card ranked, S to D, with FPS at 1080p, 1440p and 4K.', 'computingskill' ) ),
+			array( 'title' => __( 'CPU Tier List', 'computingskill' ), 'url' => home_url( '/cpu-tier-list/' ), 'desc' => __( 'Every gaming CPU ranked, with the fastest card each one keeps up with.', 'computingskill' ) ),
+		);
+		foreach ( array( 'rtx-4060-vs-rtx-5060' => __( 'RTX 4060 vs RTX 5060', 'computingskill' ), 'rtx-5070-vs-rx-9070-xt' => __( 'RTX 5070 vs RX 9070 XT', 'computingskill' ), 'ryzen-5-5600-vs-core-i5-12400f' => __( 'Ryzen 5 5600 vs Core i5-12400F', 'computingskill' ) ) as $vs_slug => $vs_title ) {
+			if ( isset( $vs_urls[ 'cs_comparison|' . $vs_slug ] ) && count( $vs_cards ) < 4 ) {
+				$vs_cards[] = array( 'title' => $vs_title, 'url' => $vs_urls[ 'cs_comparison|' . $vs_slug ] );
+			}
+		}
+		?>
+		<section class="cs-home-section">
+			<h2><?php esc_html_e( 'Tier Lists & Comparisons', 'computingskill' ); ?></h2>
+			<?php cs_card_grid( $vs_cards ); ?>
+			<p class="cs-section-more"><a href="<?php echo esc_url( home_url( '/comparisons/' ) ); ?>"><?php esc_html_e( 'View all comparisons →', 'computingskill' ); ?></a></p>
+		</section>
+
 		<section class="cs-home-section">
 			<h2><?php esc_html_e( 'Popular Guides', 'computingskill' ); ?></h2>
 			<?php
@@ -182,7 +209,9 @@ get_header();
 			}
 			echo '</div>';
 			?>
-			<p class="cs-lb-legend"><span class="cs-lb-key cs-lb-cpu"><?php esc_html_e( 'CPU bottleneck (% of GPU left idle)', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-gpu"><?php esc_html_e( 'GPU-limited (normal)', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-balanced"><?php esc_html_e( 'Balanced (under 6%)', 'computingskill' ); ?></span></p>
+			<p class="cs-lb-legend"><span class="cs-lb-key cs-lb-cpu"><?php esc_html_e( 'CPU bottleneck (% of GPU left idle)', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-gpu"><?php esc_html_e( 'GPU-limited (normal)', 'computingskill' ); ?></span> <span class="cs-lb-key cs-lb-balanced"><?php esc_html_e( 'Balanced (under 6%)', 'computingskill' ); ?></span> <span class="cs-lb-key-note"><?php esc_html_e( 'Bar length: 0 to 60%, the most the estimate shows.', 'computingskill' ); ?></span></p>
+			<?php // U4 (U-37): every other homepage section had a "View all" link. ?>
+			<p class="cs-section-more"><a href="<?php echo esc_url( home_url( '/bottleneck/' ) ); ?>"><?php esc_html_e( 'View all CPU + GPU pairings →', 'computingskill' ); ?></a></p>
 		</section>
 
 		<?php echo cs_latest_posts_section( 4 ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>

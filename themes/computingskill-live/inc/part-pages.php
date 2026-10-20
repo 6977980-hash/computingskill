@@ -1269,6 +1269,12 @@ function cs_pp_vs_cpu_html( $a_slug, $a, $b_slug, $b ) {
 /**
  * Directory of every part page on /hardware/ and every comparison on
  * /comparisons/, so each generated page is linked from its hub.
+ *
+ * U4 (U-22, 20 Oct 2026): the lists came after the FAQ, and the 56
+ * head-to-heads were one unsorted list. They now sit above "Which One Do
+ * You Need?" and the FAQ (cs_pp_hub_insert()); comparisons are grouped by
+ * the class of the faster part (the tier list lines), fastest first, under
+ * a tier-list box.
  */
 function cs_pp_hub_html( $content ) {
 	if ( ! is_singular( 'page' ) || ! in_the_loop() || ! is_main_query() ) {
@@ -1291,36 +1297,86 @@ function cs_pp_hub_html( $content ) {
 			if ( ! $by ) {
 				continue;
 			}
-			$html .= '<h3>' . esc_html( $label ) . '</h3><ul class="cs-pp-hub">';
+			$html .= '<h3 id="part-' . esc_attr( $type ) . '">' . esc_html( $label ) . '</h3><ul class="cs-pp-hub">';
 			foreach ( $by as $brand => $links ) {
 				$html .= '<li><strong>' . esc_html( $brand ) . ':</strong> ' . implode( ', ', $links ) . '</li>';
 			}
 			$html .= '</ul>';
 		}
-		return $content . $html;
+		return cs_pp_hub_insert( $content, $html );
 	}
 	if ( 'comparisons' === $slug ) {
-		$groups = array( 'gpu' => array(), 'cpu' => array() );
+		$classes = array(
+			'gpu' => array(
+				'4k'    => __( '4K cards', 'computingskill' ),
+				'1440p' => __( '1440p cards', 'computingskill' ),
+				'1080p' => __( '1080p and budget cards', 'computingskill' ),
+			),
+			'cpu' => array(
+				'high'  => __( 'High-end CPUs', 'computingskill' ),
+				'upper' => __( 'Upper mid-range CPUs', 'computingskill' ),
+				'mid'   => __( 'Mid-range CPUs', 'computingskill' ),
+				'low'   => __( 'Budget CPUs', 'computingskill' ),
+			),
+		);
+		$gpu_t  = cs_tl_gpu_targets();
+		$groups = array();
 		foreach ( cs_pp_vs_pairs() as $p ) {
 			list( $type, $a, $b ) = $p;
 			$data = cs_pp_data( $type );
 			$key  = 'cs_comparison|' . cs_pp_vs_slug( $a, $b );
-			if ( isset( $urls[ $key ], $data[ $a ], $data[ $b ] ) ) {
-				$groups[ $type ][] = '<li><a href="' . esc_url( $urls[ $key ] ) . '">' . esc_html( cs_pp_short( $data[ $a ] ) . ' vs ' . cs_pp_short( $data[ $b ] ) ) . '</a></li>';
+			if ( ! isset( $urls[ $key ], $data[ $a ], $data[ $b ] ) ) {
+				continue;
 			}
+			$top = max( $data[ $a ]['score'], $data[ $b ]['score'] );
+			if ( 'gpu' === $type ) {
+				$class = $top >= $gpu_t['4k'] ? '4k' : ( $top >= $gpu_t['1440p'] ? '1440p' : '1080p' );
+			} else {
+				$class = $top >= 80 ? 'high' : ( $top >= 70 ? 'upper' : ( $top >= 60 ? 'mid' : 'low' ) );
+			}
+			$groups[ $type ][ $class ][] = array( $top, min( $data[ $a ]['score'], $data[ $b ]['score'] ), '<li><a href="' . esc_url( $urls[ $key ] ) . '">' . esc_html( cs_pp_short( $data[ $a ] ) . ' vs ' . cs_pp_short( $data[ $b ] ) ) . '</a></li>' );
 		}
-		if ( ! $groups['gpu'] && ! $groups['cpu'] ) {
+		if ( ! $groups ) {
 			return $content;
 		}
-		$html = '<h2 id="head-to-head">' . esc_html__( 'Head-to-Head: CPU and GPU Comparisons', 'computingskill' ) . '</h2><p>' . esc_html__( 'Two parts side by side, with specs, estimated FPS, power and which one fits your build.', 'computingskill' ) . '</p>';
+		$html  = '<div class="cs-related" id="rankings"><h2>' . esc_html__( 'Tier Lists: Every Card and CPU Ranked', 'computingskill' ) . '</h2><ul class="cs-related-grid">';
+		$html .= '<li><a href="' . esc_url( home_url( '/gpu-tier-list/' ) ) . '">' . esc_html__( 'GPU Tier List', 'computingskill' ) . '</a></li>';
+		$html .= '<li><a href="' . esc_url( home_url( '/cpu-tier-list/' ) ) . '">' . esc_html__( 'CPU Tier List', 'computingskill' ) . '</a></li>';
+		$html .= '<li><a href="' . esc_url( home_url( '/bottleneck/' ) ) . '">' . esc_html__( 'CPU + GPU Bottleneck Comparisons', 'computingskill' ) . '</a></li>';
+		$html .= '</ul></div>';
+		$html .= '<h2 id="head-to-head">' . esc_html__( 'Head-to-Head: CPU and GPU Comparisons', 'computingskill' ) . '</h2><p>' . esc_html__( 'Two parts side by side, with specs, estimated FPS, power and which one fits your build. Grouped by the class of the faster part, as in the tier lists, fastest first.', 'computingskill' ) . '</p>';
 		foreach ( array( 'gpu' => __( 'Graphics cards', 'computingskill' ), 'cpu' => __( 'Processors', 'computingskill' ) ) as $type => $label ) {
-			if ( $groups[ $type ] ) {
-				$html .= '<h3>' . esc_html( $label ) . '</h3><ul class="cs-pp-hub cs-pp-cols">' . implode( '', $groups[ $type ] ) . '</ul>';
+			if ( empty( $groups[ $type ] ) ) {
+				continue;
+			}
+			$html .= '<h3 id="vs-' . esc_attr( $type ) . '">' . esc_html( $label ) . '</h3>';
+			foreach ( $classes[ $type ] as $class => $class_label ) {
+				if ( empty( $groups[ $type ][ $class ] ) ) {
+					continue;
+				}
+				$rows = $groups[ $type ][ $class ];
+				usort( $rows, function ( $x, $y ) {
+					return $y[0] - $x[0] ?: $y[1] - $x[1];
+				} );
+				$html .= '<h4>' . esc_html( $class_label ) . '</h4><ul class="cs-pp-hub cs-pp-cols">' . implode( '', array_column( $rows, 2 ) ) . '</ul>';
 			}
 		}
-		return $content . $html;
+		return cs_pp_hub_insert( $content, $html );
 	}
 	return $content;
+}
+
+/**
+ * Puts a hub list before "Which One Do You Need?", else before the FAQ,
+ * else at the end.
+ */
+function cs_pp_hub_insert( $content, $html ) {
+	foreach ( array( '#<h2[^>]*>\s*Which One Do You Need\?\s*</h2>#u', '#<div class="cs-faq"#' ) as $pattern ) {
+		if ( preg_match( $pattern, $content, $m, PREG_OFFSET_CAPTURE ) ) {
+			return substr( $content, 0, $m[0][1] ) . $html . "\n" . substr( $content, $m[0][1] );
+		}
+	}
+	return $content . $html;
 }
 add_filter( 'the_content', 'cs_pp_hub_html', 14 );
 

@@ -27,6 +27,27 @@ get_header();
 			</h1>
 		</header>
 
+		<?php
+		// U4 (U-35): tools for intent words ("psu for rtx 4080", "can i run
+		// cyberpunk", "how much ram"), which text search ranked low or missed.
+		$best = ( ! is_paged() && function_exists( 'cs_search_suggestions' ) ) ? cs_search_suggestions( get_search_query( false ) ) : array();
+		if ( $best ) :
+			?>
+			<section class="cs-search-best" aria-labelledby="cs-search-best-title">
+				<h2 id="cs-search-best-title"><?php esc_html_e( 'Best match', 'computingskill' ); ?></h2>
+				<div class="cs-card-grid">
+					<?php
+					foreach ( $best as $page ) {
+						cs_card( get_the_title( $page ), get_permalink( $page ), get_the_excerpt( $page ) );
+					}
+					?>
+				</div>
+			</section>
+			<?php if ( have_posts() ) : ?>
+				<h2 class="cs-search-more-title"><?php esc_html_e( 'All results', 'computingskill' ); ?></h2>
+			<?php endif; ?>
+		<?php endif; ?>
+
 		<?php if ( have_posts() ) : ?>
 			<div class="cs-card-grid">
 				<?php

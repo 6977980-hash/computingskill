@@ -171,8 +171,27 @@ function cs_print_consent_banner() {
 <script>
 (function () {
 	if (!window.csGa) { return; }
-	var box;
-	function close() { if (box) { box.remove(); box = null; } }
+	var box, timer;
+	// U4 (U-24): the card never covers a Calculate button: while one would
+	// be under it, it moves to the top of the screen. The page also gets
+	// room at the bottom so its end can scroll clear of the card.
+	function place() {
+		if (!box) { return; }
+		var h = box.offsetHeight, zone = window.innerHeight - h - 24, hit = false;
+		document.querySelectorAll('.cs-calc-submit, .cs-calc-actions button').forEach(function (b) {
+			var r = b.getBoundingClientRect();
+			if (r.height && r.bottom > zone && r.top < window.innerHeight) { hit = true; }
+		});
+		box.classList.toggle('cs-consent--top', hit);
+		document.body.style.paddingBottom = (h + 24) + 'px';
+	}
+	function later() { clearTimeout(timer); timer = setTimeout(place, 60); }
+	function close() {
+		if (box) { box.remove(); box = null; }
+		document.body.style.paddingBottom = '';
+		window.removeEventListener('scroll', later);
+		window.removeEventListener('resize', later);
+	}
 	function open() {
 		if (box) { return; }
 		box = document.createElement('div');
@@ -199,6 +218,9 @@ function cs_print_consent_banner() {
 		// E5 (A11Y-07): first in the tab order (after the skip link); it stays fixed at the bottom.
 		var skip = document.querySelector('.skip-link');
 		if (skip && skip.parentNode === document.body) { skip.after(box); } else { document.body.prepend(box); }
+		place();
+		window.addEventListener('scroll', later, { passive: true });
+		window.addEventListener('resize', later);
 	}
 	document.querySelectorAll('[data-cs-consent-open]').forEach(function (el) {
 		el.hidden = false;

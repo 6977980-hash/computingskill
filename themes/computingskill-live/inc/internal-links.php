@@ -500,20 +500,32 @@ function cs_il_topic_groups() {
 			'how-much-ram-do-i-need-for-gaming-and-streaming' => __( 'gaming and live streaming on one PC at the same time', 'computingskill' ),
 			'ram-calculator'                                 => __( 'a GB figure for your own mix of apps', 'computingskill' ),
 		),
+		// U4 (U-33): the four power tools answer different questions.
 		'psu'        => array(
 			'psu'                => __( 'how a power supply works and what its ratings mean', 'computingskill' ),
 			'how-to-choose-a-psu' => __( 'step-by-step buying: wattage headroom, 80 PLUS, cables, GPU connectors', 'computingskill' ),
 			'psu-calculator'     => __( 'the wattage your own parts need', 'computingskill' ),
+			'pc-power-consumption-calculator'  => __( 'what the whole PC draws while you use it, and what it costs in electricity', 'computingskill' ),
+			'cpu-power-consumption-calculator' => __( 'one processor’s draw at idle, in games and at full load', 'computingskill' ),
+			'gpu-power-consumption-calculator' => __( 'one graphics card’s draw at idle, in games and at full load', 'computingskill' ),
 		),
+		// U4 (U-33): the performance calculators and the tier lists use the
+		// same scores: one part looked up, or every part ranked.
 		'gpu'        => array(
 			'gpu'                        => __( 'how a graphics card works and what its specs mean', 'computingskill' ),
 			'how-to-choose-a-gaming-gpu' => __( 'step-by-step buying by budget, resolution, VRAM and power', 'computingskill' ),
 			'gpu-performance-calculator' => __( 'where a specific card sits on our score scale', 'computingskill' ),
+			'gpu-tier-list'              => __( 'every card ranked on the same scores, with FPS at 1080p, 1440p and 4K', 'computingskill' ),
+		),
+		'cpu'        => array(
+			'cpu'                        => __( 'what a processor does and which specs matter', 'computingskill' ),
+			'cpu-performance-calculator' => __( 'where a specific CPU sits on our gaming score scale', 'computingskill' ),
+			'cpu-tier-list'              => __( 'every CPU ranked on the same scores, with the fastest card each one keeps up with', 'computingskill' ),
 		),
 		'bottleneck' => array(
 			'pc-bottleneck-calculator' => __( 'any CPU + GPU pair, with game type and graphics settings', 'computingskill' ),
 			'bottleneck'               => __( 'ready-made results for common pairs, side by side', 'computingskill' ),
-			'cpu-vs-gpu-calculator'    => __( 'a quick look at the two scores and the balance, no settings', 'computingskill' ),
+			'cpu-vs-gpu-calculator'    => __( 'the same engine as the Bottleneck Calculator, showing the two scores and the balance, no game or settings', 'computingskill' ),
 			'cpu-bottleneck-explained' => __( 'what a CPU bottleneck is and how to spot one', 'computingskill' ),
 			'gpu-bottleneck-explained' => __( 'why a GPU-limited game is the normal case', 'computingskill' ),
 		),
@@ -777,6 +789,11 @@ function cs_il_hub_guides() {
 				'pc-build-cost-calculator'  => __( 'What will this build cost and where does the money go?', 'computingskill' ),
 				'pc-power-consumption-calculator' => __( 'What does my PC cost to run in electricity?', 'computingskill' ),
 				'pc-cooling-calculator'     => __( 'Is air cooling enough or do I need an AIO?', 'computingskill' ),
+				// U4 (U-33): the tools that overlap with the ones above.
+				'cpu-vs-gpu-calculator'     => __( 'Just the two scores side by side, without game or settings? (Same engine as the Bottleneck Calculator.)', 'computingskill' ),
+				'gpu-performance-calculator' => __( 'Where does one graphics card rank? (Every card ranked: the GPU tier list.)', 'computingskill' ),
+				'cpu-performance-calculator' => __( 'Where does one CPU rank? (Every CPU ranked: the CPU tier list.)', 'computingskill' ),
+				'gpu-power-consumption-calculator' => __( 'How much power does my graphics card alone draw? (CPU: the CPU Power Consumption Calculator.)', 'computingskill' ),
 			),
 			'outro' => __( 'Hardware specs come from the manufacturers, and the CPU and GPU tools share one gaming-performance score scale, placed from published review averages, so the bottleneck, FPS, upgrade and comparison pages never disagree about the same parts.', 'computingskill' ),
 		),
@@ -855,6 +872,9 @@ function cs_il_hub_guides() {
 				'how-to-choose-a-gaming-gpu'                     => __( 'I am buying a graphics card.', 'computingskill' ),
 				'how-much-ram-do-i-need-for-gaming-and-streaming' => __( 'I want to stream while I play.', 'computingskill' ),
 				'how-much-vram-do-i-need'                        => __( 'I am moving to 1440p or 4K.', 'computingskill' ),
+				// U4 (U-21): the tier lists were not linked from /guides/.
+				'gpu-tier-list'                                  => __( 'I want to know how good my graphics card is.', 'computingskill' ),
+				'cpu-tier-list'                                  => __( 'I want to know how good my processor is for gaming.', 'computingskill' ),
 			),
 			'outro' => __( 'Each guide links to the calculator that puts its advice into numbers for your own parts.', 'computingskill' ),
 		),

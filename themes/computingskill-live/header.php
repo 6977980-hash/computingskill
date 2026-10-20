@@ -49,15 +49,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 				) );
 			} else {
 				?>
-				<ul id="cs-primary-menu">
-					<li><a href="<?php echo esc_url( home_url( '/calculators/' ) ); ?>"><?php esc_html_e( 'Calculators', 'computingskill' ); ?></a></li>
-					<li><a href="<?php echo esc_url( home_url( '/computer-tools/' ) ); ?>"><?php esc_html_e( 'Tools', 'computingskill' ); ?></a></li>
-					<li><a href="<?php echo esc_url( home_url( '/blog/' ) ); ?>"><?php esc_html_e( 'Blog', 'computingskill' ); ?></a></li>
-					<li><a href="<?php echo esc_url( home_url( '/games/' ) ); ?>"><?php esc_html_e( 'Games', 'computingskill' ); ?></a></li>
-					<li><a href="<?php echo esc_url( home_url( '/hardware/' ) ); ?>"><?php esc_html_e( 'Hardware', 'computingskill' ); ?></a></li>
-					<li><a href="<?php echo esc_url( home_url( '/guides/' ) ); ?>"><?php esc_html_e( 'Guides', 'computingskill' ); ?></a></li>
-					<li><a href="<?php echo esc_url( home_url( '/comparisons/' ) ); ?>"><?php esc_html_e( 'Comparisons', 'computingskill' ); ?></a></li>
-				</ul>
+				<?php // U4 (U-21, U-32): Tier Lists item and the current section, inc/u4-nav.php. ?>
+				<?php echo cs_nav_menu_html(); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 				<?php
 			}
 			?>
@@ -65,7 +58,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<form class="cs-search-form" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
 			<label class="screen-reader-text" for="cs-search-input"><?php esc_html_e( 'Search ComputingSkill', 'computingskill' ); ?></label>
-			<input type="search" id="cs-search-input" name="s" placeholder="<?php esc_attr_e( 'Search calculators, tools, guides…', 'computingskill' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" />
+			<input type="search" id="cs-search-input" name="s" placeholder="<?php esc_attr_e( 'Search tools and parts…', 'computingskill' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" />
 			<button type="submit"><span class="screen-reader-text"><?php esc_html_e( 'Search', 'computingskill' ); ?></span><?php echo cs_icon_svg( 'search' ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed theme SVG. ?></button>
 		</form>
 	</div>

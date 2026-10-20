@@ -1065,7 +1065,7 @@ function cs_llms_txt() {
 		$out .= "\n## " . __( 'Game system requirements', 'computingskill' ) . "\n\n";
 		$archive = get_post_type_archive_link( 'cs_game' );
 		if ( $archive ) {
-			$out .= cs_llms_line( __( 'Can I Run This Game? (all games)', 'computingskill' ), $archive, __( 'minimum and recommended PC specs from each publisher', 'computingskill' ) );
+			$out .= cs_llms_line( __( 'PC Game System Requirements (all games)', 'computingskill' ), $archive, __( 'minimum and recommended PC specs from each publisher', 'computingskill' ) );
 		}
 		foreach ( $games as $p ) {
 			$out .= cs_llms_line( get_the_title( $p ), get_permalink( $p ) );

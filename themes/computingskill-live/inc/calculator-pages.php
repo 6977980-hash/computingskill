@@ -368,17 +368,16 @@ function cs_page_text_swap( $content, $list ) {
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-u3' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-u4' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// U3 (user-side audit): tools that changed what they ask or show
-		// (PSU "Other GPU", Compatibility "Other" boxes, CPU vs GPU scales,
-		// FPS game type, Can I Run It cards). The type-to-find box on every
-		// picker is a layout change only. U2, U1, K4, K3, K2, K1, D2, D3, D5
-		// and D10 ran with earlier revs; their pages are dated already.
-		'psu-calculator', 'pc-compatibility-checker', 'cpu-vs-gpu-calculator', 'fps-calculator', 'can-i-run-it',
+		// U4 (user-side audit): /comparisons/ has a rewritten intro and its
+		// lists moved up and were grouped. The menu, jump links, tool boxes
+		// and other hub changes are navigation only. U3, U2, U1, K4, K3, K2,
+		// K1, D2, D3, D5 and D10 ran with earlier revs; their pages are dated.
+		'comparisons',
 	);
 }
 

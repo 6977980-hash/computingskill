@@ -189,3 +189,126 @@
 	.cs-ref-stack td:last-child { padding-bottom: 8px; }
 	.cs-ref-stack td::before { content: attr(data-label) ": "; font-weight: 600; color: var(--cs-text-muted); }
 }
+
+/* U4 (20 Oct 2026 user-side audit): navigation, layout and accessibility. */
+/* U-19: anchors and keyboard focus land below the sticky header (125px on
+   phones, 69px on desktop). main.js keeps --cs-header-offset = header
+   height + 16px; these are the fallbacks. */
+html { scroll-padding-top: var(--cs-header-offset, 141px); }
+@media (min-width: 900px) {
+	html { scroll-padding-top: var(--cs-header-offset, 85px); }
+}
+/* U-20: the skip link kept the 1px clip and sat behind the header. */
+.skip-link.screen-reader-text:focus {
+	position: fixed !important; left: 16px; top: 12px; z-index: 10001;
+	width: auto; height: auto; clip: auto; overflow: visible;
+	padding: 10px 18px; border-radius: 10px;
+	background: var(--cs-primary); color: var(--cs-on-primary);
+	font-weight: 700; text-decoration: none;
+	outline: 3px solid var(--cs-ink); outline-offset: 2px;
+}
+/* U-27: light-mode orange (CPU-limited) was 4.47:1 on the page background;
+   #9e5900 is 4.95:1 there, 4.81:1 on surface-2, 5.41:1 on white. */
+@media (prefers-color-scheme: light) {
+	:root { --cs-cpu: #9e5900; }
+}
+/* U-32: the menu shows the section you are in. */
+#cs-primary-menu a.is-current { color: var(--cs-ink); font-weight: 700; box-shadow: inset 3px 0 0 var(--cs-primary); }
+@media (min-width: 900px) {
+	#cs-primary-menu a.is-current { background: var(--cs-surface-2); box-shadow: inset 0 -2px 0 var(--cs-primary); }
+}
+/* U-24: one search box in the first view of the homepage: the hero box on
+   desktop, the header box on phones (it sits right above the hero). */
+@media (min-width: 900px) {
+	.home .cs-site-header .cs-search-form { display: none; }
+	.home .cs-primary-navigation { margin-left: auto; }
+}
+@media (max-width: 899px) {
+	.home .cs-hero-search { display: none; }
+}
+/* U-30: the example parts are plain text, not field-like boxes, and the
+   bars get a 0-60% scale under them. */
+.cs-telemetry-pair { margin: 0 0 18px; }
+.cs-telemetry-part { display: block; background: none; border: 0; padding: 0; }
+.cs-telemetry .cs-lb-row, .cs-lb-scale { grid-template-columns: 52px minmax(0, 1fr) 12.5em; }
+.cs-telemetry .cs-lb-val { min-width: 0; }
+.cs-lb-scale { display: grid; gap: 12px; margin: 6px 0 0; font: 500 0.7rem var(--cs-font-mono); color: var(--cs-text-muted); }
+.cs-lb-ticks { display: flex; justify-content: space-between; border-top: 1px solid var(--cs-border); padding-top: 3px; }
+.cs-lb-key-note { flex-basis: 100%; }
+/* U-31: link grids fill their last row instead of leaving empty cells, and
+   six-card grids are 3 + 3 (were 4 + 2) on wide screens. */
+.cs-related-grid { display: flex; flex-wrap: wrap; }
+.cs-related-grid > li { flex: 1 1 200px; }
+.cs-card-grid:has(> :nth-child(6):last-child) { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+/* U-22: in-page jump links on long hubs. */
+.cs-jump-nav { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 14px 0; font-size: 0.92rem; }
+.cs-jump-nav ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.cs-jump-nav a { display: inline-block; padding: 5px 10px; border: 1px solid var(--cs-border); border-radius: 999px; background: var(--cs-surface-2); color: var(--cs-text); text-decoration: none; }
+.cs-jump-nav a:hover, .cs-jump-nav a:focus-visible { border-color: var(--cs-primary); color: var(--cs-ink); }
+.cs-jump-label { font-weight: 600; color: var(--cs-text-muted); }
+.cs-jump-group { margin: 16px 0; padding: 12px 14px; border: 1px solid var(--cs-border); border-radius: var(--cs-radius); background: var(--cs-surface); }
+.cs-jump-group .cs-jump-nav { margin: 8px 0 0; }
+.cs-jump-title { margin: 0; font-weight: 600; }
+.cs-article-content h4 { margin: 1.2em 0 0.4em; }
+/* U-21: GPU / CPU tier list switch. */
+.cs-tier-switch ul { display: flex; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
+.cs-tier-switch a { display: inline-block; padding: 8px 16px; border: 1px solid var(--cs-border); border-radius: 10px; color: var(--cs-text); text-decoration: none; font-weight: 600; }
+.cs-tier-switch a[aria-current="page"] { background: var(--cs-primary); border-color: var(--cs-primary); color: var(--cs-on-primary); }
+.cs-tier-switch a:not([aria-current]):hover { border-color: var(--cs-primary); }
+/* U-23: Can I Run It card at the top of /games/; game page links. */
+.cs-games-cir { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; margin: 24px 0 8px; padding: 18px 20px; border: 1px solid var(--cs-primary); border-radius: var(--cs-radius); background: var(--cs-surface); color: var(--cs-text); text-decoration: none; }
+.cs-games-cir:hover, .cs-games-cir:focus-visible { text-decoration: none; box-shadow: 0 0 0 3px var(--cs-glow); }
+.cs-games-cir-title { font: 700 1.15rem var(--cs-font-display); color: var(--cs-ink); }
+.cs-games-cir-desc { grid-column: 1; color: var(--cs-text-muted); font-size: 0.95rem; }
+.cs-games-cir-go { grid-column: 2; grid-row: 1 / span 2; font-size: 1.4rem; color: var(--cs-primary); }
+.cs-game-cta p.cs-game-cta-more { margin: 12px 0 0; font-weight: 400; font-size: 0.95rem; }
+.cs-game-cta-more a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+/* U-35 / U-39: search best match, 404 "did you mean". */
+.cs-search-best h2, .cs-search-more-title { font-size: 1.15rem; margin: 18px 0 0; }
+.cs-search-best .cs-card { border-color: var(--cs-primary); }
+.cs-404-guess { font-size: 1.1rem; font-weight: 600; }
+.cs-404-guess a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+/* U-24: a slimmer consent card. Phones: smaller text and padding, buttons on
+   one row. Desktop: a card in the bottom-right corner. analytics.php moves
+   it to the top while it would cover a Calculate button. */
+.cs-consent { transition: none; }
+@media (max-width: 899px) {
+	.cs-consent { left: 8px; right: 8px; bottom: 8px; gap: 8px 12px; padding: 10px 12px; font-size: 0.82rem; line-height: 1.4; }
+	.cs-consent p { flex-basis: 100%; }
+	.cs-consent-actions { flex-wrap: nowrap; width: 100%; }
+	.cs-consent-actions button { flex: 1 1 0; min-height: 40px; padding: 6px 10px; }
+}
+@media (min-width: 900px) {
+	.cs-consent { left: auto; right: 16px; max-width: 400px; margin: 0; }
+}
+.cs-consent.cs-consent--top { bottom: auto; top: calc(var(--cs-header-offset, 85px) - 8px); }
+/* A11Y-03 follow-up: links that sit inside a line of text on the hub
+   "Which One Do You Need?" lists and the /games/ intro wrap into the
+   sentence on narrow screens, so they are underlined too. */
+.cs-hub-guide li a,
+.cs-games-hub .cs-container p a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+/* Header from 900 to 1319px: logo, menu and search didn't fit on one row
+   (the page scrolled sideways by up to 235px at 900px even before the
+   Tier Lists item). The menu gets its own row there. */
+@media (min-width: 900px) and (max-width: 1319px) {
+	.cs-header-inner { flex-wrap: wrap; row-gap: 6px; }
+	.cs-search-form { order: 2; }
+	.cs-primary-navigation { order: 3; flex: 1 1 100%; }
+	#cs-primary-menu { flex-wrap: wrap; }
+	.home .cs-primary-navigation { margin-left: 0; }
+}
+/* U-29: with eight menu items the header search was squeezed and its
+   placeholder cut. Slimmer menu pills until there is room. */
+@media (min-width: 1320px) and (max-width: 1599px) {
+	#cs-primary-menu { gap: 2px; }
+	#cs-primary-menu a { padding-left: 8px; padding-right: 8px; }
+	.cs-search-form { flex: 0 0 230px; }
+}
+/* U-31: two-column calculator forms mixed framed fields (the ones with an
+   icon tile) and bare ones, and an odd last field left half a row empty
+   (Bottleneck Calculator at 1920). In a form with framed fields every
+   field is framed, and an odd last field takes the whole row. */
+@media (min-width: 640px) {
+	.cs-calc-fields:has(> .cs-field-has-icon) > .cs-field:not(.cs-field-has-icon) { background: var(--cs-bg); border: 1px solid var(--cs-border); border-radius: 12px; padding: 12px 14px; }
+	.cs-calc-fields > .cs-field:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}

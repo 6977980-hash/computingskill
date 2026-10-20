@@ -41,7 +41,6 @@ function cs_content_index_groups() {
 				array( 'slug' => 'gpu-performance-calculator', 'title' => __( 'GPU Performance Calculator', 'computingskill' ), 'desc' => __( 'See a graphics card\'s gaming-performance score (RTX 4090 = 100) and tier, to compare NVIDIA, AMD and Intel cards on one scale.', 'computingskill' ) ),
 				array( 'slug' => 'gpu-power-consumption-calculator', 'title' => __( 'GPU Power Consumption Calculator', 'computingskill' ), 'desc' => __( 'Estimate how much power your graphics card actually draws at idle, typical gaming, and full load compared to its rated TDP.', 'computingskill' ) ),
 				array( 'slug' => 'gpu-vram-calculator', 'title' => __( 'GPU VRAM Calculator', 'computingskill' ), 'desc' => __( 'Estimate how much GPU VRAM you need for your resolution, settings, and ray tracing preferences before you buy a graphics card.', 'computingskill' ) ),
-				array( 'slug' => 'bottleneck', 'title' => __( 'PC Bottleneck Comparisons', 'computingskill' ), 'desc' => __( 'Browse pre-built bottleneck estimates for common CPU and GPU pairings at 1080p, 1440p and 4K.', 'computingskill' ) ),
 				array( 'slug' => 'pc-bottleneck-calculator', 'title' => __( 'PC Bottleneck Calculator', 'computingskill' ), 'desc' => __( 'Check whether your CPU or GPU is holding back your PC\'s performance, with results broken down by 1080p, 1440p, and 4K.', 'computingskill' ) ),
 				array( 'slug' => 'pc-build-cost-calculator', 'title' => __( 'PC Build Cost Calculator', 'computingskill' ), 'desc' => __( 'Estimate the total cost of your PC build and see how your budget typically splits across components.', 'computingskill' ) ),
 				array( 'slug' => 'pc-compatibility-checker', 'title' => __( 'PC Compatibility Checker', 'computingskill' ), 'desc' => __( 'Check CPU socket and BIOS support, RAM type, case fit for the motherboard, cooler and GPU, and PSU headroom and cables before you buy or build.', 'computingskill' ) ),
@@ -142,6 +141,9 @@ function cs_content_index_groups() {
 				array( 'slug' => 'gpu-tier-list', 'title' => __( 'GPU Tier List', 'computingskill' ), 'desc' => __( 'Every graphics card in our database ranked for gaming, in S to D tiers, with estimated FPS at 1080p, 1440p and 4K and the best cards for each resolution.', 'computingskill' ) ),
 				array( 'slug' => 'cpu-tier-list', 'title' => __( 'CPU Tier List', 'computingskill' ), 'desc' => __( 'Every processor in our database ranked for gaming, in S to D tiers, with FPS ceilings, the fastest GPU each one drives at 1440p and the best CPU per socket.', 'computingskill' ) ),
 				array( 'slug' => 'ssd-vs-hdd', 'title' => __( 'SSD vs HDD', 'computingskill' ), 'desc' => __( 'A practical, technical comparison of SSDs and HDDs covering speed, price per GB, durability, and which one actually fits your use case.', 'computingskill' ) ),
+				// U4 (U-38): /bottleneck/ sat under Calculators while its combo pages
+				// sat under it as "Bottleneck Comparisons"; it is a comparisons hub.
+				array( 'slug' => 'bottleneck', 'title' => __( 'PC Bottleneck Comparisons', 'computingskill' ), 'desc' => __( 'Browse pre-built bottleneck estimates for common CPU and GPU pairings at 1080p, 1440p and 4K.', 'computingskill' ) ),
 			),
 		),
 	);

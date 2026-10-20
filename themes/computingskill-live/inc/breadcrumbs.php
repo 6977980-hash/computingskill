@@ -33,6 +33,8 @@ function cs_breadcrumbs() {
 	} elseif ( is_singular( 'cs_bottleneck' ) ) {
 		// Parent is the /bottleneck/ hub (Sep 2026 audit): gives the hub a
 		// crawlable link from every one of the 30 combination pages.
+		// U4 (U-38): /bottleneck/ itself sits under Comparisons.
+		$trail[] = array( 'label' => __( 'Comparisons', 'computingskill' ), 'url' => home_url( '/comparisons/' ) );
 		$trail[] = array( 'label' => __( 'Bottleneck Comparisons', 'computingskill' ), 'url' => home_url( '/bottleneck/' ) );
 		$trail[] = array( 'label' => get_the_title(), 'url' => '' );
 	} elseif ( is_singular() ) {

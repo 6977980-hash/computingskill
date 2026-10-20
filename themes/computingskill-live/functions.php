@@ -55,6 +55,7 @@ require_once CS_THEME_DIR . '/inc/k3-pages.php';
 require_once CS_THEME_DIR . '/inc/k4-pages.php';
 require_once CS_THEME_DIR . '/inc/a11y.php';
 require_once CS_THEME_DIR . '/inc/u2-text.php';
+require_once CS_THEME_DIR . '/inc/u4-nav.php';
 require_once CS_THEME_DIR . '/inc/fixes-loader.php';
 
 /**

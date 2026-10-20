@@ -81,9 +81,20 @@ while ( have_posts() ) :
 						<?php endif; ?>
 					</p>
 
+					<?php // U4 (U-23): the button opened the Bottleneck Calculator, which doesn't answer "can I run this game"; it now opens the FPS Calculator with this game picked. ?>
 					<div class="cs-game-cta">
-						<p><?php esc_html_e( "Want to know how YOUR specific CPU and GPU actually pair up, not just whether you clear the minimum?", 'computingskill' ); ?></p>
-						<a class="cs-calc-submit cs-game-cta-button" href="<?php echo esc_url( home_url( '/pc-bottleneck-calculator/' ) ); ?>"><?php esc_html_e( 'Test Your Configuration', 'computingskill' ); ?></a>
+						<p><?php echo esc_html( sprintf( __( 'Want to know roughly what frame rate your own CPU and graphics card get in %s, not just whether you clear the minimum?', 'computingskill' ), $g['name'] ) ); ?></p>
+						<a class="cs-calc-submit cs-game-cta-button" href="<?php echo esc_url( add_query_arg( 'game', $slug, home_url( '/fps-calculator/' ) ) ); ?>"><?php echo esc_html( sprintf( __( 'Check Your PC for %s', 'computingskill' ), $g['name'] ) ); ?></a>
+						<p class="cs-game-cta-more">
+							<?php
+							printf(
+								/* translators: 1: Can I Run It link, 2: Bottleneck Calculator link */
+								esc_html__( 'Or check every game in our list at once with %1$s, or the balance of your CPU and graphics card with the %2$s.', 'computingskill' ),
+								'<a href="' . esc_url( home_url( '/can-i-run-it/' ) ) . '">' . esc_html__( 'Can I Run It?', 'computingskill' ) . '</a>',
+								'<a href="' . esc_url( home_url( '/pc-bottleneck-calculator/' ) ) . '">' . esc_html__( 'Bottleneck Calculator', 'computingskill' ) . '</a>'
+							);
+							?>
+						</p>
 					</div>
 				</section>
 

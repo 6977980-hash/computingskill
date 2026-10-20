@@ -2,6 +2,27 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.62 (20 Oct 2026) — U4 navigation, layout and accessibility
+From the 20 Oct user-side audit (U4: U-19..U-24, U-27, U-29..U-33, U-35, U-37..U-39). No scores, calculator numbers or engine constants changed. New file `inc/u4-nav.php`.
+- U-19: `html { scroll-padding-top }` = sticky header height + 16px (main.js keeps `--cs-header-offset` up to date, measured with the menu closed), so anchors (/methodology/#m-psu) and Shift+Tab focus land below the header.
+- U-20: "Skip to content" shows on focus as a pill above the header (primary colour with its on-primary text: 5.2:1 light, 8.4:1 dark).
+- U-21: "Tier Lists" in the main menu (→ GPU tier list, with a GPU / CPU switch at the top of both lists), a "Tier Lists & Comparisons" homepage row, the homepage quick answer links both lists, and /guides/ "Which One Do You Need?" lists them.
+- U-22: /comparisons/: tier-list box and the head-to-heads now sit above "Which One Do You Need?" and the FAQ, grouped by the faster part's class (GPUs: 4K / 1440p / 1080p and budget; CPUs: high-end / upper mid / mid / budget, the tier list lines), fastest first, with jump links; the "Five comparisons live here" paragraph is rewritten. /hardware/: part list above the FAQ, jump links. /bottleneck/: "Find your CPU" jump links (AMD / Intel) to each CPU table.
+- U-23: /games/ H1 "PC Game System Requirements" (matches its title) with a Can I Run It card on top; game pages' button opens the FPS Calculator with the game picked ("Check Your PC for {game}"), plus Can I Run It and Bottleneck links.
+- U-24: one search box in the homepage's first view (hero box on desktop, header box on phones); consent card slimmer on phones (~125px, was 174), a bottom-right card on desktop, and it moves to the top while it would cover a Calculate button.
+- U-27: light-mode orange (`--cs-cpu`) #9e5900 (4.95:1 on the page background).
+- U-29: header search placeholder "Search tools and parts…" fits; menu pills slimmer from 1320 to 1599px. From 900 to 1319px the menu gets its own header row (the header scrolled the page sideways by up to 235px there before).
+- U-30: homepage example parts are plain text (they looked like inputs), the bars have a 0-30-60% scale and the note says what the bars mean.
+- U-31: a section heading directly above a link box no longer repeats as the box heading (/calculators/, /computer-tools/); link boxes fill their last row; six-card grids are 3 + 3; calculator forms with icon fields frame every field and an odd last field takes the whole row.
+- U-32: the menu marks the current section (`aria-current="page"` on the hub, `"true"` inside it, bold + underline).
+- U-33: "Which Page Do You Need?" boxes for the power tools (PSU vs PC/CPU/GPU power) and CPU/GPU Performance vs the tier lists; /calculators/ "Which One" adds CPU vs GPU, CPU/GPU Performance and GPU Power.
+- U-35: search shows "Best match" tools above the results for intent words (psu/watts, can i run, ram, vram, fps, bottleneck, tier list, upgrade, cooling, build cost).
+- U-37: homepage "View all CPU + GPU pairings →" and "View all comparisons →".
+- U-38: /bottleneck/ sits under Comparisons (content index, breadcrumb, BreadcrumbList schema); combo pages Home › Comparisons › Bottleneck Comparisons › pair; /guides/ box "Bottleneck Guides and Calculators".
+- U-39: 404 suggests the closest page ("Did you mean PSU Calculator?") and fills the search box with the URL's words.
+- Also: links inside hub "Which One" lists and the /games/ intro are underlined (axe link-in-text-block at some widths); two scrolling tables under one heading get different region names.
+- `CS_CALC_PAGES_REV` 2026-10-20-u4 dates /comparisons/ only. `CS_GENERATED_CONTENT_REV` not bumped (game pages: button only).
+
 ## 1.0.61 (20 Oct 2026) — U3 calculator usability
 From the 20 Oct user-side audit (U3: U-13..U-18, U-25, U-26, U-28, U-49..U-51). No scores, engine constants or calculator numbers changed.
 - U-13: every CPU/GPU picker has a "Type to find" combobox above the native list (`buildPickerSearch()` / `pickerMatches()` in calculators.js): matches each typed word anywhere in the name, ignoring case, spaces and dashes ("4070", "rtx4070", "5600x", "i5 12400f", "245k"); arrow keys + Enter pick, Enter never calculates, no match offers "Other". The select stays the real field. Under 480px the decorative icon tiles are hidden and padding shrinks, so selects are full width (295px at 375; no option name cut).
