@@ -26,6 +26,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * existing FAQ rather than a second, redundant section.
  */
 function cs_extra_faq_definitions() {
+	return array_merge( cs_extra_faq_base(), function_exists( 'cs_k1_extra_faqs' ) ? cs_k1_extra_faqs() : array() );
+}
+
+function cs_extra_faq_base() {
 	return array(
 		array(
 			'slugs' => array( 'gpu-vram-calculator', 'vram' ),
@@ -76,7 +80,7 @@ function cs_extra_faq_definitions() {
 }
 
 /**
- * Prints ONE extra FAQ item for the current page, if its slug matches a
+ * Prints the extra FAQ items for the current page whose slugs match a
  * definition above, and queues it for FAQPage JSON-LD the same way
  * [cs_faq] does (see inc/shortcodes.php / inc/schema.php). Call from a
  * page template right after the_content(), same pattern as
@@ -112,7 +116,6 @@ function cs_maybe_print_extra_faq() {
 			'answer'   => wp_strip_all_tags( $a ),
 		);
 
-		// Each page only matches one definition by design; stop once found.
-		return;
+		// K1: a page can now carry more than one extra question.
 	}
 }

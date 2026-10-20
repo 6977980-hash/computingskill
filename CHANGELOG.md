@@ -2,6 +2,17 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.53 (20 Oct 2026) — K1 ranking calculators
+From the 20 Oct GSC keyword-gap report (calculators already at positions 10-20). New code in `inc/k1-pages.php`.
+- Title tags (≤60) and meta descriptions with a number for /storage-calculator/, /ssd-tbw-calculator/ (now "TBW & DWPD"), /ssd-lifespan-calculator/, /resolution-calculator/ and /upload-time-calculator/.
+- Storage: "What Fits on 512GB, 1TB, 2TB and 4TB?" table (photos, 1080p and 4K video hours, 100GB games, 90% of the drive used) + 2 FAQ (photos / games in 1TB).
+- SSD TBW: "What Does TBW Mean?" answer under the calculator; "Typical TBW by Capacity" table (Samsung 870 EVO, WD_BLACK SN850X, Crucial P3 Plus published ratings); 2 FAQ (good TBW for 1TB, DWPD from TBW).
+- SSD Lifespan: "How Long Does an SSD Last?" direct answer, "How to Check SSD Health" (Windows Settings, CrystalDiskInfo, PowerShell, maker apps, Mac/Linux), link to the TBW calculator; FAQ "How long does a 1TB SSD last?".
+- Resolution: "How Many Pixels Is 4K?", a Total pixels column in the common resolutions table, and a render scale table (50-85% of 1080p/1440p/4K) with a DLSS/FSR link.
+- Upload: H1 "Upload Speed & Time Calculator" (one-time job `CS_K1_REV`, only while the title is unchanged); upload table now at 10/20/50/100 Mbps.
+- Extra FAQ (`inc/extra-faq.php`) allows several questions per page, all in FAQPage schema.
+- `CS_CALC_PAGES_REV` 2026-10-20-k1 dates the five pages today.
+
 ## 1.0.52 (20 Oct 2026) — E3 technical SEO + trust
 - Part (`/hardware/{part}/`) and comparison (`/comparisons/{a}-vs-{b}/`) pages show "By Ali Ahmad · Last updated" and carry a WebPage node with author, publisher, dates, description and the page's share card as `primaryImageOfPage` (ONP-01).
 - Comparison title tags are at most 60 characters (shorter endings for long part names; the H1 keeps the full title); DLSS guide title 59 characters (SEO-03).

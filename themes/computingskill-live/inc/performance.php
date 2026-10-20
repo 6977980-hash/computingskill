@@ -498,7 +498,7 @@ function cs_perf_marker_options() {
 		'cs_combo_pages_synced', 'cs_generated_content_rev', 'cs_seo_rev', 'cs_calc_pages_rev',
 		'cs_policy_pages_created', 'cs_legal_rev', 'cs_aeo_rev', 'cs_llms_written', 'cs_tier_pages_created',
 		'cs_part_pages_created', 'cs_part_pages_synced', 'cs_d10_pages_created', 'cs_d10_post_rewrites',
-		'cs_links_rev', 'cs_combo_merge_rev', 'cs_perf_rev',
+		'cs_links_rev', 'cs_combo_merge_rev', 'cs_perf_rev', 'cs_k1_rev',
 	);
 }
 

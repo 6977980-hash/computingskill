@@ -267,6 +267,13 @@ function cs_title_overrides() {
 		'cpu-tier-list'             => __( 'CPU Tier List 2026: Best Gaming Processors Ranked', 'computingskill' ),
 		// E3 (SEO-03): the post title is 61 characters.
 		'dlss-fsr-frame-generation-explained' => __( 'DLSS vs FSR vs XeSS: Upscaling & Frame Generation Explained', 'computingskill' ),
+		// K1 (GSC, 20 Oct 2026): calculators already ranking 10-20 had
+		// "{Name} - Computing Skill" titles that named none of their queries.
+		'storage-calculator'        => __( 'Storage Calculator: Space for Photos, 4K Video & Games', 'computingskill' ),
+		'ssd-tbw-calculator'        => __( 'SSD TBW & DWPD Calculator: What TBW Means for a Drive', 'computingskill' ),
+		'ssd-lifespan-calculator'   => __( 'SSD Lifespan Calculator: How Long Does an SSD Last?', 'computingskill' ),
+		'resolution-calculator'     => __( 'Resolution Calculator: Pixels, Megapixels & Aspect Ratio', 'computingskill' ),
+		'upload-time-calculator'    => __( 'Upload Speed & Time Calculator: How Long Will It Take?', 'computingskill' ),
 		'archive:cs_game'           => __( 'PC Game System Requirements: Can Your PC Run It?', 'computingskill' ),
 		'term:buying-guides'        => __( 'PC Buying Guides: Articles - Computing Skill', 'computingskill' ),
 	);
@@ -353,17 +360,19 @@ function cs_page_description_overrides() {
 		'data-storage-converter' => __( 'Convert between bits, bytes, KB, MB, GB, TB and PB, and see why a drive sold as 1TB shows about 931GB in Windows (decimal vs binary units explained).', 'computingskill' ),
 		'file-transfer-time-calculator' => __( 'Estimate file transfer time over USB 2.0 to USB 3.2, SATA, NVMe or 1/2.5/10 Gigabit Ethernet using each interface\'s real usable speed, or enter your own.', 'computingskill' ),
 		'ssd' => __( 'How SSDs work, NVMe vs SATA, and the specs that matter — interface, NAND type, DRAM cache, TBW endurance — plus how to choose the right SSD for your PC.', 'computingskill' ),
-		'storage-calculator' => __( 'Estimate how much space your files, games or media library need, and check whether they\'ll fit on your drive with sensible headroom left over.', 'computingskill' ),
+		// K1: descriptions with a number from the page's own tables (inc/k1-pages.php).
+		'storage-calculator' => __( 'How many photos, hours of 4K video and games fit on 512GB, 1TB, 2TB or 4TB? A 1TB drive holds about 225,000 photos or 9 big games. Check your own files.', 'computingskill' ),
 		'storage-tools' => __( 'Free storage calculators: SSD lifespan and TBW/DWPD endurance, drive space planning, and storage unit conversions, plus SSD, HDD and NVMe background guides.', 'computingskill' ),
 		'pc-compatibility-checker' => __( 'Check socket and BIOS support, DDR4 vs DDR5, board size, cooler height and GPU length vs your case, PSU headroom and the 16-pin GPU cable before you build a PC.', 'computingskill' ),
-		'ssd-lifespan-calculator' => __( 'Estimate how many years your SSD should last from its TBW endurance rating and your daily write volume — and why TBW is a warranty limit, not a failure date.', 'computingskill' ),
-		'ssd-tbw-calculator' => __( 'Convert an SSD\'s DWPD rating to TBW (or TBW to DWPD) from capacity and warranty length, and compare drives fairly with a TBW-per-terabyte figure.', 'computingskill' ),
+		'ssd-lifespan-calculator' => __( 'How long does an SSD last? A 600 TBW drive at 50GB of writes a day takes about 33 years to reach its rating. Enter yours, and learn to check SSD health.', 'computingskill' ),
+		'ssd-tbw-calculator' => __( 'TBW means terabytes written, an SSD\'s rated write endurance; many 1TB TLC drives are rated 600 TBW. Convert DWPD to TBW and compare typical ratings.', 'computingskill' ),
 		'cpu-performance-calculator' => __( 'See a CPU\'s gaming-performance score and tier, from Entry-level to Flagship, placed from published review averages, with its cores, clocks, TDP and socket.', 'computingskill' ),
 		'gpu-performance-calculator' => __( 'See a graphics card\'s gaming-performance score (RTX 4090 = 100) and tier, placed from published review averages, with its VRAM, memory bus, TDP and PSU need.', 'computingskill' ),
 		'pc-build-cost-calculator' => __( 'Add up your PC build part by part, see what share goes to the CPU, GPU, motherboard, RAM, storage, PSU, case and cooling, and how much of your budget is left.', 'computingskill' ),
 		'pc-case' => __( 'How PC case size, airflow, GPU clearance, cooler height and radiator support affect your build, and how to choose the right case form factor and layout.', 'computingskill' ),
 		'refresh-rate-calculator' => __( 'Convert monitor refresh rate (Hz) to frame time in milliseconds and back — for example 144Hz = 6.94ms — and see why higher refresh rates feel smoother.', 'computingskill' ),
-		'resolution-calculator' => __( 'Look up a resolution\'s standard name (720p, 1080p, 1440p, 4K, ultrawide), its total megapixels and its exact aspect ratio in one step.', 'computingskill' ),
+		'resolution-calculator' => __( 'Pixels, megapixels and aspect ratio for any resolution: 4K is 3840×2160, or 8.3 million pixels; 1080p is 2.07MP. Plus a render scale table (75% of 1440p).', 'computingskill' ),
+		'upload-time-calculator' => __( 'Upload speed and time calculator: how long a video, file or backup takes to upload. 10GB at 20 Mbps takes about 1h 7m; see 1-100GB at 10-100 Mbps.', 'computingskill' ),
 		'privacy-policy' => __( 'How ComputingSkill handles contact messages, server logs, cookies and Google Analytics (only with your consent), what we never sell, and your privacy rights.', 'computingskill' ),
 		'terms-of-use' => __( 'The terms for using ComputingSkill.com: free calculators and guides, estimates rather than guarantees, acceptable use, our content and trademarks.', 'computingskill' ),
 		// D6 (2.7): the post's own description was 164 characters.

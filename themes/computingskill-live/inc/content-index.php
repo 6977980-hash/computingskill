@@ -76,7 +76,7 @@ function cs_content_index_groups() {
 				array( 'slug' => 'internet-data-usage-calculator', 'title' => __( 'Internet Data Usage Calculator', 'computingskill' ), 'desc' => __( 'Estimate your monthly internet data usage from streaming, browsing, gaming, and video calls to stay under a data cap.', 'computingskill' ) ),
 				array( 'slug' => 'mb-s-to-mbps-converter', 'title' => __( 'MB/s to Mbps Converter', 'computingskill' ), 'desc' => __( 'Convert MB/s to Mbps quickly, useful for comparing a measured transfer speed against your advertised plan.', 'computingskill' ) ),
 				array( 'slug' => 'mbps-to-mb-s-converter', 'title' => __( 'Mbps to MB/s Converter', 'computingskill' ), 'desc' => __( 'Convert Mbps to MB/s instantly and understand why ISPs advertise speed in megabits, not megabytes.', 'computingskill' ) ),
-				array( 'slug' => 'upload-time-calculator', 'title' => __( 'Upload Time Calculator', 'computingskill' ), 'desc' => __( 'Estimate how long it will take to upload a file or backup based on your upload speed, which is often far slower than download.', 'computingskill' ) ),
+				array( 'slug' => 'upload-time-calculator', 'title' => __( 'Upload Speed & Time Calculator', 'computingskill' ), 'desc' => __( 'Estimate how long it will take to upload a file or backup based on your upload speed, which is often far slower than download.', 'computingskill' ) ),
 			),
 		),
 		'display-tools' => array(

@@ -568,7 +568,8 @@ function cs_aeo_reference_data( $type ) {
 
 		case 'download-time':
 		case 'upload-time':
-			$speeds = array( 25, 100, 300, 1000 );
+			// K1: upload speeds are usually far below download speeds.
+			$speeds = 'upload-time' === $type ? array( 10, 20, 50, 100 ) : array( 25, 100, 300, 1000 );
 			$rows   = array();
 			foreach ( array( 1, 10, 50, 100 ) as $gb ) {
 				$row = array( $gb . 'GB' );
@@ -579,7 +580,7 @@ function cs_aeo_reference_data( $type ) {
 			}
 			return array(
 				'title' => 'download-time' === $type ? __( 'Download times at common speeds', 'computingskill' ) : __( 'Upload times at common speeds', 'computingskill' ),
-				'head'  => array( __( 'File size', 'computingskill' ), '25 Mbps', '100 Mbps', '300 Mbps', '1 Gbps' ),
+				'head'  => array_merge( array( __( 'File size', 'computingskill' ) ), 'upload-time' === $type ? array( '10 Mbps', '20 Mbps', '50 Mbps', '100 Mbps' ) : array( '25 Mbps', '100 Mbps', '300 Mbps', '1 Gbps' ) ),
 				'rows'  => $rows,
 				'note'  => __( 'Theoretical best case (speed ÷ 8 = MB/s, 1GB = 1,000MB). Real transfers usually take 10–20% longer.', 'computingskill' ),
 			);
@@ -701,11 +702,18 @@ function cs_aeo_reference_data( $type ) {
 			foreach ( $names as $key => $name ) {
 				list( $w, $h ) = array_map( 'intval', explode( 'x', $key ) );
 				$r      = cs_aeo_ratio( $w, $h );
-				$rows[] = array( $w . '×' . $h, $e( $name ), $e( $r['simple'] . ( $r['marketed'] && $r['marketed'] !== $r['simple'] ? ' (' . $r['marketed'] . ')' : '' ) ), cs_aeo_num( $w * $h / 1e6, 2 ) . ' MP' );
+				$row = array( $w . '×' . $h, $e( $name ), $e( $r['simple'] . ( $r['marketed'] && $r['marketed'] !== $r['simple'] ? ' (' . $r['marketed'] . ')' : '' ) ), cs_aeo_num( $w * $h / 1e6, 2 ) . ' MP' );
+				if ( 'resolution' === $type ) {
+					// K1: "4k in px" / "4k resolution in pixels" queries.
+					array_splice( $row, 3, 0, array( cs_aeo_num( $w * $h ) ) );
+				}
+				$rows[] = $row;
 			}
 			return array(
 				'title' => __( 'Common resolutions', 'computingskill' ),
-				'head'  => array( __( 'Resolution', 'computingskill' ), __( 'Name', 'computingskill' ), __( 'Aspect ratio', 'computingskill' ), __( 'Megapixels', 'computingskill' ) ),
+				'head'  => 'resolution' === $type
+					? array( __( 'Resolution', 'computingskill' ), __( 'Name', 'computingskill' ), __( 'Aspect ratio', 'computingskill' ), __( 'Total pixels', 'computingskill' ), __( 'Megapixels', 'computingskill' ) )
+					: array( __( 'Resolution', 'computingskill' ), __( 'Name', 'computingskill' ), __( 'Aspect ratio', 'computingskill' ), __( 'Megapixels', 'computingskill' ) ),
 				'rows'  => $rows,
 				'note'  => __( '≈ marks panels sold under the nearest round ratio, such as 3440×1440 (43:18) as 21:9.', 'computingskill' ),
 			);

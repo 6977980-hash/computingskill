@@ -65,3 +65,7 @@
 	.cs-calc-fields:empty,
 	.cs-calculator[data-shared="1"] .cs-calc-result:empty { min-height: var(--cs-reserve-wide, var(--cs-reserve, 0)); }
 }
+
+/* K1: long row labels in the new calculator tables may wrap. */
+.cs-k1-table th[scope="row"] { white-space: normal; min-width: 9em; }
+.cs-k1-section code { word-break: break-word; }

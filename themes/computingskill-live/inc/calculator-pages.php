@@ -321,15 +321,14 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-18-d10' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-k1' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// D5 text or result changes (D2 ran with CS_CALC_PAGES_REV
-		// 2026-10-17-d2, D3 with 2026-10-17-d3; both are done).
-		'pc-compatibility-checker', 'psu-calculator', 'pc-power-consumption-calculator', 'cpu-power-consumption-calculator',
-		'pc-cooling-calculator', 'gpu-vram-calculator', 'methodology',
+		// K1 sections, tables and FAQ (inc/k1-pages.php). D2, D3, D5 and
+		// D10 ran with earlier revs; their pages are dated already.
+		'storage-calculator', 'ssd-tbw-calculator', 'ssd-lifespan-calculator', 'resolution-calculator', 'upload-time-calculator',
 	);
 }
 
