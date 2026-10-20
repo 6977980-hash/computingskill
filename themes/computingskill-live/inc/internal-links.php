@@ -1035,7 +1035,7 @@ function cs_links_rev_run() {
 		\RankMath\Sitemap\Cache::invalidate_storage();
 	}
 	do_action( 'litespeed_purge_all' );
-	update_option( 'cs_links_rev', CS_LINKS_REV, false );
+	update_option( 'cs_links_rev', CS_LINKS_REV, true );
 	delete_option( 'cs_links_rev_lock' );
 }
 add_action( 'init', 'cs_links_rev_run', 32 );
@@ -1156,7 +1156,7 @@ function cs_combo_merge_run() {
 		cs_llms_write();
 	}
 	do_action( 'litespeed_purge_all' );
-	update_option( 'cs_combo_merge_rev', CS_COMBO_MERGE_REV, false );
+	update_option( 'cs_combo_merge_rev', CS_COMBO_MERGE_REV, true );
 	delete_option( 'cs_combo_merge_lock' );
 }
 add_action( 'init', 'cs_combo_merge_run', 33 );

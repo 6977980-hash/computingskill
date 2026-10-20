@@ -317,11 +317,13 @@ function cs_calc_pages_touch() {
 		return;
 	}
 	global $wpdb;
+	$touched = array();
 	foreach ( cs_calc_pages_changed() as $slug ) {
 		$page = get_page_by_path( $slug );
 		if ( ! $page || 'publish' !== $page->post_status ) {
 			continue;
 		}
+		$touched[] = $page->ID;
 		// Direct update: wp_update_post() would add a revision for a date change.
 		$wpdb->update(
 			$wpdb->posts,
@@ -335,9 +337,10 @@ function cs_calc_pages_touch() {
 	if ( class_exists( '\RankMath\Sitemap\Cache' ) && method_exists( '\RankMath\Sitemap\Cache', 'invalidate_storage' ) ) {
 		\RankMath\Sitemap\Cache::invalidate_storage();
 	}
-	// Cached copies still carry the old text and dates (no-op without LiteSpeed).
-	do_action( 'litespeed_purge_all' );
-	update_option( 'cs_calc_pages_rev', CS_CALC_PAGES_REV, false );
+	// Cached copies still carry the old text and dates (no-op without
+	// LiteSpeed). E1 (SEO-01): only these pages, not the whole cache.
+	cs_perf_purge_posts( $touched );
+	update_option( 'cs_calc_pages_rev', CS_CALC_PAGES_REV, true );
 	delete_option( 'cs_calc_pages_lock' );
 }
 add_action( 'init', 'cs_calc_pages_touch', 41 );

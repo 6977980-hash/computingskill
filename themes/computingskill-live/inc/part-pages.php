@@ -213,8 +213,8 @@ function cs_pp_sync() {
 		update_post_meta( $id, '_cs_generated', $kind );
 		$done[] = $key;
 	}
-	update_option( 'cs_part_pages_created', array_values( array_unique( $done ) ), false );
-	update_option( 'cs_part_pages_synced', $hash, false );
+	update_option( 'cs_part_pages_created', array_values( array_unique( $done ) ), true );
+	update_option( 'cs_part_pages_synced', $hash, true );
 	delete_option( 'cs_part_pages_lock' );
 }
 add_action( 'init', 'cs_pp_sync', 31 );
@@ -231,16 +231,17 @@ function cs_pp_urls() {
 	if ( null !== $urls ) {
 		return $urls;
 	}
-	$urls = array();
-	$ids  = get_posts( array(
-		'post_type'      => array( 'cs_hardware', 'cs_comparison' ),
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'fields'         => 'ids',
-		'no_found_rows'  => true,
+	$urls  = array();
+	// E1 (PERF-01): full posts in one query, not one get_post() per ID.
+	$posts = get_posts( array(
+		'post_type'              => array( 'cs_hardware', 'cs_comparison' ),
+		'post_status'            => 'publish',
+		'posts_per_page'         => -1,
+		'no_found_rows'          => true,
+		'update_post_meta_cache' => false,
+		'update_post_term_cache' => false,
 	) );
-	foreach ( $ids as $id ) {
-		$p = get_post( $id );
+	foreach ( $posts as $p ) {
 		$urls[ $p->post_type . '|' . $p->post_name ] = get_permalink( $p );
 	}
 	return $urls;
@@ -1167,6 +1168,9 @@ function cs_pp_hub_html( $content ) {
 		return $content;
 	}
 	$slug = get_post_field( 'post_name' );
+	if ( 'hardware' !== $slug && 'comparisons' !== $slug ) {
+		return $content;
+	}
 	$urls = cs_pp_urls();
 	if ( 'hardware' === $slug ) {
 		$html = '<h2 id="every-part">' . esc_html__( 'Every CPU and GPU We Cover', 'computingskill' ) . '</h2><p>' . esc_html__( 'One page per part, with specs, estimated FPS, the parts it pairs with and the PSU it needs. Fastest first.', 'computingskill' ) . '</p>';

@@ -197,7 +197,7 @@ function cs_policy_pages_create() {
 		}
 		$done[] = $slug;
 	}
-	update_option( 'cs_policy_pages_created', array_values( array_unique( $done ) ), false );
+	update_option( 'cs_policy_pages_created', array_values( array_unique( $done ) ), true );
 	delete_option( 'cs_policy_pages_lock' );
 }
 add_action( 'init', 'cs_policy_pages_create', 30 );
@@ -308,9 +308,11 @@ function cs_legal_rev_apply() {
 		return;
 	}
 	global $wpdb;
+	$touched = array();
 	foreach ( array( 'privacy-policy', 'disclaimer' ) as $slug ) {
 		$page = get_page_by_path( $slug );
 		if ( $page ) {
+			$touched[] = $page->ID;
 			$wpdb->update(
 				$wpdb->posts,
 				array( 'post_modified' => current_time( 'mysql' ), 'post_modified_gmt' => current_time( 'mysql', true ) ),
@@ -324,10 +326,11 @@ function cs_legal_rev_apply() {
 	if ( class_exists( '\RankMath\Sitemap\Cache' ) && method_exists( '\RankMath\Sitemap\Cache', 'invalidate_storage' ) ) {
 		\RankMath\Sitemap\Cache::invalidate_storage();
 	}
-	// Cached pages still carry the old footer, the old headers and the old
-	// contact form token; clear LiteSpeed's cache once (no-op without it).
-	do_action( 'litespeed_purge_all' );
-	update_option( 'cs_legal_rev', CS_LEGAL_REV, false );
+	// D1 cleared the whole cache once (footer, headers, contact token all
+	// changed). E1 (SEO-01): a later CS_LEGAL_REV only changes these
+	// pages, so only they are purged (no-op without LiteSpeed).
+	cs_perf_purge_posts( $touched );
+	update_option( 'cs_legal_rev', CS_LEGAL_REV, true );
 	delete_option( 'cs_legal_rev_lock' );
 }
 add_action( 'init', 'cs_legal_rev_apply', 40 );

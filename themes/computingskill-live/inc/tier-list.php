@@ -78,7 +78,7 @@ function cs_tier_pages_create() {
 		}
 		$done[] = $slug;
 	}
-	update_option( 'cs_tier_pages_created', array_values( array_unique( $done ) ), false );
+	update_option( 'cs_tier_pages_created', array_values( array_unique( $done ) ), true );
 	delete_option( 'cs_tier_pages_lock' );
 }
 add_action( 'init', 'cs_tier_pages_create', 30 );

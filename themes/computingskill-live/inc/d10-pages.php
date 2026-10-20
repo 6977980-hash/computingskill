@@ -69,7 +69,7 @@ function cs_d10_pages_create() {
 		}
 		$done[] = $slug;
 	}
-	update_option( 'cs_d10_pages_created', array_values( array_unique( $done ) ), false );
+	update_option( 'cs_d10_pages_created', array_values( array_unique( $done ) ), true );
 	delete_option( 'cs_d10_pages_lock' );
 }
 add_action( 'init', 'cs_d10_pages_create', 32 );
@@ -406,7 +406,7 @@ function cs_d10_post_rewrites() {
 		}
 		$done[] = $slug;
 	}
-	update_option( 'cs_d10_post_rewrites', array_values( array_unique( $done ) ), false );
+	update_option( 'cs_d10_post_rewrites', array_values( array_unique( $done ) ), true );
 	delete_option( 'cs_d10_post_rewrites_lock' );
 }
 add_action( 'init', 'cs_d10_post_rewrites', 33 );

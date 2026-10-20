@@ -315,7 +315,7 @@ function cs_seo_rev_run() {
 	}
 	do_action( 'litespeed_purge_all' );
 
-	update_option( 'cs_seo_rev', CS_SEO_REV, false );
+	update_option( 'cs_seo_rev', CS_SEO_REV, true );
 	delete_option( 'cs_seo_rev_lock' );
 }
 add_action( 'init', 'cs_seo_rev_run', 32 );

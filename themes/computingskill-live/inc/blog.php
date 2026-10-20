@@ -106,7 +106,9 @@ add_filter( 'rank_math/sitemap/post_types', 'cs_sitemap_include_posts', 20 );
  * while that draft is untouched (see the hash check below).
  */
 function cs_blog_drafts_sync() {
-	if ( wp_installing() || ! is_admin() ) {
+	// E1 (PERF-02): not on admin-ajax (the contact form's anonymous nonce
+	// fetch runs admin_init too) or for visitors who aren't logged in.
+	if ( wp_installing() || ! is_admin() || wp_doing_ajax() || ! is_user_logged_in() ) {
 		return;
 	}
 	$files = glob( CS_THEME_DIR . '/data/blog-drafts/*.php' );

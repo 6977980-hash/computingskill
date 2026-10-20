@@ -94,7 +94,7 @@ function cs_combo_pages_sync() {
 	}
 
 	if ( $ok ) {
-		update_option( 'cs_combo_pages_synced', $hash, false );
+		update_option( 'cs_combo_pages_synced', $hash, true );
 	}
 	delete_option( 'cs_combo_pages_lock' );
 }
@@ -157,7 +157,7 @@ function cs_generated_pages_touch() {
 		\RankMath\Sitemap\Cache::invalidate_storage();
 	}
 
-	update_option( 'cs_generated_content_rev', CS_GENERATED_CONTENT_REV, false );
+	update_option( 'cs_generated_content_rev', CS_GENERATED_CONTENT_REV, true );
 	delete_option( 'cs_generated_content_lock' );
 }
 add_action( 'init', 'cs_generated_pages_touch', 31 );

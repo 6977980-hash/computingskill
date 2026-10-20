@@ -845,8 +845,11 @@ add_filter( 'the_content', 'cs_aeo_methodology', 9 );
 /**
  * Pages that had no quick answer (crawl, 18 Oct 2026). Legal pages and
  * Contact are left out: a policy has no single answer to give.
+ *
+ * E1 (PERF-01): with a slug, the combo count (a query over every combo
+ * page) is only worked out for 'bottleneck', the one answer that shows it.
  */
-function cs_aeo_quick_answers() {
+function cs_aeo_quick_answers( $slug = '' ) {
 	$n_calc = 0;
 	$groups = cs_content_index_groups();
 	foreach ( $groups as $key => $g ) {
@@ -856,7 +859,7 @@ function cs_aeo_quick_answers() {
 			}
 		}
 	}
-	$combos = function_exists( 'cs_bn_published_pairs' ) ? count( cs_bn_published_pairs() ) : 0;
+	$combos = ( '' === $slug || 'bottleneck' === $slug ) && function_exists( 'cs_bn_published_pairs' ) ? count( cs_bn_published_pairs() ) : 0;
 	return array(
 		'how-much-ram-do-i-need-for-gaming-and-streaming' => __( 'For gaming and streaming on the same PC, 32GB of RAM is the sweet spot for most setups. 16GB can run both but leaves almost no margin once the game, OBS or Streamlabs, Discord and a browser are open together, and 64GB only pays off for heavier work alongside the stream, such as 4K capture or editing while live.', 'computingskill' ),
 		'methodology'    => __( 'Every result on ComputingSkill is an estimate built from manufacturers’ published specs and documented formulas, not from our own benchmarks. CPU and GPU scores are a relative gaming index positioned from public review averages (RTX 4090 = 100 for GPUs), and each calculator’s formula is listed below.', 'computingskill' ),
@@ -885,7 +888,7 @@ function cs_aeo_quick_answer_box( $content ) {
 }
 
 function cs_aeo_quick_answer_html( $slug ) {
-	$answers = cs_aeo_quick_answers();
+	$answers = cs_aeo_quick_answers( (string) $slug );
 	if ( ! isset( $answers[ $slug ] ) ) {
 		return '';
 	}
@@ -1111,13 +1114,21 @@ function cs_llms_write() {
 		return false;
 	}
 	if ( file_exists( $file ) && file_get_contents( $file ) === $text ) { // phpcs:ignore WordPress.WP.AlternativeFunctions
-		return true;
+		$ok = true;
+	} else {
+		if ( file_exists( $file ) && ! file_exists( ABSPATH . 'llms.txt.phase6.bak' ) ) {
+			@copy( $file, ABSPATH . 'llms.txt.phase6.bak' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		}
+		// E1 (PERF-03): temp file + rename, so a reader never gets half a file.
+		$tmp = $file . '.tmp-' . getmypid();
+		$ok  = false !== @file_put_contents( $tmp, $text, LOCK_EX ) && @rename( $tmp, $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+		if ( ! $ok && file_exists( $tmp ) ) {
+			@unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+		}
 	}
-	if ( file_exists( $file ) && ! file_exists( ABSPATH . 'llms.txt.phase6.bak' ) ) {
-		@copy( $file, ABSPATH . 'llms.txt.phase6.bak' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
-	}
-	$ok = false !== @file_put_contents( $file, $text ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
-	update_option( 'cs_llms_written', array( 'ok' => $ok, 'time' => time(), 'bytes' => strlen( $text ) ), false );
+	// E1 (PERF-03): the time is saved on the unchanged path too, or
+	// cs_llms_daily() would rebuild the text on every request after a day.
+	update_option( 'cs_llms_written', array( 'ok' => $ok, 'time' => time(), 'bytes' => strlen( $text ) ), true );
 	return $ok;
 }
 
@@ -1180,7 +1191,7 @@ function cs_aeo_rev_run() {
 		\RankMath\Sitemap\Cache::invalidate_storage();
 	}
 	do_action( 'litespeed_purge_all' );
-	update_option( 'cs_aeo_rev', CS_AEO_REV, false );
+	update_option( 'cs_aeo_rev', CS_AEO_REV, true );
 	delete_option( 'cs_aeo_rev_lock' );
 }
 add_action( 'init', 'cs_aeo_rev_run', 40 );

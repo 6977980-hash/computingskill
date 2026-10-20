@@ -20,6 +20,9 @@
  *    classic-theme and global-styles CSS, and the emoji script/CSS is gone
  *    site-wide. The per-tool hardware/games data is in inc/setup.php.
  *  - 4.5 Front-end HTML for visitors gets a short browser cache header.
+ *  - E1 (20 Oct 2026): pages that sent their own no-cache header keep it,
+ *    the homepage drops the block CSS, job markers are autoloaded, and a
+ *    503 database-error page is placed (cs_perf_e1_run()).
  *
  * Social cards (og:image) keep their PNG files on purpose.
  *
@@ -32,6 +35,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! defined( 'CS_PERF_REV' ) ) {
 	define( 'CS_PERF_REV', '2026-10-18-d9' );
+}
+if ( ! defined( 'CS_PERF_E1_REV' ) ) {
+	define( 'CS_PERF_E1_REV', '2026-10-20-e1' );
 }
 
 /* ------------------------------------------------------------------ */
@@ -366,7 +372,7 @@ function cs_perf_rev_run() {
 	} else {
 		delete_option( 'cs_perf_webp_after' );
 		do_action( 'litespeed_purge_all' );
-		update_option( 'cs_perf_rev', CS_PERF_REV, false );
+		update_option( 'cs_perf_rev', CS_PERF_REV, true );
 	}
 	delete_option( 'cs_perf_rev_lock' );
 }
@@ -394,6 +400,11 @@ add_filter( 'posts_where', 'cs_perf_after_where', 10, 2 );
  * theme styles .screen-reader-text and images itself.
  */
 function cs_perf_needs_block_css() {
+	// E1 (PERF-05): the homepage is front-page.php over the posts index and
+	// prints no post content, so it needs no block CSS.
+	if ( is_front_page() && is_home() ) {
+		return false;
+	}
 	if ( ! is_singular() ) {
 		return true;
 	}
@@ -437,6 +448,16 @@ function cs_perf_cache_header() {
 	if ( headers_sent() || is_admin() || is_user_logged_in() || is_preview() || is_search() || is_404() || is_feed() || is_customize_preview() ) {
 		return;
 	}
+	// E1 (PERF-04): a page that asked not to be cached (the contact form's
+	// nocache_headers(), DONOTCACHEPAGE) keeps its own Cache-Control.
+	if ( ( defined( 'DONOTCACHEPAGE' ) && DONOTCACHEPAGE ) || ( function_exists( 'cs_contact_page_has_form' ) && cs_contact_page_has_form() ) ) {
+		return;
+	}
+	foreach ( headers_list() as $h ) {
+		if ( 0 === stripos( $h, 'cache-control:' ) ) {
+			return;
+		}
+	}
 	if ( ! in_array( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : 'GET', array( 'GET', 'HEAD' ), true ) ) {
 		return;
 	}
@@ -448,3 +469,103 @@ function cs_perf_cache_header() {
 	header( 'Cache-Control: public, max-age=600' );
 }
 add_action( 'template_redirect', 'cs_perf_cache_header', 99 );
+
+/* ------------------------------------------------------------------ */
+/* E1 stability (full audit 20 Oct 2026: SEO-01, PERF-02)              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Purges only the given posts from LiteSpeed's cache (no-op without it).
+ * A job that changes a few pages uses this instead of litespeed_purge_all,
+ * so a deploy doesn't turn every visit into an uncached build at once.
+ */
+function cs_perf_purge_posts( $ids ) {
+	foreach ( array_unique( array_map( 'intval', (array) $ids ) ) as $id ) {
+		if ( $id ) {
+			do_action( 'litespeed_purge_post', $id );
+		}
+	}
+}
+
+/**
+ * One-time job markers read on every request. They were saved with
+ * autoload off, so each was its own query; autoloaded they come with the
+ * single options query WordPress runs anyway. The jobs now save them
+ * autoloaded; this flips the ones already in the database.
+ */
+function cs_perf_marker_options() {
+	return array(
+		'cs_combo_pages_synced', 'cs_generated_content_rev', 'cs_seo_rev', 'cs_calc_pages_rev',
+		'cs_policy_pages_created', 'cs_legal_rev', 'cs_aeo_rev', 'cs_llms_written', 'cs_tier_pages_created',
+		'cs_part_pages_created', 'cs_part_pages_synced', 'cs_d10_pages_created', 'cs_d10_post_rewrites',
+		'cs_links_rev', 'cs_combo_merge_rev', 'cs_perf_rev',
+	);
+}
+
+/**
+ * Shown by WordPress (instead of its bare "Error establishing a database
+ * connection" 500) when MySQL refuses a connection: 503 + Retry-After, so
+ * crawlers treat it as a short, temporary outage.
+ */
+function cs_perf_db_error_dropin() {
+	return <<<'PHP'
+<?php
+/* Computing Skill (theme E1): shown when the database refuses a connection. */
+if ( ! headers_sent() ) {
+	http_response_code( 503 );
+	header( 'Retry-After: 30' );
+	header( 'Cache-Control: no-store' );
+	header( 'Content-Type: text/html; charset=utf-8' );
+}
+?><!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Computing Skill is busy</title></head>
+<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 16px;text-align:center;color:#1a1a1a;background:#fff">
+<h1 style="font-size:1.5rem">One moment, please</h1>
+<p>Computing Skill is busy right now. Please reload the page in about 30 seconds.</p>
+</body></html>
+
+PHP;
+}
+
+/**
+ * Once per CS_PERF_E1_REV: flip the markers to autoload, place the
+ * database-error page (only if the site has none), and purge the
+ * homepage, whose head lost the block CSS.
+ */
+function cs_perf_e1_run() {
+	if ( wp_installing() || get_option( 'cs_perf_e1' ) === CS_PERF_E1_REV ) {
+		return;
+	}
+	if ( ! add_option( 'cs_perf_e1_lock', time(), '', 'no' ) ) {
+		if ( time() - (int) get_option( 'cs_perf_e1_lock' ) > 300 ) {
+			delete_option( 'cs_perf_e1_lock' );
+		}
+		return;
+	}
+	global $wpdb;
+	$keys = cs_perf_marker_options();
+	if ( function_exists( 'wp_set_option_autoload_values' ) ) {
+		wp_set_option_autoload_values( array_fill_keys( $keys, true ) );
+	} else {
+		foreach ( $keys as $k ) {
+			$wpdb->update( $wpdb->options, array( 'autoload' => 'yes' ), array( 'option_name' => $k ), array( '%s' ), array( '%s' ) );
+		}
+		wp_cache_delete( 'alloptions', 'options' );
+	}
+
+	$file = WP_CONTENT_DIR . '/db-error.php';
+	if ( ! file_exists( $file ) && wp_is_writable( WP_CONTENT_DIR ) ) {
+		$tmp = $file . '.tmp-' . getmypid();
+		if ( false !== @file_put_contents( $tmp, cs_perf_db_error_dropin(), LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+			@rename( $tmp, $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+		}
+		if ( file_exists( $tmp ) ) {
+			@unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+		}
+	}
+
+	do_action( 'litespeed_purge_url', home_url( '/' ) );
+	update_option( 'cs_perf_e1', CS_PERF_E1_REV, true );
+	delete_option( 'cs_perf_e1_lock' );
+}
+add_action( 'init', 'cs_perf_e1_run', 1 );

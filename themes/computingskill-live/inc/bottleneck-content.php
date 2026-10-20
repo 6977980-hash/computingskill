@@ -494,18 +494,20 @@ function cs_bn_published_pairs() {
 		return $pairs;
 	}
 	$pairs = array();
-	$ids   = get_posts( array(
-		'post_type'      => 'cs_bottleneck',
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'fields'         => 'ids',
-		'no_found_rows'  => true,
+	// E1 (PERF-01): full posts with their meta primed (2 queries), not
+	// 'fields' => 'ids' + uncached meta and permalink lookups per post.
+	$posts = get_posts( array(
+		'post_type'              => 'cs_bottleneck',
+		'post_status'            => 'publish',
+		'posts_per_page'         => -1,
+		'no_found_rows'          => true,
+		'update_post_term_cache' => false,
 	) );
-	foreach ( $ids as $id ) {
-		$c = get_post_meta( $id, 'cs_cpu', true );
-		$g = get_post_meta( $id, 'cs_gpu', true );
+	foreach ( $posts as $p ) {
+		$c = get_post_meta( $p->ID, 'cs_cpu', true );
+		$g = get_post_meta( $p->ID, 'cs_gpu', true );
 		if ( $c && $g ) {
-			$pairs[ $c . '|' . $g ] = get_permalink( $id );
+			$pairs[ $c . '|' . $g ] = get_permalink( $p );
 		}
 	}
 	return $pairs;

@@ -140,21 +140,8 @@ function cs_enqueue_calculators( $type = '' ) {
 	// is never shown for a page that isn't live.
 	if ( $wants['combos'] && empty( $added['combos'] ) ) {
 		$added['combos'] = true;
-		$combos = array();
-		$posts  = get_posts( array(
-			'post_type'      => 'cs_bottleneck',
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'no_found_rows'  => true,
-		) );
-		foreach ( $posts as $post_id ) {
-			$cpu = get_post_meta( $post_id, 'cs_cpu', true );
-			$gpu = get_post_meta( $post_id, 'cs_gpu', true );
-			if ( $cpu && $gpu ) {
-				$combos[ $cpu . '|' . $gpu ] = get_permalink( $post_id );
-			}
-		}
+		// E1 (PERF-01): same map as the combo tables, built once per request.
+		$combos = function_exists( 'cs_bn_published_pairs' ) ? cs_bn_published_pairs() : array();
 		// D7: merged near-twin pairs link to the page they were merged into.
 		if ( function_exists( 'cs_merged_combo_links' ) ) {
 			$combos = cs_merged_combo_links( $combos );
