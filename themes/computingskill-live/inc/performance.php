@@ -89,30 +89,32 @@ add_filter( 'wp_get_attachment_image_attributes', 'cs_perf_lcp_attachment_attrs'
  * @return array type => array( fields mobile, fields wide, result|null ).
  */
 function cs_perf_calc_heights() {
+	// U3: + the type-to-find box on every CPU/GPU picker; Compatibility's
+	// two "Other" boxes are hidden until picked.
 	return array(
 		'aspect-ratio'       => array( 140, 60, null ),
 		'bandwidth'          => array( 300, 140, null ),
-		'bottleneck'         => array( 510, 310, array( 1620, 850 ) ),
+		'bottleneck'         => array( 589, 354, array( 1620, 850 ) ),
 		'build-cost'         => array( 980, 500, null ),
-		'compatibility'      => array( 1780, 920, null ),
-		'cooling'            => array( 312, 190, null ), // E4: "Other CPU" watts box hidden until picked.
-		'cpu-performance'    => array( 60, 60, null ),
+		'compatibility'      => array( 1659, 970, null ),
+		'cooling'            => array( 386, 211, null ), // E4: "Other CPU" watts box hidden until picked.
+		'cpu-performance'    => array( 102, 102, null ),
 		'cpu-power'          => array( 140, 60, null ),
-		'cpu-vs-gpu'         => array( 190, 80, null ),
+		'cpu-vs-gpu'         => array( 266, 130, null ),
 		'data-usage'         => array( 380, 220, null ),
 		'download-time'      => array( 300, 140, null ),
 		'dpi'                => array( 140, 60, null ),
 		'file-transfer-time' => array( 490, 220, null ),
-		'fps'                => array( 910, 460, array( 790, 500 ) ), // D10: + upscaling and frame generation.
-		'canirun'            => array( 480, 275, null ),
-		'gpu-performance'    => array( 60, 60, null ),
+		'fps'                => array( 978, 499, array( 790, 500 ) ), // D10: + upscaling and frame generation.
+		'canirun'            => array( 545, 314, null ),
+		'gpu-performance'    => array( 102, 102, null ),
 		'gpu-power'          => array( 140, 60, null ),
 		'mbps-to-mbs'        => array( 60, 60, null ),
 		'mbs-to-mbps'        => array( 60, 60, null ),
 		'monitor-size'       => array( 140, 60, null ),
-		'power-consumption'  => array( 737, 356, null ), // E4: same.
+		'power-consumption'  => array( 790, 394, null ), // E4: same.
 		'ppi'                => array( 220, 140, null ),
-		'psu'                => array( 492, 268, array( 1370, 710 ) ), // E4: same.
+		'psu'                => array( 544, 289, array( 1370, 710 ) ), // E4: same.
 		'ram'                => array( 190, 80, null ),
 		'refresh-rate'       => array( 180, 80, null ),
 		'resolution'         => array( 140, 60, null ),
@@ -120,7 +122,7 @@ function cs_perf_calc_heights() {
 		'ssd-tbw'            => array( 420, 240, null ),
 		'storage'            => array( 300, 140, null ),
 		'storage-converter'  => array( 300, 140, null ),
-		'upgrade'            => array( 430, 250, null ),
+		'upgrade'            => array( 507, 291, null ),
 		'upload-time'        => array( 300, 140, null ),
 		'vram'               => array( 240, 120, null ),
 	);

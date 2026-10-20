@@ -295,10 +295,14 @@ function cs_aeo_reference_data( $type ) {
 			);
 
 		case 'cpu-vs-gpu':
-			$rows = array();
+			// U3 (U-49): each score as a share of the fastest of its kind, the
+			// same as the calculator, so the two columns aren't read as one scale.
+			$rows    = array();
+			$cpu_top = max( 1, (float) max( array_column( cs_get_cpu_data(), 'score' ) ) );
+			$gpu_top = max( 1, (float) max( array_column( cs_get_gpu_data(), 'score' ) ) );
 			foreach ( cs_aeo_pairs( $type, 5 ) as $p ) {
 				$r   = cs_calculate_bottleneck( $p[0], $p[1] );
-				$row = array( cs_aeo_pair_cell( $p ), (int) $p[0]['score'], (int) $p[1]['score'] );
+				$row = array( cs_aeo_pair_cell( $p ), round( $p[0]['score'] / $cpu_top * 100 ) . '%', round( $p[1]['score'] / $gpu_top * 100 ) . '%' );
 				foreach ( array_keys( $res3 ) as $res ) {
 					$row[] = $e( cs_bn_cell( $r[ $res ] ) );
 				}
@@ -306,9 +310,9 @@ function cs_aeo_reference_data( $type ) {
 			}
 			return array(
 				'title' => __( 'Example pairs', 'computingskill' ),
-				'head'  => array( __( 'CPU + GPU', 'computingskill' ), __( 'CPU score', 'computingskill' ), __( 'GPU score', 'computingskill' ), '1080p', '1440p', '4K' ),
+				'head'  => array( __( 'CPU + GPU', 'computingskill' ), __( 'CPU, % of fastest CPU', 'computingskill' ), __( 'GPU, % of fastest GPU', 'computingskill' ), '1080p', '1440p', '4K' ),
 				'rows'  => $rows,
-				'note'  => __( 'CPU and GPU scores are separate scales, so the balance comes from the bottleneck engine at each resolution, not from comparing the two numbers.', 'computingskill' ),
+				'note'  => __( 'The CPU and GPU percentages are separate scales (each part against the fastest of its own kind), so the balance comes from the bottleneck engine at each resolution, not from comparing the two numbers.', 'computingskill' ),
 			);
 
 		case 'cpu-performance':
@@ -743,8 +747,11 @@ function cs_aeo_calc_reference( $type ) {
 	if ( ! $data || empty( $data['rows'] ) ) {
 		return '';
 	}
+	// U3 (U-18): tables with 4+ columns become stacked cards on phones
+	// (fixes.css .cs-ref-stack); each cell carries its column name.
+	$stack = count( $data['head'] ) >= 4;
 	$html  = '<div class="cs-calc-ref">';
-	$html .= '<div class="cs-table-wrap"><table class="cs-hardware-table cs-ref-table"><caption>' . esc_html( $data['title'] ) . '</caption><thead><tr>';
+	$html .= '<div class="cs-table-wrap"><table class="cs-hardware-table cs-ref-table' . ( $stack ? ' cs-ref-stack' : '' ) . '"><caption>' . esc_html( $data['title'] ) . '</caption><thead><tr>';
 	foreach ( $data['head'] as $h ) {
 		$html .= '<th scope="col">' . esc_html( $h ) . '</th>';
 	}
@@ -752,7 +759,8 @@ function cs_aeo_calc_reference( $type ) {
 	foreach ( $data['rows'] as $row ) {
 		$html .= '<tr>';
 		foreach ( $row as $i => $cell ) {
-			$html .= ( 0 === $i ? '<th scope="row">' : '<td>' ) . $cell . ( 0 === $i ? '</th>' : '</td>' );
+			$label = $stack && isset( $data['head'][ $i ] ) ? ' data-label="' . esc_attr( $data['head'][ $i ] ) . '"' : '';
+			$html .= ( 0 === $i ? '<th scope="row">' : '<td' . $label . '>' ) . $cell . ( 0 === $i ? '</th>' : '</td>' );
 		}
 		$html .= '</tr>';
 	}

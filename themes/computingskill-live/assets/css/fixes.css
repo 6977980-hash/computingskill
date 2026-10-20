@@ -125,3 +125,67 @@
 @media (prefers-color-scheme: light) {
 	:root { --cs-gpu: #00768a; }
 }
+
+/* U3 (20 Oct 2026 user-side audit): calculator usability. */
+/* U-13: type-to-find box above each CPU/GPU picker (calculators.js). */
+.cs-picker-search { position: relative; }
+.cs-field input.cs-picker-find { width: 100%; padding: 8px 12px; font-size: 0.95rem; border: 1px dashed var(--cs-border); border-radius: 10px; background: var(--cs-surface); color: var(--cs-text); }
+.cs-field input.cs-picker-find::placeholder { color: var(--cs-text-muted); opacity: 1; }
+.cs-field input.cs-picker-find:focus { border-style: solid; border-color: var(--cs-primary); box-shadow: 0 0 0 3px var(--cs-glow); outline: none; }
+.cs-picker-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; max-height: 280px; overflow-y: auto; background: var(--cs-surface); border: 1px solid var(--cs-border); border-radius: 10px; box-shadow: var(--cs-shadow-lg, 0 12px 30px rgba(0, 0, 0, 0.25)); }
+.cs-picker-list[hidden] { display: none; }
+.cs-picker-list li { padding: 9px 10px; border-radius: 6px; cursor: pointer; color: var(--cs-text); font-size: 0.95rem; line-height: 1.3; }
+.cs-picker-list li:hover, .cs-picker-list li[aria-selected="true"] { background: var(--cs-primary); color: var(--cs-on-primary, #fff); }
+.cs-picker-list li.cs-picker-none { cursor: default; color: var(--cs-text-muted); }
+.cs-picker-list li.cs-picker-none:hover { background: none; color: var(--cs-text-muted); }
+/* MOB-02: on phones the decorative icon tile goes and the nested padding
+   shrinks, so a select is the full card width and names aren't cut. */
+@media (max-width: 480px) {
+	.cs-calculator { padding: 16px 12px; }
+	.cs-field-has-icon { padding: 10px; gap: 0; }
+	.cs-field-has-icon .cs-field-icon { display: none; }
+}
+/* U-14: a result whose inputs have changed since Calculate. */
+/* Not faded (that dropped text below 4.5:1): a dashed frame, greyed
+   colours and the note on top. */
+.cs-calc-result.is-stale { outline: 2px dashed var(--cs-text-muted); outline-offset: 4px; }
+.cs-calc-result.is-stale > :not(.cs-stale-note) { filter: grayscale(1); }
+.cs-stale-note { margin: 8px 14px 4px; padding: 8px 12px; border-left: 3px solid var(--cs-primary); background: var(--cs-surface-2, var(--cs-bg-alt)); color: var(--cs-text); font-weight: 600; font-size: 0.95rem; }
+/* U-25: fields with an error are marked, with their own message. */
+.cs-field.has-field-error { border-color: var(--cs-error-text); }
+.cs-field [aria-invalid="true"] { border-color: var(--cs-error-text) !important; box-shadow: 0 0 0 1px var(--cs-error-text); }
+.cs-field-error { margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--cs-error-text); }
+.cs-field-error::before { content: "⚠ "; }
+.cs-error p { margin: 0; }
+.cs-error ul { margin: 6px 0 0; padding-left: 1.2em; }
+/* U-26: focus moves to the result headline; no box around a programmatic focus. */
+.cs-result-headline:focus:not(:focus-visible) { outline: none; }
+/* U-15: Can I Run It on phones, each game is a card: name, then specs,
+   then the settings answer, each labelled. No sideways scroll. */
+@media (max-width: 600px) {
+	.cs-calc-result:has(.cs-cir-table) { padding: 0; }
+	.cs-calc-result .cs-result-block:has(.cs-cir-table) { padding: 10px 0; }
+	.cs-cir-wrap { overflow: visible; }
+	.cs-cir-table, .cs-cir-table tbody, .cs-cir-table tr, .cs-cir-table th, .cs-cir-table td { display: block; width: auto; }
+	.cs-cir-table thead { position: absolute; clip: rect(1px, 1px, 1px, 1px); width: 1px; height: 1px; overflow: hidden; }
+	.cs-cir-table tr { margin: 0 0 10px; border: 1px solid var(--cs-border); border-radius: 10px; overflow: hidden; }
+	.cs-cir-table tbody th[scope="row"] { width: auto; padding: 8px 10px; border-bottom: 1px solid var(--cs-border); font-size: 1rem; color: var(--cs-text); }
+	.cs-cir-table td { padding: 6px 10px; border-bottom: 0; font-family: inherit; font-weight: 500; }
+	.cs-cir-table td::before { content: attr(data-label); display: block; font: 600 0.72rem var(--cs-font-mono, inherit); letter-spacing: 0.06em; text-transform: uppercase; color: var(--cs-text-muted); }
+	.cs-result-table.cs-cir-table tr:nth-child(even) th, .cs-result-table.cs-cir-table tr:nth-child(even) td { background: transparent; }
+}
+/* U-18: on phones the calculator reference tables with 4+ columns
+   (inc/aeo.php, .cs-ref-stack) become one card per row: the pair or part
+   on top, then each column as "label: value". Narrower ones wrap their
+   row names so the value columns keep a readable width. */
+@media (max-width: 600px) {
+	.cs-ref-table tbody th { white-space: normal; min-width: 7em; }
+	.cs-ref-stack, .cs-ref-stack tbody, .cs-ref-stack tr, .cs-ref-stack th, .cs-ref-stack td { display: block; width: auto; min-width: 0; }
+	.cs-ref-stack caption { display: block; }
+	.cs-ref-stack thead { position: absolute; clip: rect(1px, 1px, 1px, 1px); width: 1px; height: 1px; overflow: hidden; }
+	.cs-ref-stack tr { margin: 0 0 10px; border: 1px solid var(--cs-border); border-radius: 10px; overflow: hidden; }
+	.cs-ref-stack tbody th[scope="row"] { min-width: 0; padding: 8px 10px; border-bottom: 1px solid var(--cs-border); }
+	.cs-ref-stack td { padding: 4px 10px; border-bottom: 0; }
+	.cs-ref-stack td:last-child { padding-bottom: 8px; }
+	.cs-ref-stack td::before { content: attr(data-label) ": "; font-weight: 600; color: var(--cs-text-muted); }
+}

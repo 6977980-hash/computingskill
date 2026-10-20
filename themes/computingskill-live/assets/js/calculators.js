@@ -183,6 +183,183 @@
 	}
 
 	/* ----------------------------------------------------------------
+	 * U3 (U-13): part search. The native select's type-ahead only matches
+	 * the start of a label, so "4070" did nothing and "rtx 4070" jumped to
+	 * the Radeon RX 6600 ("GeForce RTX 4070" starts with "G"). A small
+	 * combobox above each CPU/GPU picker matches every typed word anywhere
+	 * in the name, ignoring spaces, dashes and case ("4070", "rtx4070",
+	 * "5600x", "i5 12400f"). Picking a match sets the native select, which
+	 * stays the real field (and the fallback) for everything else.
+	 * ---------------------------------------------------------------- */
+
+	function searchNorm( s ) {
+		return String( s ).toLowerCase().replace( /[^a-z0-9]/g, '' );
+	}
+
+	function pickerMatches( select, query ) {
+		var tokens = String( query ).toLowerCase().split( /[\s\-_\/,.]+/ ).map( searchNorm ).filter( Boolean );
+		if ( ! tokens.length ) {
+			return [];
+		}
+		var found = [];
+		for ( var i = 0; i < select.options.length; i++ ) {
+			var o = select.options[ i ];
+			if ( ! o.value || o.value === OTHER_VALUE || o.value === 'custom' ) {
+				continue;
+			}
+			var full = searchNorm( o.textContent );
+			var words = o.textContent.toLowerCase().split( /[^a-z0-9]+/ );
+			var rank = 0, ok = true;
+			for ( var t = 0; t < tokens.length; t++ ) {
+				if ( full.indexOf( tokens[ t ] ) === -1 ) {
+					ok = false;
+					break;
+				}
+				// A whole-word hit ("5600" in "Ryzen 5 5600") ranks above a
+				// partial one ("5600X").
+				rank += words.indexOf( tokens[ t ] ) !== -1 ? 0 : 1;
+			}
+			if ( ok ) {
+				found.push( { value: o.value, label: o.textContent, rank: rank, len: full.length } );
+			}
+		}
+		found.sort( function ( a, b ) {
+			return ( a.rank - b.rank ) || ( a.len - b.len ) || a.label.localeCompare( b.label, 'en', { numeric: true } );
+		} );
+		return found.slice( 0, 8 );
+	}
+
+	function buildPickerSearch( select, inputId, noun, otherValue ) {
+		var box = document.createElement( 'div' );
+		box.className = 'cs-picker-search';
+		var search = document.createElement( 'input' );
+		search.type = 'search';
+		search.id = inputId + '-find';
+		search.className = 'cs-picker-find';
+		search.setAttribute( 'role', 'combobox' );
+		search.setAttribute( 'aria-autocomplete', 'list' );
+		search.setAttribute( 'aria-expanded', 'false' );
+		search.setAttribute( 'autocomplete', 'off' );
+		search.setAttribute( 'spellcheck', 'false' );
+		search.setAttribute( 'aria-label', 'Find your ' + noun + ' by model, for example ' + ( noun === 'CPU' ? '5600 or 12400F' : '4070 or 9060 XT' ) );
+		search.placeholder = 'Type to find, e.g. ' + ( noun === 'CPU' ? '5600 or 12400F' : '4070 or 9060 XT' );
+		var list = document.createElement( 'ul' );
+		list.className = 'cs-picker-list';
+		list.id = inputId + '-list';
+		list.setAttribute( 'role', 'listbox' );
+		list.setAttribute( 'aria-label', noun + ' matches' );
+		list.hidden = true;
+		search.setAttribute( 'aria-controls', list.id );
+		var status = document.createElement( 'span' );
+		status.className = 'screen-reader-text';
+		status.setAttribute( 'role', 'status' );
+		box.appendChild( search );
+		box.appendChild( list );
+		box.appendChild( status );
+
+		var items = [], active = -1;
+		function close() {
+			list.hidden = true;
+			list.innerHTML = '';
+			items = [];
+			active = -1;
+			search.setAttribute( 'aria-expanded', 'false' );
+			search.removeAttribute( 'aria-activedescendant' );
+		}
+		function setActive( i ) {
+			if ( ! items.length ) {
+				return;
+			}
+			active = ( i + items.length ) % items.length;
+			var lis = list.children;
+			for ( var k = 0; k < lis.length; k++ ) {
+				lis[ k ].setAttribute( 'aria-selected', k === active ? 'true' : 'false' );
+			}
+			search.setAttribute( 'aria-activedescendant', lis[ active ].id );
+			if ( lis[ active ].scrollIntoView ) {
+				lis[ active ].scrollIntoView( { block: 'nearest' } );
+			}
+		}
+		function choose( i ) {
+			var item = items[ i ];
+			if ( ! item ) {
+				return;
+			}
+			select.value = item.value;
+			select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			search.value = '';
+			close();
+			status.textContent = item.label + ' selected.';
+		}
+		function open() {
+			var q = search.value;
+			list.innerHTML = '';
+			items = pickerMatches( select, q );
+			active = -1;
+			search.removeAttribute( 'aria-activedescendant' );
+			if ( ! q.trim() ) {
+				close();
+				return;
+			}
+			if ( ! items.length && otherValue ) {
+				items = [ { value: otherValue, label: 'No match: use ' + ( otherValue === OTHER_VALUE ? '“Other / not listed”' : '“Other ' + noun + '”' ) } ];
+			}
+			if ( ! items.length ) {
+				var none = document.createElement( 'li' );
+				none.className = 'cs-picker-none';
+				none.textContent = 'No ' + noun + ' matches “' + q.trim() + '”.';
+				list.appendChild( none );
+			}
+			items.forEach( function ( item, i ) {
+				var li = document.createElement( 'li' );
+				li.id = list.id + '-' + i;
+				li.setAttribute( 'role', 'option' );
+				li.setAttribute( 'aria-selected', 'false' );
+				li.textContent = item.label;
+				// mousedown, not click: the input keeps focus, so its blur
+				// doesn't close the list before the pick lands.
+				li.addEventListener( 'mousedown', function ( e ) {
+					e.preventDefault();
+					choose( i );
+				} );
+				list.appendChild( li );
+			} );
+			list.hidden = false;
+			search.setAttribute( 'aria-expanded', 'true' );
+			status.textContent = items.length && items[ 0 ].value !== otherValue ? items.length + ( items.length === 1 ? ' match' : ' matches' ) + ', use the arrow keys to choose.' : '';
+		}
+		search.addEventListener( 'input', open );
+		search.addEventListener( 'blur', close );
+		search.addEventListener( 'keydown', function ( e ) {
+			if ( e.key === 'ArrowDown' || e.key === 'ArrowUp' ) {
+				if ( list.hidden ) {
+					open();
+				}
+				if ( items.length ) {
+					e.preventDefault();
+					setActive( active === -1 && e.key === 'ArrowUp' ? -1 : active + ( e.key === 'ArrowDown' ? 1 : -1 ) );
+				}
+			} else if ( e.key === 'Enter' ) {
+				// Enter picks a match and never runs the calculation (the
+				// container's Enter handler would otherwise calculate).
+				if ( search.value.trim() ) {
+					e.preventDefault();
+					e.stopPropagation();
+					choose( active === -1 ? 0 : active );
+				}
+			} else if ( e.key === 'Escape' ) {
+				if ( ! list.hidden ) {
+					e.preventDefault();
+					close();
+				} else {
+					search.value = '';
+				}
+			}
+		} );
+		return box;
+	}
+
+	/* ----------------------------------------------------------------
 	 * Field icons — small original line-icon SVGs (currentColor), shown
 	 * on fields that opt in with an `icon` key in their definition. Purely
 	 * decorative UI iconography, not a depiction of any real product.
@@ -227,6 +404,10 @@
 			if ( field.type === 'select-hardware' && field.other ) {
 				opts = opts.concat( [ { value: OTHER_VALUE, label: 'Other / not listed' } ] );
 			}
+			// U3 (U-16): extra choices after the parts (PSU "Other GPU").
+			if ( field.extra ) {
+				opts = opts.concat( field.extra );
+			}
 			fillSelect( input, opts );
 			if ( field.default !== undefined ) {
 				input.value = field.default;
@@ -252,14 +433,35 @@
 		}
 
 		input.id = inputId;
+		// U3 (U-14): the browser must not refill these on Back/reload: it did
+		// so after the share link had set them, so the form showed the last
+		// edit (4K) while the result was the address bar's (1440p).
+		input.setAttribute( 'autocomplete', 'off' );
+		// U3 (U-13): CPU/GPU pickers get a type-to-find box above the list.
+		if ( input.tagName === 'SELECT' && ( field.type === 'select-hardware' || field.search ) ) {
+			var findNoun = ( field.source || field.icon ) === 'cpu' ? 'CPU' : 'GPU';
+			var findOther = field.other ? OTHER_VALUE : ( field.search && field.search !== true ? field.search : '' );
+			main.appendChild( buildPickerSearch( input, inputId, findNoun, findOther ) );
+			wrapper.classList.add( 'cs-field-findable' );
+		}
 		main.appendChild( input );
 
+		// U3 (U-28): hints are tied to their field (aria-describedby).
+		var describedBy = [];
 		if ( field.help ) {
 			var help = document.createElement( 'p' );
 			help.className = 'cs-field-help';
+			help.id = inputId + '-help';
 			help.textContent = field.help;
 			main.appendChild( help );
+			describedBy.push( help.id );
 		}
+		if ( describedBy.length ) {
+			input.setAttribute( 'aria-describedby', describedBy.join( ' ' ) );
+		}
+		input.csHelpIds = describedBy;
+		input.csMain = main;
+		input.csWrapper = wrapper;
 
 		if ( field.type === 'select-hardware' && field.other ) {
 			var noun = field.source === 'cpu' ? 'CPU' : 'GPU';
@@ -271,12 +473,18 @@
 			otherLabel.textContent = 'Closest listed ' + noun + ' in performance';
 			var otherSelect = document.createElement( 'select' );
 			otherSelect.id = inputId + '-other';
+			otherSelect.setAttribute( 'autocomplete', 'off' );
 			// U1 (U-07): starts empty and must be picked. It used to start on
 			// the fastest part (9800X3D / RTX 5090), so an unknown, likely older
 			// part was estimated as the best one.
 			fillSelect( otherSelect, [ { value: '', label: 'Choose the closest listed ' + noun + '…' } ].concat( closestPartOptions( field.source ) ) );
 			var otherHelp = document.createElement( 'p' );
 			otherHelp.className = 'cs-field-help';
+			otherHelp.id = inputId + '-other-help';
+			otherSelect.setAttribute( 'aria-describedby', otherHelp.id );
+			otherSelect.csHelpIds = [ otherHelp.id ];
+			otherSelect.csMain = otherBox;
+			otherSelect.csWrapper = wrapper;
 			otherHelp.textContent = 'Fastest first. Pick the listed ' + noun + ' that reviews place closest to yours; the estimate uses that ' + noun + '’s data.';
 			otherBox.appendChild( otherLabel );
 			otherBox.appendChild( otherSelect );
@@ -314,7 +522,7 @@
 			var part = HW[ field.source ] && HW[ field.source ][ picked ];
 			var noun = field.source === 'cpu' ? 'CPU' : 'GPU';
 			if ( ! part ) {
-				throw { msg: 'You chose "Other / not listed" for your ' + noun + ': pick the listed ' + noun + ' closest to yours in performance under "Closest listed ' + noun + ' in performance", or choose your ' + noun + ' from the main list.' };
+				throw { msg: 'You chose "Other / not listed" for your ' + noun + ': pick the listed ' + noun + ' closest to yours in performance under "Closest listed ' + noun + ' in performance", or choose your ' + noun + ' from the main list.', el: input.csOther };
 			}
 			return { value: picked, warning: 'Your ' + noun + ' isn’t in our list, so this estimate uses the closest listed ' + noun + ': ' + part.name + '.' };
 		}
@@ -504,7 +712,10 @@
 				}
 			}
 			var isDefault = field.default !== undefined && ( field.type === 'checkbox' ? !! field.default === !! v : String( field.default ) === String( v ) );
-			if ( isDefault || v === '' || v === undefined ) {
+			// U3 (U-51): a field another one sets (FPS Game type, set by the
+			// picked game) is disabled and left out of the link.
+			var setElsewhere = inputs[ field.id ] && inputs[ field.id ].disabled;
+			if ( isDefault || setElsewhere || v === '' || v === undefined ) {
 				params.delete( field.id );
 			} else {
 				params.set( field.id, field.type === 'checkbox' ? ( v ? '1' : '0' ) : String( v ) );
@@ -591,18 +802,26 @@
 		// while that other field has that value (the PSU, PC Power and
 		// Cooling calculators' "Other CPU" watts box). While hidden it is
 		// neither read nor checked: calculate() uses its default.
-		function syncShown() {
-			def.fields.forEach( function ( field ) {
-				if ( field.showIf && inputs[ field.showIf.field ] ) {
-					wrappers[ field.id ].hidden = inputs[ field.showIf.field ].value !== field.showIf.value;
-				}
+		// U3 (U-50): `showIf` may also be a list; the field shows when any
+		// of its conditions holds (Compatibility's system-power box: Other
+		// CPU or Other GPU). A definition's own `sync( inputs )` runs here
+		// too (FPS: a picked game sets the game type).
+		function shownBy( cond ) {
+			return [].concat( cond ).some( function ( c ) {
+				return inputs[ c.field ] && inputs[ c.field ].value === c.value;
 			} );
 		}
-		def.fields.forEach( function ( field ) {
-			if ( field.showIf && inputs[ field.showIf.field ] ) {
-				inputs[ field.showIf.field ].addEventListener( 'change', syncShown );
+		function syncShown() {
+			def.fields.forEach( function ( field ) {
+				if ( field.showIf ) {
+					wrappers[ field.id ].hidden = ! shownBy( field.showIf );
+				}
+			} );
+			if ( def.sync ) {
+				def.sync( inputs );
 			}
-		} );
+		}
+		fieldsRoot.addEventListener( 'change', syncShown );
 		syncShown();
 
 		// Mutually-exclusive field pairs (a field definition sets
@@ -631,25 +850,151 @@
 			shareOwner = container;
 		}
 
-		function calculate() {
+		// U3 (U-26): the result box is no longer one big live region that
+		// also gets focus. A hidden status line announces the headline only,
+		// and focus moves to that headline.
+		resultRoot.removeAttribute( 'aria-live' );
+		var statusEl = document.createElement( 'p' );
+		statusEl.className = 'screen-reader-text cs-calc-status';
+		statusEl.setAttribute( 'role', 'status' );
+		resultRoot.parentNode.insertBefore( statusEl, resultRoot );
+
+		// U3 (U-25): every bad field is marked (aria-invalid, red border, its
+		// own message tied to it by aria-describedby), all of them are listed
+		// above the result, and focus goes to the first one.
+		var marked = [];
+		function clearFieldError( el ) {
+			el.removeAttribute( 'aria-invalid' );
+			if ( el.csErrorEl ) {
+				el.csErrorEl.parentNode.removeChild( el.csErrorEl );
+				el.csErrorEl = null;
+			}
+			if ( el.csHelpIds && el.csHelpIds.length ) {
+				el.setAttribute( 'aria-describedby', el.csHelpIds.join( ' ' ) );
+			} else {
+				el.removeAttribute( 'aria-describedby' );
+			}
+			if ( el.csWrapper ) {
+				el.csWrapper.classList.remove( 'has-field-error' );
+			}
+		}
+		function clearErrors() {
+			marked.forEach( clearFieldError );
+			marked = [];
+		}
+		function markField( el, msg ) {
+			var err = document.createElement( 'p' );
+			err.className = 'cs-field-error';
+			err.id = el.id + '-error';
+			err.textContent = msg;
+			el.csMain.insertBefore( err, el.nextSibling );
+			el.csErrorEl = err;
+			el.setAttribute( 'aria-invalid', 'true' );
+			el.setAttribute( 'aria-describedby', [ err.id ].concat( el.csHelpIds || [] ).join( ' ' ) );
+			el.csWrapper.classList.add( 'has-field-error' );
+			marked.push( el );
+		}
+
+		// U3 (U-17): bring the result's headline into view when Calculate
+		// leaves it low on the screen (at 1366x768 the PSU and Upgrade results
+		// started 10px above the bottom edge and looked like nothing happened).
+		function headerOffset() {
+			var head = document.getElementById( 'cs-masthead' );
+			var h = 0;
+			if ( head ) {
+				var pos = window.getComputedStyle( head ).position;
+				if ( pos === 'sticky' || pos === 'fixed' ) {
+					h = head.getBoundingClientRect().bottom;
+				}
+			}
+			return Math.max( 0, h ) + 12;
+		}
+		function bringIntoView( el, mustSee ) {
+			var rect = el.getBoundingClientRect();
+			var top = headerOffset();
+			var cut = mustSee && mustSee.getBoundingClientRect().bottom > window.innerHeight;
+			if ( rect.top < top || rect.top > window.innerHeight * 0.6 || cut ) {
+				var reduce = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+				window.scrollTo( { top: Math.max( 0, window.pageYOffset + rect.top - top ), behavior: reduce ? 'auto' : 'smooth' } );
+			}
+		}
+
+		// U3 (U-14): after a result is shown, changing any input marks it
+		// out of date until Calculate is pressed again.
+		var hasResult = false;
+		function markStale() {
+			if ( ! hasResult || resultRoot.classList.contains( 'is-stale' ) ) {
+				return;
+			}
+			resultRoot.classList.add( 'is-stale' );
+			var note = document.createElement( 'p' );
+			note.className = 'cs-stale-note';
+			note.textContent = 'Your inputs changed: press Calculate to update this result.';
+			resultRoot.insertBefore( note, resultRoot.firstChild );
+		}
+		function onFieldEdit( e ) {
+			if ( e.target.closest && e.target.closest( '.cs-picker-search' ) ) {
+				return;
+			}
+			if ( e.target.getAttribute && e.target.getAttribute( 'aria-invalid' ) === 'true' ) {
+				clearFieldError( e.target );
+				marked = marked.filter( function ( m ) { return m !== e.target; } );
+			}
+			markStale();
+		}
+		fieldsRoot.addEventListener( 'input', onFieldEdit );
+		fieldsRoot.addEventListener( 'change', onFieldEdit );
+
+		function showErrors( errors, moveFocus ) {
+			resultRoot.classList.add( 'has-error' );
+			resultRoot.classList.remove( 'is-stale' );
+			hasResult = false;
+			var html = '<div class="cs-error" role="alert">';
+			if ( errors.length === 1 ) {
+				html += '<p>' + escapeHtml( errors[ 0 ].msg ) + '</p>';
+			} else {
+				html += '<p>Please fix ' + errors.length + ' fields:</p><ul>' + errors.map( function ( er ) {
+					return '<li>' + escapeHtml( er.msg ) + '</li>';
+				} ).join( '' ) + '</ul>';
+			}
+			resultRoot.innerHTML = html + '</div>';
+			statusEl.textContent = '';
+			var first = errors[ 0 ].el;
+			if ( moveFocus && first ) {
+				first.focus( { preventScroll: true } );
+				bringIntoView( first.csWrapper || first );
+			}
+		}
+
+		// `quiet`: a share link calculating on load; the page is not
+		// scrolled and focus is left alone.
+		function calculate( quiet ) {
 			var values = {};
 			var warnings = [];
+			var errors = [];
 
-			try {
-				def.fields.forEach( function ( field ) {
-					if ( field.showIf && wrappers[ field.id ].hidden ) {
-						values[ field.id ] = field.default;
-						return;
-					}
+			clearErrors();
+			def.fields.forEach( function ( field ) {
+				if ( field.showIf && wrappers[ field.id ].hidden ) {
+					values[ field.id ] = field.default;
+					return;
+				}
+				try {
 					var result = readField( inputs[ field.id ], field );
 					values[ field.id ] = result.value;
 					if ( result.warning ) {
 						warnings.push( result.warning );
 					}
-				} );
-			} catch ( e ) {
-				resultRoot.classList.add( 'has-error' );
-				resultRoot.innerHTML = '<p class="cs-error" role="alert">' + escapeHtml( e.msg ) + '</p>';
+				} catch ( e ) {
+					var el = e.el || inputs[ field.id ];
+					errors.push( { msg: e.msg, el: el } );
+					if ( el.csMain ) {
+						markField( el, e.msg );
+					}
+				}
+			} );
+			if ( errors.length ) {
+				showErrors( errors, ! quiet );
 				return;
 			}
 
@@ -659,12 +1004,11 @@
 			try {
 				outputHtml = def.compute( values, HW );
 			} catch ( e ) {
-				resultRoot.classList.add( 'has-error' );
 				// A compute() may throw { msg } for a known input problem
 				// (e.g. both Refresh Rate fields left empty); show that exact
 				// message instead of the generic fallback.
 				var msg = e && e.msg ? e.msg : 'Something went wrong calculating that. Please check your inputs and try again.';
-				resultRoot.innerHTML = '<p class="cs-error" role="alert">' + escapeHtml( msg ) + '</p>';
+				showErrors( [ { msg: msg } ], false );
 				return;
 			}
 
@@ -682,16 +1026,35 @@
 				updateShareUrl( def, values, inputs );
 				html += shareBarHtml();
 			}
+			resultRoot.classList.remove( 'is-stale' );
 			resultRoot.innerHTML = html;
-			resultRoot.setAttribute( 'tabindex', '-1' );
-			resultRoot.focus( { preventScroll: true } );
+			resultRoot.removeAttribute( 'tabindex' );
+			hasResult = true;
+			var headline = resultRoot.querySelector( '.cs-result-headline' ) || resultRoot.firstElementChild;
+			if ( quiet ) {
+				return;
+			}
+			var summary = headline ? headline.textContent.replace( /\s+/g, ' ' ).trim() : '';
+			summary = summary.length > 220 ? summary.slice( 0, summary.lastIndexOf( ' ', 217 ) ) + '…' : summary;
+			// Emptied first, so the same result twice is announced again.
+			statusEl.textContent = '';
+			setTimeout( function () {
+				statusEl.textContent = summary;
+			}, 80 );
+			if ( headline ) {
+				headline.setAttribute( 'tabindex', '-1' );
+				headline.focus( { preventScroll: true } );
+			}
+			bringIntoView( resultRoot, headline );
 		}
 
 		var submitBtn = container.querySelector( '[data-role="submit"]' );
 		var resetBtn = container.querySelector( '[data-role="reset"]' );
 
 		if ( submitBtn ) {
-			submitBtn.addEventListener( 'click', calculate );
+			submitBtn.addEventListener( 'click', function () {
+				calculate( false );
+			} );
 		}
 
 		// E4 (FUN-01): only Enter in an input or select calculates; Enter on
@@ -699,35 +1062,44 @@
 		container.addEventListener( 'keydown', function ( e ) {
 			if ( e.key === 'Enter' && ( e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' ) ) {
 				e.preventDefault();
-				calculate();
+				calculate( false );
 			}
 		} );
 
+		function resetFields() {
+			def.fields.forEach( function ( field ) {
+				var input = inputs[ field.id ];
+				input.disabled = false;
+				input.csUserValue = undefined;
+				if ( field.type === 'checkbox' ) {
+					input.checked = !! field.default;
+				} else if ( field.default !== undefined ) {
+					input.value = field.default;
+				} else if ( field.type === 'select-hardware' ) {
+					// value = '' left a picker empty and the next
+					// Calculate failed.
+					input.value = hardwareStart( field.source );
+				} else {
+					input.value = '';
+				}
+				if ( input.csOther ) {
+					input.csOther.value = '';
+				}
+				if ( input.csSyncOther ) {
+					input.csSyncOther();
+				}
+			} );
+			syncShown();
+			clearErrors();
+		}
+
 		if ( resetBtn ) {
 			resetBtn.addEventListener( 'click', function () {
-				def.fields.forEach( function ( field ) {
-					var input = inputs[ field.id ];
-					if ( field.type === 'checkbox' ) {
-						input.checked = !! field.default;
-					} else if ( field.default !== undefined ) {
-						input.value = field.default;
-					} else if ( field.type === 'select-hardware' ) {
-						// value = '' left a picker empty and the next
-						// Calculate failed.
-						input.value = hardwareStart( field.source );
-					} else {
-						input.value = '';
-					}
-					if ( input.csOther ) {
-						input.csOther.value = '';
-					}
-					if ( input.csSyncOther ) {
-						input.csSyncOther();
-					}
-				} );
-				syncShown();
-				resultRoot.classList.remove( 'has-error' );
+				resetFields();
+				resultRoot.classList.remove( 'has-error', 'is-stale' );
 				resultRoot.innerHTML = '';
+				hasResult = false;
+				statusEl.textContent = '';
 				if ( shares ) {
 					clearShareUrl( def );
 				}
@@ -753,8 +1125,22 @@
 			var fromLink = applyShareParams( def, inputs );
 			syncShown();
 			if ( fromLink ) {
-				calculate();
+				calculate( true );
 			}
+			// U3 (U-14): coming Back to a page whose result went out of date
+			// (the browser keeps the edited form), the form is set back to the
+			// inputs in the address bar, which are the result's, and the
+			// result is worked out again, so the two agree.
+			window.addEventListener( 'pageshow', function ( e ) {
+				if ( ! e.persisted || ! resultRoot.classList.contains( 'is-stale' ) ) {
+					return;
+				}
+				resetFields();
+				if ( applyShareParams( def, inputs ) || ! shareParams() || ! def.fields.some( function ( f ) { return shareParams().has( f.id ); } ) ) {
+					syncShown();
+					calculate( true );
+				}
+			} );
 		}
 		// D9: the result area's reserved height (data-shared, fixes.css) is
 		// only for the share-link result on load, never after Reset.
@@ -998,7 +1384,7 @@
 		var opts = hardwareOptions( 'cpu' ).slice();
 		opts.push( { value: 'custom', label: 'Other CPU — enter its watts below' } );
 		return [
-			{ id: 'cpu', type: 'select', label: 'CPU', icon: 'cpu', default: HW.cpu && HW.cpu[ 'ryzen-5-7600' ] ? 'ryzen-5-7600' : ( opts[ 0 ] ? opts[ 0 ].value : 'custom' ), options: opts },
+			{ id: 'cpu', type: 'select', label: 'CPU', icon: 'cpu', default: HW.cpu && HW.cpu[ 'ryzen-5-7600' ] ? 'ryzen-5-7600' : ( opts[ 0 ] ? opts[ 0 ].value : 'custom' ), options: opts, search: 'custom' },
 			// E4 (FUN-04): shown, read and checked only with "Other CPU".
 			{ id: 'cpuTdp', type: 'number', label: wattsLabel, default: 125, min: 15, max: 400, help: wattsHelp, showIf: { field: 'cpu', value: 'custom' } }
 		];
@@ -1026,7 +1412,11 @@
 	CS_DEFS.psu = {
 		share: true,
 		fields: [
-			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
+			// U3 (U-16): "Other GPU" for cards not in the list (RTX 3080 Ti,
+			// RX 6900 XT, GTX 1080 …), with its board power typed in. No
+			// default watts: the box is empty until the visitor fills it in.
+			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu', extra: [ { value: 'custom', label: 'Other GPU — enter its board power below' } ], search: 'custom' },
+			{ id: 'gpuTdp', type: 'number', label: 'Other GPU: board power in watts', min: 20, max: 800, step: 1, placeholder: 'e.g. 350', help: 'The card’s "Total board power" (TBP / TGP / graphics card power) on the maker’s spec page.', showIf: { field: 'gpu', value: 'custom' } }
 		].concat( cpuPickerFields( 'Other CPU: max turbo/boost power in watts', 'Intel lists this as "Maximum Turbo Power"; for AMD Ryzen use the PPT figure (about TDP × 1.35).' ) ).concat( [
 			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8, step: 1, integer: true },
 			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8, step: 1, integer: true },
@@ -1034,7 +1424,7 @@
 			{ id: 'overclock', type: 'checkbox', label: 'I plan to overclock the CPU and/or GPU', default: false }
 		] ),
 		compute: function ( v, hw ) {
-			var gpu = hw.gpu[ v.gpu ];
+			var gpu = v.gpu === 'custom' ? { name: 'your GPU', brand: '', tdp_w: v.gpuTdp, custom: true } : hw.gpu[ v.gpu ];
 			var cpu = resolveCpuPower( v, hw );
 			// CPU at its maximum turbo/boost power (not base TDP): a PSU has
 			// to carry the peak the CPU is actually allowed to pull.
@@ -1057,8 +1447,8 @@
 			var rows = [
 				[ 'Estimated system draw under load', fmt( base, 0 ) + 'W' ],
 				[ 'Recommended PSU wattage (with headroom)', recommended + 'W' ],
-				[ 'GPU (' + gpu.name + ')', gpu.tdp_w + 'W' ],
-				[ 'GPU vendor’s own recommended PSU', manufacturerRec ? manufacturerRec + 'W' : '—' ],
+				[ gpu.custom ? 'GPU (the board power you entered)' : 'GPU (' + gpu.name + ')', gpu.tdp_w + 'W' ],
+				[ 'GPU vendor’s own recommended PSU', manufacturerRec ? manufacturerRec + 'W' : ( gpu.custom ? 'Check your card’s spec page and use the larger figure' : '—' ) ],
 				[ 'CPU (' + cpu.name + ', max turbo/boost power)', cpu.max + 'W' ],
 				// D5 (Oct 2026, audit 1.17): the efficiency grade and the
 				// ATX 3.x / 12V-2x6 advice scale with the build.
@@ -1284,6 +1674,35 @@
 			{ id: 'upscaling', type: 'select', label: 'Upscaling (DLSS / FSR / XeSS)', default: 'off', options: UPSCALE_OPTIONS, help: 'Renders at a lower resolution and upscales. Only works in games that support it.' },
 			{ id: 'framegen', type: 'select', label: 'Frame generation', default: 'off', options: FRAMEGEN_OPTIONS, help: 'Adds generated frames: smoother motion, but input feel follows the base frame rate.' }
 		],
+		// U3 (U-51): a picked game sets the game type, so the Game type
+		// select shows that type and is locked ("set by the game") until
+		// the game is cleared, when the visitor's own choice comes back.
+		sync: function ( inputs ) {
+			var sel = inputs.gametype, game = GAMES[ inputs.game.value ];
+			var help = sel.csHelpIds && sel.csHelpIds[ 0 ] ? document.getElementById( sel.csHelpIds[ 0 ] ) : null;
+			if ( help && ! help.csText ) {
+				help.csText = help.textContent;
+			}
+			if ( game && BN_GAME_PROFILE[ game.profile ] ) {
+				if ( ! sel.disabled ) {
+					sel.csUserValue = sel.value;
+				}
+				sel.value = game.profile;
+				sel.disabled = true;
+				if ( help ) {
+					help.textContent = 'Set by the game you picked (' + game.name + ').';
+				}
+			} else if ( sel.disabled ) {
+				sel.disabled = false;
+				if ( sel.csUserValue !== undefined ) {
+					sel.value = sel.csUserValue;
+				}
+				sel.csUserValue = undefined;
+				if ( help ) {
+					help.textContent = help.csText;
+				}
+			}
+		},
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
 			// A picked game with a known type (data/games-data.php 'profile')
@@ -1499,9 +1918,12 @@
 			headline += ( count.below ? 'It' : 'Your PC' ) + ' meets the ' + ( count.below ? '' : '<strong>' ) + 'recommended specs of ' + count.rec + ' of ' + keys.length + ' games' + ( count.below ? '' : '</strong>' ) + ( count.min ? ' and the minimum of ' + count.min + ' more' : '' ) + '. ';
 			headline += ( count.below ? 'Of the rest, ' : '' ) + playable + ' of ' + estimated + ' games we estimate reach ' + target + '+ FPS at ' + RES_LABELS[ v.resolution ] + ' at some preset.';
 			html += '<p class="cs-result-headline">' + headline + '</p>';
-			html += '<div class="cs-table-wrap"><table class="cs-result-table cs-cir-table"><thead><tr><th scope="col">Game</th><th scope="col">Publisher specs</th><th scope="col">Highest settings at ' + target + '+ FPS</th></tr></thead><tbody>';
+			// U3 (U-15, U-28): a caption names the table, and on phones each row
+			// becomes a card (fixes.css) whose cells carry their column name.
+			var colSpecs = 'Publisher specs', colBest = 'Highest settings at ' + target + '+ FPS';
+			html += '<div class="cs-table-wrap cs-cir-wrap"><table class="cs-result-table cs-cir-table"><caption class="screen-reader-text">Your PC in ' + keys.length + ' games at ' + RES_LABELS[ v.resolution ] + '</caption><thead><tr><th scope="col">Game</th><th scope="col">' + colSpecs + '</th><th scope="col">' + colBest + '</th></tr></thead><tbody>';
 			rows.forEach( function ( r ) {
-				html += '<tr><th scope="row">' + r[ 0 ] + '</th><td>' + r[ 1 ] + '</td><td>' + r[ 2 ] + '</td></tr>';
+				html += '<tr><th scope="row">' + r[ 0 ] + '</th><td data-label="' + escapeHtml( colSpecs ) + '">' + r[ 1 ] + '</td><td data-label="' + escapeHtml( colBest ) + '">' + r[ 2 ] + '</td></tr>';
 			} );
 			html += '</tbody></table></div>';
 			html += '<p class="cs-disclaimer"><strong>Estimate only:</strong> the publisher’s minimum and recommended parts are placed on our score scale (approximate where a part isn’t in our database). FPS uses the FPS Calculator’s formula for the game’s type (typical AAA, esports or CPU-heavy), adjusted for how demanding its published recommended graphics card is and capped where the game locks its frame rate. It is not a benchmark of each game, and games you’re below the minimum for aren’t counted. Ray tracing is off; ' + ( gpu.upscaler ? escapeHtml( gpu.upscaler ) + ' upscaling' : 'upscaling' ) + ' can add more; ' + SCORE_NOTE + '</p>';
@@ -1811,8 +2233,9 @@
 	}
 	CS_DEFS.compatibility = {
 		fields: [
-			{ id: 'cpu', type: 'select', label: 'CPU', icon: 'cpu', default: HW.cpu && HW.cpu[ 'ryzen-5-7600' ] ? 'ryzen-5-7600' : 'custom', options: pickerWithOther( 'cpu', 'Other CPU — pick its socket below' ) },
-			{ id: 'cpuSocket', type: 'select', label: 'Other CPU: socket (only used with "Other CPU")', default: 'AM5', options: SOCKET_OPTIONS },
+			{ id: 'cpu', type: 'select', label: 'CPU', icon: 'cpu', default: HW.cpu && HW.cpu[ 'ryzen-5-7600' ] ? 'ryzen-5-7600' : 'custom', options: pickerWithOther( 'cpu', 'Other CPU — pick its socket below' ), search: 'custom' },
+			// U3 (U-50): the two "Other" boxes show only when Other is picked.
+			{ id: 'cpuSocket', type: 'select', label: 'Other CPU: socket', default: 'AM5', options: SOCKET_OPTIONS, showIf: { field: 'cpu', value: 'custom' } },
 			{ id: 'moboSocket', type: 'select', label: 'Motherboard socket', default: 'AM5', options: SOCKET_OPTIONS },
 			{ id: 'ramType', type: 'select', label: 'RAM type you have/want', default: 'DDR5', options: [ { value: 'DDR4', label: 'DDR4' }, { value: 'DDR5', label: 'DDR5' } ] },
 			{ id: 'moboRam', type: 'select', label: 'Motherboard supported RAM', default: 'DDR5', options: [ { value: 'DDR4', label: 'DDR4' }, { value: 'DDR5', label: 'DDR5' } ] },
@@ -1821,7 +2244,7 @@
 			{ id: 'caseForm', type: 'select', label: 'Largest motherboard the case takes', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: 'atx', label: 'ATX (most mid towers)' }, { value: 'matx', label: 'Micro-ATX' }, { value: 'itx', label: 'Mini-ITX only' }, { value: 'eatx', label: 'E-ATX (most full towers)' } ] },
 			{ id: 'coolerHeight', type: 'number', label: 'CPU air cooler height (mm, optional)', min: 20, max: 250, required: false, blankValue: 0, placeholder: 'e.g. 155', help: 'Leave blank for an AIO liquid cooler or to skip this check.' },
 			{ id: 'caseCoolerMax', type: 'number', label: 'Case max CPU cooler height (mm, optional)', min: 20, max: 250, required: false, blankValue: 0, placeholder: 'e.g. 165' },
-			{ id: 'gpu', type: 'select', label: 'GPU', icon: 'gpu', default: HW.gpu && HW.gpu[ 'rtx-4070' ] ? 'rtx-4070' : 'custom', options: pickerWithOther( 'gpu', 'Other GPU — enter system power below' ) },
+			{ id: 'gpu', type: 'select', label: 'GPU', icon: 'gpu', default: HW.gpu && HW.gpu[ 'rtx-4070' ] ? 'rtx-4070' : 'custom', options: pickerWithOther( 'gpu', 'Other GPU — enter system power below' ), search: 'custom' },
 			// U1 (U-09): start blank and skip the check when either is empty;
 			// prefilled 320 / 380 mm made every result say "Fits".
 			{ id: 'gpuLength', type: 'number', label: 'GPU length (mm, optional, check your exact model)', min: 100, max: 450, required: false, blankValue: 0, placeholder: 'e.g. 320', help: 'Length differs between brands of the same GPU, so take it from your card\'s spec page. Leave blank to skip this check.' },
@@ -1829,7 +2252,7 @@
 			{ id: 'gpuPlug', type: 'select', label: 'GPU power plug', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: '8pin', label: '8-pin PCIe' }, { value: '16pin', label: '16-pin 12V-2x6 / 12VHPWR' } ], help: 'Every RTX 4080, 4090, 5080 and 5090 uses the 16-pin plug, and many RTX 4070- and 5070-class cards do; most other cards use 8-pin. Check your exact model.' },
 			{ id: 'psuWattage', type: 'number', label: 'PSU wattage (optional)', min: 150, max: 1600, required: false, blankValue: 0, placeholder: 'e.g. 750', help: 'Leave blank to see the recommended wattage without checking a PSU.' },
 			{ id: 'psuCable', type: 'select', label: 'PSU has a native 12V-2x6 (16-pin) cable', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: 'yes', label: 'Yes (ATX 3.0 / 3.1 PSU)' }, { value: 'no', label: 'No, 8-pin PCIe cables only' } ] },
-			{ id: 'systemNeed', type: 'number', label: 'Other CPU/GPU: estimated system power need in watts (only used if either is "Other")', default: 450, min: 50, max: 1500 }
+			{ id: 'systemNeed', type: 'number', label: 'Other CPU/GPU: estimated system power need in watts', default: 450, min: 50, max: 1500, showIf: [ { field: 'cpu', value: 'custom' }, { field: 'gpu', value: 'custom' } ] }
 		],
 		compute: function ( v, hw ) {
 			var cpu = v.cpu !== 'custom' && hw.cpu ? hw.cpu[ v.cpu ] : null;
@@ -1985,9 +2408,20 @@
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ], gpu = hw.gpu[ v.gpu ];
 			var all = bottleneckEstimate( cpu, gpu );
+			// U3 (U-49): "52 / 95" next to "34 / 123" read as "the CPU is
+			// stronger". Each part is now shown against the fastest of its own
+			// kind, and the row names say the two are separate scales.
+			var topOf = function ( map ) {
+				return Object.keys( map ).sort( function ( a, b ) { return map[ b ].score - map[ a ].score; } )[ 0 ];
+			};
+			var vsTop = function ( map, key ) {
+				var top = topOf( map );
+				return Math.round( map[ key ].score / hwScoreMax( map ) * 100 ) + '% of the fastest ' + ( map === hw.cpu ? 'gaming CPU' : 'GPU' ) + ' in our list' + ( top !== key ? ' (the ' + escapeHtml( map[ top ].name ) + ')' : ' (this is it)' );
+			};
 			var rows = [
-				[ cpu.name + ' score', fmt( cpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.cpu ), 0 ) ],
-				[ gpu.name + ' score', fmt( gpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.gpu ), 0 ) ],
+				[ cpu.name + ' (CPU scale)', vsTop( hw.cpu, v.cpu ) ],
+				[ gpu.name + ' (GPU scale)', vsTop( hw.gpu, v.gpu ) ],
+				[ 'Reading these', 'The CPU and GPU percentages are separate scales, so don’t compare them with each other; the balance rows below compare the two parts' ],
 				[ '1080p balance', bnLabel( all[ '1080p' ] ) ],
 				[ '1440p balance', bnLabel( all[ '1440p' ] ) ],
 				[ '4K balance', bnLabel( all[ '4k' ] ) ]

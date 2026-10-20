@@ -2,6 +2,22 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.61 (20 Oct 2026) — U3 calculator usability
+From the 20 Oct user-side audit (U3: U-13..U-18, U-25, U-26, U-28, U-49..U-51). No scores, engine constants or calculator numbers changed.
+- U-13: every CPU/GPU picker has a "Type to find" combobox above the native list (`buildPickerSearch()` / `pickerMatches()` in calculators.js): matches each typed word anywhere in the name, ignoring case, spaces and dashes ("4070", "rtx4070", "5600x", "i5 12400f", "245k"); arrow keys + Enter pick, Enter never calculates, no match offers "Other". The select stays the real field. Under 480px the decorative icon tiles are hidden and padding shrinks, so selects are full width (295px at 375; no option name cut).
+- U-14: changing any input after a result marks it out of date (dashed frame, greyed, "Your inputs changed: press Calculate to update this result."). Calculator controls are `autocomplete="off"`, so after Back/reload the form shows the address bar's inputs, the same as the result; a page restored from the back-forward cache with an out-of-date result is reset to the link's inputs and recalculated.
+- U-15: Can I Run It under 600px shows each game as a card (name, publisher specs, highest settings, each labelled); no sideways scroll; result ~2,600px instead of ~4,300px.
+- U-16: PSU Calculator "Other GPU — enter its board power below" with a watts box (shown only then, no default, 20-800W); share links carry `gpu=custom&gpuTdp=…` (`cs_share_param_keys()`).
+- U-17: after Calculate the page scrolls the result to just under the sticky header when its top is below 60% of the screen or its headline is cut off (PSU and Upgrade at 1366x768). Share links calculating on load don't scroll or move focus.
+- U-18: calculator reference tables with 4+ columns (`cs_aeo_calc_reference()`, class `cs-ref-stack`, `data-label` per cell) become one card per row on phones.
+- U-25: all field errors at once: each bad field gets `aria-invalid`, a red border and its own message (aria-describedby); the result area lists them; focus goes to the first, scrolled clear of the header. Fixing a field clears its mark.
+- U-26: the result box is no longer `aria-live` (JS removes it); a hidden `role="status"` line announces the headline only, and focus goes to the headline instead of the whole result.
+- U-28: field hints linked with aria-describedby; contact Name/Email `autocomplete="name"`/`"email"`; Can I Run It table has a caption.
+- U-49: CPU vs GPU shows each part as "% of the fastest CPU/GPU in our list" with a "separate scales" row; its reference table uses the same percentages.
+- U-50: Compatibility checker "Other CPU: socket" shows only with Other CPU, "system power need" only with Other CPU or GPU (`showIf` accepts a list).
+- U-51: FPS Calculator: a picked game sets and locks Game type ("Set by the game you picked"), restores the visitor's choice when cleared; the share link leaves out a locked field.
+- Reserved field heights (`cs_perf_calc_heights()`) re-measured for the 11 tools with pickers. `CS_CALC_PAGES_REV` 2026-10-20-u3 dates PSU, Compatibility, CPU vs GPU, FPS and Can I Run It.
+
 ## 1.0.60 (20 Oct 2026) — U2 text and trust consistency
 From the 20 Oct user-side audit (U2: U-05, U-06, U-34, U-36, U-42..U-45, U-47, U-48). No scores or engine numbers changed.
 - U-05: one method description site-wide, `cs_method_sentence()` (inc/aeo.php): specs from the makers, CPU/GPU performance from our gaming index placed from review averages, other tools use stated formulas. Applied to the homepage, About and llms.txt quick answers, About (section + FAQ), /calculators/ (intro, accuracy FAQ, "general specs" FAQ, hub outro), Disclaimer (section, FPS paragraph, FAQ) and the published posts ("specs-based" gone; draft files and the K4 generator updated too). Page text is swapped by `inc/u2-text.php` with `cs_page_text_swap()` (shared with inc/calculator-pages.php).

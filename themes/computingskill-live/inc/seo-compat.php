@@ -447,8 +447,9 @@ add_filter( 'rank_math/frontend/description', 'cs_improve_short_descriptions', 2
  */
 function cs_share_param_keys() {
 	// E4: + the "Other / not listed" markers (FUN-05) and the Upgrade
-	// Calculator / Can I Run It fields (UX-03).
-	return array( 'cpu', 'gpu', 'resolution', 'preset', 'gametype', 'game', 'cpuTdp', 'ramSticks', 'storageDrives', 'fans', 'overclock', 'upscaling', 'framegen', 'cpu_other', 'gpu_other', 'ram', 'storageType', 'target' );
+	// Calculator / Can I Run It fields (UX-03). U3 (U-16): + the PSU
+	// Calculator's "Other GPU" watts.
+	return array( 'cpu', 'gpu', 'resolution', 'preset', 'gametype', 'game', 'cpuTdp', 'gpuTdp', 'ramSticks', 'storageDrives', 'fans', 'overclock', 'upscaling', 'framegen', 'cpu_other', 'gpu_other', 'ram', 'storageType', 'target' );
 }
 
 function cs_canonical_without_share_params( $url ) {

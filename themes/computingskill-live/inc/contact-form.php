@@ -158,11 +158,11 @@ function cs_contact_form_shortcode() {
 
 			<div class="cs-field">
 				<label for="cs-contact-name"><?php esc_html_e( 'Name', 'computingskill' ); ?></label>
-				<input type="text" id="cs-contact-name" name="cs_contact_name" required value="<?php echo isset( $_POST['cs_contact_name'] ) ? esc_attr( wp_unslash( $_POST['cs_contact_name'] ) ) : ''; ?>">
+				<input type="text" id="cs-contact-name" name="cs_contact_name" autocomplete="name" required value="<?php echo isset( $_POST['cs_contact_name'] ) ? esc_attr( wp_unslash( $_POST['cs_contact_name'] ) ) : ''; ?>">
 			</div>
 			<div class="cs-field">
 				<label for="cs-contact-email"><?php esc_html_e( 'Email', 'computingskill' ); ?></label>
-				<input type="email" id="cs-contact-email" name="cs_contact_email" required value="<?php echo isset( $_POST['cs_contact_email'] ) ? esc_attr( wp_unslash( $_POST['cs_contact_email'] ) ) : ''; ?>">
+				<input type="email" id="cs-contact-email" name="cs_contact_email" autocomplete="email" required value="<?php echo isset( $_POST['cs_contact_email'] ) ? esc_attr( wp_unslash( $_POST['cs_contact_email'] ) ) : ''; ?>">
 			</div>
 			<div class="cs-field">
 				<label for="cs-contact-message"><?php esc_html_e( 'Message', 'computingskill' ); ?></label>

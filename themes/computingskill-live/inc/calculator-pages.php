@@ -368,16 +368,17 @@ function cs_page_text_swap( $content, $list ) {
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-u2' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-u3' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// U2 (user-side audit): page text changed (inc/u2-text.php, the
-		// Methodology upgrade threshold, the contact email). U1, K4, K3, K2,
-		// K1, D2, D3, D5 and D10 ran with earlier revs; their pages are dated
-		// already.
-		'about-us', 'calculators', 'how-much-ram-do-i-need', 'methodology', 'contact',
+		// U3 (user-side audit): tools that changed what they ask or show
+		// (PSU "Other GPU", Compatibility "Other" boxes, CPU vs GPU scales,
+		// FPS game type, Can I Run It cards). The type-to-find box on every
+		// picker is a layout change only. U2, U1, K4, K3, K2, K1, D2, D3, D5
+		// and D10 ran with earlier revs; their pages are dated already.
+		'psu-calculator', 'pc-compatibility-checker', 'cpu-vs-gpu-calculator', 'fps-calculator', 'can-i-run-it',
 	);
 }
 
