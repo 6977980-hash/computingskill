@@ -564,7 +564,8 @@ function cs_il_topic_box_html( $slug ) {
 		}
 		ob_start();
 		?>
-		<aside class="cs-related cs-topic-box">
+		<?php // E5 (A11Y-06): a section, not an aside, since it sits inside <main>. ?>
+		<section class="cs-related cs-topic-box" aria-label="<?php esc_attr_e( 'Related pages', 'computingskill' ); ?>">
 			<h2><?php esc_html_e( 'Which Page Do You Need?', 'computingskill' ); ?></h2>
 			<ul>
 				<?php foreach ( $group as $other => $use ) : ?>
@@ -580,7 +581,7 @@ function cs_il_topic_box_html( $slug ) {
 					</li>
 				<?php endforeach; ?>
 			</ul>
-		</aside>
+		</section>
 		<?php
 		return ob_get_clean();
 	}

@@ -2,6 +2,18 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.58 (20 Oct 2026) — E5 mobile + accessibility
+From the 20 Oct full audit (E5: UX-01, UX-02, A11Y-01..07). Markup, CSS and JS only; no text, numbers or URLs changed.
+- UX-01: tables typed into page/post content are wrapped in a `.cs-table-wrap` scroller by a `the_content` filter (`inc/a11y.php`, priority 100), so on phones they scroll sideways instead of being cut off (/psu/, /how-much-ram-do-i-need/, /1080p-vs-1440p-vs-4k/, /cpu-cooler/, /ddr4-vs-ddr5/, /hdd/, /ssd-vs-hdd/ …). Under 600px their cells keep a readable width. Reference tables (D8 `.cs-ref-table`, K1-K4 tables) now wrap text cells: they were 830-1,275px wide and scrolled even on desktop.
+- UX-02: mobile menu closes on Escape (focus back on the button) and on a click outside the header; the icon turns into an ×.
+- A11Y-01: menu button is at least 44×44px.
+- A11Y-02: homepage "Quick answer" label is white on green again (the intro rule had turned it grey).
+- A11Y-03: links inside running text (article paragraphs/lists/tables, FAQ answers, disclaimers, calculator sources, "Which page do you need?", hub backlinks, consent banner) are underlined. Nav, cards and buttons unchanged.
+- A11Y-04: `main.js` makes every `.cs-table-wrap` that really scrolls focusable (`tabindex="0"`, `role="region"`, label from the caption or the heading before it); rechecked on resize and after calculator results render.
+- A11Y-05: light-mode `--cs-gpu` #007f93 → #00768a (4.86:1 on the page background).
+- A11Y-06: "Which page do you need?" box is a `<section aria-label="Related pages">` (was an `<aside>` inside `<main>`); empty corner header in `cs_pp_table()` / `cs_k1_table()` gets a screen-reader "Spec"; 404 page has an h2 "Popular tools".
+- A11Y-07: consent banner is inserted right after the skip link, so it is the first thing Tab reaches (was 73 Tabs); it still shows fixed at the bottom.
+
 ## 1.0.57 (20 Oct 2026) — E4 calculator fixes
 From the 20 Oct full audit (E4: FUN-01, FUN-02, FUN-04..08, UX-03). No engine constants changed; PHP and JS engines stay in sync.
 - FUN-01: Enter only calculates from an input or select; Enter on a link in a result (combo page, game, methodology) now follows the link.

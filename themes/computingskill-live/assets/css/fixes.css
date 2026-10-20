@@ -71,3 +71,57 @@
 /* K1: long row labels in the new calculator tables may wrap. */
 .cs-k1-table th[scope="row"] { white-space: normal; min-width: 9em; }
 .cs-k1-section code { word-break: break-word; }
+
+/* E5 (20 Oct 2026 full audit): mobile + accessibility. */
+/* UX-01: tables typed into post content now sit in a .cs-table-wrap scroller
+   (inc/a11y.php). Their own margin would double the wrap's; cells keep a
+   readable width on phones and the table scrolls instead of squashing. */
+.cs-article-content .cs-table-wrap > table:not([class]) { margin: 0; }
+@media (max-width: 600px) {
+	.cs-article-content .cs-table-wrap > table:not([class]) th { min-width: 7em; }
+	.cs-article-content .cs-table-wrap > table:not([class]) td { min-width: 10em; }
+}
+/* Reference tables (D8, K1-K4): text cells and column heads wrap instead of
+   making a 900-1,300px table that scrolls even on a desktop. */
+.cs-ref-table td, .cs-ref-table thead th { white-space: normal; min-width: 6em; }
+/* A11Y-04: main.js makes a scrolling wrap focusable; show where focus is. */
+.cs-table-wrap:focus-visible { outline: 2px solid var(--cs-primary); outline-offset: 2px; border-radius: 12px; }
+
+/* A11Y-01 + UX-02: a 44x44 menu button whose icon turns into an X when open. */
+.cs-menu-toggle { min-width: 44px; min-height: 44px; justify-content: center; }
+.cs-menu-toggle[aria-expanded="true"] .cs-menu-icon { background: transparent; }
+.cs-menu-toggle[aria-expanded="true"] .cs-menu-icon::before { top: 0; transform: rotate(45deg); }
+.cs-menu-toggle[aria-expanded="true"] .cs-menu-icon::after { top: 0; transform: rotate(-45deg); }
+
+/* A11Y-02: the homepage intro rule turned the "Quick answer" pill text grey. */
+.cs-home-intro p.cs-quick-answer-label { color: #fff; }
+
+/* A11Y-03: links inside running text are underlined, not shown by colour
+   only. Navigation, cards and buttons keep their own look. */
+.cs-article-content p a:not(.cs-btn),
+.cs-article-content ul:not([class]) > li a,
+.cs-article-content ol:not([class]) > li a,
+.cs-article-content td a,
+.cs-article-content dd a,
+.cs-article-content blockquote a,
+.cs-home-intro p a,
+.cs-lede a,
+.cs-disclaimer a,
+.cs-calc-sources a,
+.cs-calc-ref-note a,
+.cs-faq-answer a,
+.cs-bn-learn a,
+.cs-bn-meaning a,
+.cs-quick-answer a,
+.cs-share-combo a,
+.cs-hub-backlink a,
+.cs-topic-box li a,
+.cs-consent p a,
+.cs-calc-result p a,
+.cs-calc-result li a,
+.cs-404 p a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+/* A11Y-05: the light-mode GPU colour was 4.31:1 on the page background. */
+@media (prefers-color-scheme: light) {
+	:root { --cs-gpu: #00768a; }
+}

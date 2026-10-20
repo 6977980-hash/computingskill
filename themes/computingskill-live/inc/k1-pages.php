@@ -86,7 +86,8 @@ function cs_k1_years( $tbw, $gb_per_day ) {
 function cs_k1_table( $caption, $head, $rows ) {
 	$html = '<div class="cs-table-wrap"><table class="cs-hardware-table cs-ref-table cs-k1-table"><caption>' . esc_html( $caption ) . '</caption><thead><tr>';
 	foreach ( $head as $h ) {
-		$html .= '<th scope="col">' . esc_html( $h ) . '</th>';
+		// E5 (A11Y-06): an empty corner cell still gets a name for screen readers.
+		$html .= '<th scope="col">' . ( '' === $h ? '<span class="screen-reader-text">' . esc_html__( 'Spec', 'computingskill' ) . '</span>' : esc_html( $h ) ) . '</th>';
 	}
 	$html .= '</tr></thead><tbody>';
 	foreach ( $rows as $row ) {

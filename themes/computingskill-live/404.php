@@ -22,6 +22,7 @@ get_header();
 			<button type="submit"><?php esc_html_e( 'Search', 'computingskill' ); ?></button>
 		</form>
 
+		<h2><?php esc_html_e( 'Popular tools', 'computingskill' ); ?></h2>
 		<?php
 		cs_card_grid( array(
 			array( 'title' => __( 'PC Bottleneck Calculator', 'computingskill' ), 'url' => home_url( '/pc-bottleneck-calculator/' ) ),

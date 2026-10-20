@@ -196,7 +196,9 @@ function cs_print_consent_banner() {
 		});
 		box.appendChild(p);
 		box.appendChild(row);
-		document.body.appendChild(box);
+		// E5 (A11Y-07): first in the tab order (after the skip link); it stays fixed at the bottom.
+		var skip = document.querySelector('.skip-link');
+		if (skip && skip.parentNode === document.body) { skip.after(box); } else { document.body.prepend(box); }
 	}
 	document.querySelectorAll('[data-cs-consent-open]').forEach(function (el) {
 		el.hidden = false;
