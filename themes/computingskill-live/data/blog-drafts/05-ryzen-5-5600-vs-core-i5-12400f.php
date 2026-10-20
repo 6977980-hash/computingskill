@@ -69,6 +69,6 @@ return array(
 [cs_faq_item q="Which has the better upgrade path?"]The i5-12400F. Its LGA 1700 socket supports CPUs up to the Core i7-14700K and i9-13900K. AM4 tops out at AMD's X3D chips such as the Ryzen 7 5800X3D, a solid step but a shorter one.[/cs_faq_item]
 [/cs_faq]
 
-<p><em>Performance figures are specs-based estimates from ComputingSkill's engine, not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
+<p><em>Performance figures are estimates from ComputingSkill's engine, not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
 HTML
 );

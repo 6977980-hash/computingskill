@@ -37,9 +37,11 @@ get_header();
 			// part shifts with resolution. Skipped if either part is missing.
 			$hero_cpus = cs_get_cpu_data();
 			$hero_gpus = cs_get_gpu_data();
-			if ( isset( $hero_cpus['ryzen-5-5600'], $hero_gpus['rtx-4070'] ) ) :
-				$hero_cpu = $hero_cpus['ryzen-5-5600'];
-				$hero_gpu = $hero_gpus['rtx-4070'];
+			// U2 (U-44): a current-generation pair (mild CPU limit at 1080p,
+			// GPU-limited from 1440p); was Ryzen 5 5600 + RTX 4070.
+			if ( isset( $hero_cpus['ryzen-5-7600'], $hero_gpus['rtx-5070'] ) ) :
+				$hero_cpu = $hero_cpus['ryzen-5-7600'];
+				$hero_gpu = $hero_gpus['rtx-5070'];
 				?>
 				<div class="cs-telemetry">
 					<p class="cs-telemetry-label"><?php esc_html_e( 'Bottleneck check · example', 'computingskill' ); ?></p>
@@ -148,8 +150,27 @@ get_header();
 			$pairs = cs_get_bottleneck_pairs();
 			$cpus  = cs_get_cpu_data();
 			$gpus  = cs_get_gpu_data();
+			// U2 (U-44): the first six pairs were all RTX 30/40, so the site
+			// looked a generation old. Four current-generation pairs plus two
+			// RTX 4060 pairs people search for; a pair missing from the list
+			// (or merged into another page) is filled from the list's start.
+			$featured = array( 'ryzen-5-5600|rtx-5060', 'ryzen-5-7600|rx-9060-xt', 'ryzen-7-7800x3d|rtx-5070', 'core-i5-13600k|rtx-5070', 'ryzen-5-5600|rtx-4060', 'core-i5-12400f|rtx-4060' );
+			$merged   = function_exists( 'cs_merged_combo_map' ) ? cs_merged_combo_map() : array();
+			$by_key   = array();
+			foreach ( $pairs as $pair ) {
+				if ( ! isset( $merged[ $pair['cpu'] . '-' . $pair['gpu'] ] ) ) {
+					$by_key[ $pair['cpu'] . '|' . $pair['gpu'] ] = $pair;
+				}
+			}
+			$shown = array();
+			foreach ( $featured as $key ) {
+				if ( isset( $by_key[ $key ] ) ) {
+					$shown[ $key ] = $by_key[ $key ];
+				}
+			}
+			$shown = array_slice( $shown + $by_key, 0, 6 );
 			echo '<div class="cs-card-grid cs-combo-grid">';
-			foreach ( array_slice( $pairs, 0, 6 ) as $pair ) {
+			foreach ( $shown as $pair ) {
 				if ( isset( $cpus[ $pair['cpu'] ] ) && isset( $gpus[ $pair['gpu'] ] ) ) {
 					$c = $cpus[ $pair['cpu'] ];
 					$g = $gpus[ $pair['gpu'] ];

@@ -69,6 +69,6 @@ return array(
 [cs_faq_item q="What CPU should I pair with an RTX 5060 or RX 9060 XT?"]In our estimates the Ryzen 5 5600 and Core i5-12400F are balanced or close to balanced with both cards at 1080p. Faster CPUs leave these cards as the limit even at 1080p.[/cs_faq_item]
 [/cs_faq]
 
-<p><em>Performance figures are specs-based estimates from ComputingSkill's engine, not measured benchmarks. Real results vary by game, settings and drivers.</em></p>
+<p><em>Performance figures are estimates from ComputingSkill's engine, not measured benchmarks. Real results vary by game, settings and drivers.</em></p>
 HTML
 );

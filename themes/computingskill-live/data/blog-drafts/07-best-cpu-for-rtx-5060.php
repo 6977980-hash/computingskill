@@ -14,7 +14,7 @@ return array(
 	'excerpt'  => 'We paired the GeForce RTX 5060 with 34 CPUs in our bottleneck engine. Most budget chips already keep it busy; here is which ones hold it back and what PSU each build needs.',
 	'content'  => <<<'HTML'
 <p>The GeForce RTX 5060 is NVIDIA's 1080p card in the RTX 50 series: 3,840 CUDA cores, 8GB of GDDR7 on a 128-bit bus, 145W, and 550W required system power (<a href="https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5060-family/" rel="noopener" target="_blank">NVIDIA specifications</a>). Because it is a mainstream card, it needs far less CPU than an RTX 5070, and many people pair it with a processor they already own. So how much CPU is enough?</p>
-<p>We paired the RTX 5060 with all 34 processors in our database, using the engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a> and the formula of our <a href="/psu-calculator/">PSU Calculator</a>. These are specs-based estimates, not benchmarks.</p>
+<p>We paired the RTX 5060 with all 34 processors in our database, using the engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a> and the formula of our <a href="/psu-calculator/">PSU Calculator</a>. These are estimates from our gaming-performance scores (placed from published review averages), not our own benchmarks.</p>
 
 <h2>Quick answer</h2>
 <ul>
@@ -88,6 +88,6 @@ return array(
 [cs_faq_item q="What power supply does an RTX 5060 need?"]NVIDIA lists 550W. With our PSU Calculator's formula, every CPU we tested stays at 550W except the Ryzen 9 7900X and 9950X3D (600W) and the Core i7-13700K, i7-14700K, i9-13900K, i9-14900K, Ultra 7 265K and Ultra 9 285K (650W).[/cs_faq_item]
 [/cs_faq]
 
-<p><em>All figures are specs-based estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
+<p><em>All figures are estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
 HTML
 );

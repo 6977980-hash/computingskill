@@ -346,6 +346,52 @@ function cs_bottleneck_sentence( $cpu_name, $gpu_name, $res_label, $result ) {
 }
 
 /**
+ * U2 (U-43): the per-resolution lines under a combo page's table. The
+ * Quick Summary already gives the full sentence (and why GPU-limited is
+ * normal), so these say only what differs at each resolution, and the
+ * "a faster graphics card is what helps" advice is printed once.
+ *
+ * @param array $said Carries what was already said across the three calls.
+ */
+function cs_bottleneck_sentence_brief( $cpu_name, $gpu_name, $result, &$said ) {
+	if ( 'balanced' === $result['component'] ) {
+		/* translators: 1: CPU name, 2: GPU name */
+		return sprintf( __( 'The %1$s and %2$s are well matched here.', 'computingskill' ), $cpu_name, $gpu_name );
+	}
+	if ( 'cpu' === $result['component'] ) {
+		$sev   = array(
+			'mild'       => __( 'mild', 'computingskill' ),
+			'noticeable' => __( 'noticeable', 'computingskill' ),
+			'severe'     => __( 'severe', 'computingskill' ),
+		);
+		$usage = ! empty( $result['capped'] )
+			? __( 'under 40%', 'computingskill' )
+			: sprintf( __( 'around %d%%', 'computingskill' ), 100 - $result['percent'] );
+		return sprintf(
+			/* translators: 1: CPU name, 2: GPU name, 3: severity, 4: percent, 5: GPU usage */
+			__( 'The %1$s is the likely limit: a %3$s CPU bottleneck of about %4$s, so roughly that share of the %2$s’s capacity goes unused (GPU usage %5$s).', 'computingskill' ),
+			$cpu_name,
+			$gpu_name,
+			$sev[ $result['severity'] ],
+			cs_bn_pct( $result ),
+			$usage
+		);
+	}
+	$out = sprintf(
+		/* translators: 1: CPU name, 2: GPU name, 3: percent */
+		__( 'The %2$s is the limit, and the %1$s has %3$s to spare.', 'computingskill' ),
+		$cpu_name,
+		$gpu_name,
+		! empty( $result['capped'] ) ? __( 'more than 60%', 'computingskill' ) : sprintf( __( 'about %d%%', 'computingskill' ), $result['percent'] )
+	);
+	if ( $result['percent'] >= 30 && empty( $said['gpu_upgrade'] ) ) {
+		$out               .= ' ' . __( 'For higher frame rates here, a faster graphics card is what helps; a faster CPU would not.', 'computingskill' );
+		$said['gpu_upgrade'] = true;
+	}
+	return $out;
+}
+
+/**
  * Slug helper: builds the working /bottleneck/{cpu}-{gpu}/ URL.
  *
  * Fixed during Sep 2026 audit: this used to build a nested

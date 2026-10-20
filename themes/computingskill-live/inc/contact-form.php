@@ -15,6 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/** Shown on /contact/ (U-47). The form itself still sends to admin_email. */
+define( 'CS_CONTACT_EMAIL', 'contact@computingskill.com' );
+
 function cs_handle_contact_form() {
 	if ( empty( $_POST['cs_contact_submit'] ) ) {
 		return;
@@ -136,6 +139,18 @@ function cs_contact_form_shortcode() {
 		<?php if ( $status ) : ?>
 			<p class="cs-contact-status cs-contact-<?php echo esc_attr( $status['type'] ); ?>" role="alert"><?php echo esc_html( $status['message'] ); ?></p>
 		<?php endif; ?>
+		<?php
+		// U2 (U-47): a visible address beside the form (Ali, 20 Oct 2026),
+		// for visitors who prefer email or whose form send fails.
+		$email = antispambot( CS_CONTACT_EMAIL );
+		?>
+		<p class="cs-contact-email"><?php
+			printf(
+				/* translators: %s: email address link */
+				esc_html__( 'Prefer email? Write to %s, or use the form below.', 'computingskill' ),
+				'<a href="mailto:' . $email . '">' . $email . '</a>' // phpcs:ignore WordPress.Security.EscapeOutput -- antispambot() returns entity-encoded ASCII.
+			);
+		?></p>
 		<form class="cs-contact-form" method="post" action="">
 			<?php wp_nonce_field( 'cs_contact_form', 'cs_contact_nonce' ); ?>
 			<p class="cs-hp-field" aria-hidden="true"><label>Website<input type="text" name="cs_contact_website" tabindex="-1" autocomplete="off"></label></p>

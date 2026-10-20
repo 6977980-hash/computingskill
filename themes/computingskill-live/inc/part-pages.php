@@ -484,6 +484,31 @@ function cs_pp_res_labels() {
 }
 
 /**
+ * U2 (U-45): GB of VRAM a card is short of the VRAM rule at a resolution
+ * and preset (0 when it has enough). The FPS engine takes 5% off per
+ * missing GB there (cs_bottleneck_gpu_memory_factor()), which made tables
+ * look contradictory without a marker, e.g. RTX 3060 12GB ahead of the
+ * RTX 4060 8GB at 4K high.
+ */
+function cs_pp_vram_short( $gpu, $res, $preset ) {
+	$need = cs_bottleneck_vram_need();
+	return isset( $need[ $res ][ $preset ] ) ? max( 0, (int) $need[ $res ][ $preset ] - (int) $gpu['vram_gb'] ) : 0;
+}
+
+/**
+ * U2 (U-48): "an S-tier", "an A-tier", "a B-tier" (the letter as it is
+ * said), for the tier sentences that read "a S-tier".
+ */
+function cs_pp_a_tier( $letter ) {
+	return ( false !== strpos( 'AEFHILMNORSX', substr( (string) $letter, 0, 1 ) ) ? __( 'an', 'computingskill' ) : __( 'a', 'computingskill' ) ) . ' ' . $letter;
+}
+
+/** The note under a table that uses the † marker. */
+function cs_pp_vram_note() {
+	return '<p class="cs-vram-note">' . esc_html__( '† Held back by VRAM: below the memory our VRAM rule asks for at that resolution and texture level, so the estimate drops 5% per missing GB (at most 25%), as games then stutter or lower textures. See the VRAM section below.', 'computingskill' ) . '</p>';
+}
+
+/**
  * VRAM verdict per resolution from the VRAM Calculator's minimums:
  * [ res => 'ok' | 'high-only' | 'short' ].
  */
@@ -558,8 +583,8 @@ function cs_pp_gpu_html( $slug, $gpu ) {
 
 	$html = cs_tl_quick_answer( esc_html( sprintf(
 		/* translators: 1: GPU, 2: tier, 3: score, 4: resolution, 5-7: FPS, 8: VRAM sentence, 9: PSU W */
-		__( 'The %1$s is a %2$s-tier graphics card in our GPU tier list (gaming score %3$d, RTX 4090 = 100), built for %4$s gaming. With a fast CPU it averages about %5$d FPS at 1080p, %6$d FPS at 1440p and %7$d FPS at 4K in a typical AAA game at high settings. %8$s Its maker recommends a %9$dW power supply.', 'computingskill' ),
-		$name, $letter, (int) $gpu['score'], $labels[ $target ],
+		__( 'The %1$s is %2$s-tier graphics card in our GPU tier list (gaming score %3$d, RTX 4090 = 100), built for %4$s gaming. With a fast CPU it averages about %5$d FPS at 1080p, %6$d FPS at 1440p and %7$d FPS at 4K in a typical AAA game at high settings. %8$s Its maker recommends a %9$dW power supply.', 'computingskill' ),
+		$name, cs_pp_a_tier( $letter ), (int) $gpu['score'], $labels[ $target ],
 		round( $fps['1080p'][0] ), round( $fps['1440p'][0] ), round( $fps['4k'][0] ),
 		cs_pp_vram_sentence( $gpu ),
 		(int) $gpu['recommended_psu_w']
@@ -591,12 +616,15 @@ function cs_pp_gpu_html( $slug, $gpu ) {
 		esc_html( cs_pp_short( $top ) ),
 		cs_tl_link( 'fps-calculator', __( 'FPS Calculator', 'computingskill' ) )
 	) . '</p>';
-	$rows = array();
+	$rows      = array();
+	$vram_mark = false;
 	foreach ( array( 'low' => __( 'Low', 'computingskill' ), 'medium' => __( 'Medium', 'computingskill' ), 'high' => __( 'High', 'computingskill' ), 'ultra' => __( 'Ultra', 'computingskill' ) ) as $preset => $pl ) {
 		$row = array( esc_html( $pl ) );
 		foreach ( $labels as $res => $l ) {
 			list( $f, $lim ) = cs_tl_fps( $top, $gpu, $res, $preset );
-			$row[] = (int) round( $f ) . ( 'cpu' === $lim ? '*' : '' );
+			$short = cs_pp_vram_short( $gpu, $res, $preset );
+			$vram_mark = $vram_mark || $short;
+			$row[] = (int) round( $f ) . ( 'cpu' === $lim ? '*' : '' ) . ( $short ? '†' : '' );
 		}
 		$rows[] = $row;
 	}
@@ -607,6 +635,7 @@ function cs_pp_gpu_html( $slug, $gpu ) {
 	}
 	$rows[] = $row;
 	$html  .= cs_pp_table( sprintf( __( '%s estimated average FPS', 'computingskill' ), $name ), array( __( 'Settings', 'computingskill' ), '1080p', '1440p', '4K' ), $rows );
+	$html  .= $vram_mark ? cs_pp_vram_note() : '';
 	$html  .= '<p>' . sprintf(
 		/* translators: 1: GPU, 2: tier letter, 3: tier meaning, 4: link */
 		esc_html__( 'In the %4$s the %1$s sits in %2$s tier: %3$s.', 'computingskill' ),
@@ -768,8 +797,8 @@ function cs_pp_cpu_html( $slug, $cpu ) {
 
 	$html = cs_tl_quick_answer( esc_html( sprintf(
 		/* translators: 1: CPU, 2: tier, 3: label, 4: score, 5: FPS, 6: FPS, 7: GPU, 8: socket */
-		__( 'The %1$s is a %2$s-tier gaming CPU in our CPU tier list (%3$s, gaming score %4$d). It can prepare about %5$d FPS in a typical AAA game and about %6$d FPS in esports titles, whatever the graphics card. The fastest card it drives at 1440p without a noticeable bottleneck is the %7$s. It uses the %8$s socket.', 'computingskill' ),
-		$name, $letter, cs_tl_cpu_label( $cpu['score'] ), (int) $cpu['score'], $ceil['aaa'], $ceil['esports'],
+		__( 'The %1$s is %2$s-tier gaming CPU in our CPU tier list (%3$s, gaming score %4$d). It can prepare about %5$d FPS in a typical AAA game and about %6$d FPS in esports titles, whatever the graphics card. The fastest card it drives at 1440p without a noticeable bottleneck is the %7$s. It uses the %8$s socket.', 'computingskill' ),
+		$name, cs_pp_a_tier( $letter ), cs_tl_cpu_label( $cpu['score'] ), (int) $cpu['score'], $ceil['aaa'], $ceil['esports'],
 		$max['1440p'][1] ? cs_pp_short( $max['1440p'][1] ) : '—',
 		$cpu['socket']
 	) ) );
@@ -869,7 +898,7 @@ function cs_pp_cpu_html( $slug, $cpu ) {
 		esc_html__( 'It can draw up to about %1$dW, which the %2$s and %3$s account for.', 'computingskill' ),
 		(int) $power['max'],
 		cs_tl_link( 'psu-calculator', __( 'PSU Calculator', 'computingskill' ) ),
-		cs_tl_link( 'cpu-cooler-calculator', __( 'CPU Cooler Calculator', 'computingskill' ) )
+		cs_tl_link( 'pc-cooling-calculator', __( 'PC Cooling Calculator', 'computingskill' ) ) // U-36: the tool's real name and page.
 	);
 	$html .= '<p>' . $p . '</p>';
 
@@ -893,7 +922,7 @@ function cs_pp_cpu_html( $slug, $cpu ) {
 
 	$g1440 = $max['1440p'][1];
 	$html .= cs_tl_faq( array(
-		sprintf( __( 'Is the %s good for gaming?', 'computingskill' ), $name ) => sprintf( __( 'It is a %1$s-tier, %2$s gaming CPU in our list (score %3$d). It prepares about %4$d FPS in a typical AAA game and %5$d FPS in esports titles, so it suits high-refresh gaming up to that point.', 'computingskill' ), $letter, strtolower( cs_tl_cpu_label( $cpu['score'] ) ), (int) $cpu['score'], $ceil['aaa'], $ceil['esports'] ),
+		sprintf( __( 'Is the %s good for gaming?', 'computingskill' ), $name ) => sprintf( __( 'It is %1$s-tier, %2$s gaming CPU in our list (score %3$d). It prepares about %4$d FPS in a typical AAA game and %5$d FPS in esports titles, so it suits high-refresh gaming up to that point.', 'computingskill' ), cs_pp_a_tier( $letter ), strtolower( cs_tl_cpu_label( $cpu['score'] ) ), (int) $cpu['score'], $ceil['aaa'], $ceil['esports'] ),
 		sprintf( __( 'What is the best GPU for the %s?', 'computingskill' ), $name ) => $g1440 ? sprintf( __( 'It depends on your budget and screen: any card up to the fastest one this CPU keeps up with is a good match. That ceiling is the %1$s at 1440p without a noticeable bottleneck%2$s. At 4K the card does more of the work, so faster cards still make sense. The GPU tier list helps you pick one for your budget.', 'computingskill' ), cs_pp_short( $g1440 ), $max['1080p'][1] ? sprintf( __( ', and the %s at 1080p', 'computingskill' ), cs_pp_short( $max['1080p'][1] ) ) : '' ) : __( 'Every card in our list leaves this CPU waiting at 1440p.', 'computingskill' ),
 		sprintf( __( 'What can I upgrade the %s to?', 'computingskill' ), $name ) => $upgrade ? sprintf( __( 'On the same %1$s motherboard, the fastest gaming option in our list is the %2$s (score %3$d). A BIOS update may be needed first.', 'computingskill' ), $cpu['socket'], cs_pp_short( $upgrade ), (int) $upgrade['score'] ) : sprintf( __( 'It is already the fastest gaming CPU in our list for %s; a bigger step means a new platform.', 'computingskill' ), $cpu['socket'] ),
 		sprintf( __( 'Does the %s support DDR5?', 'computingskill' ), $name ) => sprintf( __( 'Its %1$s platform supports %2$s.', 'computingskill' ), $cpu['socket'], cs_pp_lc( cs_bn_socket_memory( $cpu['socket'] ) ) ),
@@ -943,6 +972,16 @@ function cs_pp_vs_gpu_html( $a_slug, $a, $b_slug, $b ) {
 	$gap1440 = cs_pp_gap( round( max( $fa['1440p'][0], $fb['1440p'][0] ) ), round( min( $fa['1440p'][0], $fb['1440p'][0] ) ) );
 	$feat_a = cs_pp_gpu_features( $a );
 	$feat_b = cs_pp_gpu_features( $b );
+	// U2 (U-45): where the faster card loses because its VRAM falls short.
+	$vram_wins = array();
+	foreach ( array( 'high' => __( 'high', 'computingskill' ), 'ultra' => __( 'ultra', 'computingskill' ) ) as $preset => $pl ) {
+		foreach ( $labels as $res => $l ) {
+			if ( cs_pp_vram_short( $w, $res, $preset ) && ! cs_pp_vram_short( $lose, $res, $preset )
+				&& cs_pp_gap( round( cs_tl_fps( $top, $lose, $res, $preset )[0] ), round( cs_tl_fps( $top, $w, $res, $preset )[0] ) ) >= 3 ) {
+				$vram_wins[] = $l . ' ' . $pl;
+			}
+		}
+	}
 
 	if ( $gap < 5 ) {
 		$lead = sprintf( __( 'The %1$s and %2$s are about even for gaming in our index (scores %3$d and %4$d, within 5%%).', 'computingskill' ), $an, $bn, (int) $a['score'], (int) $b['score'] );
@@ -959,6 +998,16 @@ function cs_pp_vs_gpu_html( $a_slug, $a, $b_slug, $b ) {
 		$low     = $a['tdp_w'] < $b['tdp_w'] ? $a : $b;
 		$high    = $a['tdp_w'] < $b['tdp_w'] ? $b : $a;
 		$extra[] = sprintf( __( 'The %1$s draws less power (%2$dW vs %3$dW).', 'computingskill' ), cs_pp_short( $low ), (int) $low['tdp_w'], (int) $high['tdp_w'] );
+	}
+	if ( $vram_wins && $gap >= 5 ) {
+		$extra[] = sprintf(
+			/* translators: 1: slower card, 2: settings list, 3: faster card, 4: its VRAM */
+			__( 'The %1$s still comes out ahead at %2$s, where the %3$s’s %4$dGB of VRAM falls short.', 'computingskill' ),
+			cs_pp_short( $lose ),
+			cs_bn_join( $vram_wins ),
+			cs_pp_short( $w ),
+			(int) $w['vram_gb']
+		);
 	}
 	$html = cs_tl_quick_answer( esc_html( $lead . ' ' . implode( ' ', $extra ) ) );
 
@@ -1002,7 +1051,8 @@ function cs_pp_vs_gpu_html( $a_slug, $a, $b_slug, $b ) {
 		esc_html( cs_pp_short( $top ) ),
 		cs_tl_link( 'fps-calculator', __( 'FPS Calculator', 'computingskill' ) )
 	) . '</p>';
-	$rows = array();
+	$rows      = array();
+	$vram_mark = false;
 	foreach ( array( 'high' => __( 'high', 'computingskill' ), 'ultra' => __( 'ultra', 'computingskill' ) ) as $preset => $pl ) {
 		foreach ( $labels as $res => $l ) {
 			list( $x, $xl ) = cs_tl_fps( $top, $a, $res, $preset );
@@ -1012,10 +1062,14 @@ function cs_pp_vs_gpu_html( $a_slug, $a, $b_slug, $b ) {
 			$x      = round( $x );
 			$y      = round( $y );
 			$d      = cs_pp_gap( $x, $y );
-			$rows[] = array( esc_html( $l . ', ' . $pl ), (int) round( $x ) . ( 'cpu' === $xl ? '*' : '' ), (int) round( $y ) . ( 'cpu' === $yl ? '*' : '' ), esc_html( abs( $d ) < 3 ? __( 'about even', 'computingskill' ) : sprintf( __( '%1$s +%2$d%%', 'computingskill' ), $d > 0 ? $an : $bn, abs( $d > 0 ? $d : cs_pp_gap( $y, $x ) ) ) ) );
+			$sx     = cs_pp_vram_short( $a, $res, $preset ) ? '†' : '';
+			$sy     = cs_pp_vram_short( $b, $res, $preset ) ? '†' : '';
+			$vram_mark = $vram_mark || $sx || $sy;
+			$rows[] = array( esc_html( $l . ', ' . $pl ), (int) round( $x ) . ( 'cpu' === $xl ? '*' : '' ) . $sx, (int) round( $y ) . ( 'cpu' === $yl ? '*' : '' ) . $sy, esc_html( abs( $d ) < 3 ? __( 'about even', 'computingskill' ) : sprintf( __( '%1$s +%2$d%%', 'computingskill' ), $d > 0 ? $an : $bn, abs( $d > 0 ? $d : cs_pp_gap( $y, $x ) ) ) ) );
 		}
 	}
 	$html .= cs_pp_table( sprintf( __( '%1$s vs %2$s estimated FPS', 'computingskill' ), $an, $bn ), array( __( 'Resolution, settings', 'computingskill' ), $an, $bn, __( 'Difference', 'computingskill' ) ), $rows );
+	$html .= $vram_mark ? cs_pp_vram_note() : '';
 
 	$html .= '<h2>' . esc_html__( 'VRAM', 'computingskill' ) . '</h2>';
 	$html .= '<p>' . esc_html( $an . ': ' . cs_pp_vram_sentence( $a ) ) . '</p><p>' . esc_html( $bn . ': ' . cs_pp_vram_sentence( $b ) ) . '</p>';

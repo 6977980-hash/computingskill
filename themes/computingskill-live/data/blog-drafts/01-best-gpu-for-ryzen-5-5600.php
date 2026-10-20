@@ -13,7 +13,7 @@ return array(
 	'excerpt'  => 'Which graphics card can a Ryzen 5 5600 or 5600X run without a bottleneck? Our estimates for 20 GPUs at 1080p, 1440p and 4K, with the best match for each resolution.',
 	'content'  => <<<'HTML'
 <p>The AMD Ryzen 5 5600 is still one of the most common gaming CPUs: 6 cores, 12 threads, a 4.4 GHz boost clock and a 65W TDP on the AM4 socket. The question most owners ask is simple: which graphics card can it drive without holding the card back, and when does a faster card stop being worth it?</p>
-<p>We ran every GPU in our database through the same estimate engine that powers the <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a>. The results below are specs-based estimates, not benchmark runs, so treat them as a guide to balance rather than an FPS promise.</p>
+<p>We ran every GPU in our database through the same estimate engine that powers the <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a>. The results below are estimates from our gaming-performance scores (placed from published review averages), not benchmark runs, so treat them as a guide to balance rather than an FPS promise.</p>
 
 <h2>Quick answer</h2>
 <ul>
@@ -85,6 +85,6 @@ return array(
 [cs_faq_item q="Is the Ryzen 5 5600 good enough for an RTX 4090 or RTX 5090?"]Not at 1080p or 1440p: our estimates show 35% to 60% CPU-side limits there. At 4K the RTX 4090 is balanced with it, but a faster CPU gets far more out of either card.[/cs_faq_item]
 [/cs_faq]
 
-<p><em>All figures are specs-based estimates from ComputingSkill's engine, not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
+<p><em>All figures are estimates from ComputingSkill's engine, not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
 HTML
 );

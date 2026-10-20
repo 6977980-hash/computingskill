@@ -14,7 +14,7 @@ return array(
 	'excerpt'  => 'We paired the Ryzen 7 7800X3D with 37 graphics cards in our bottleneck engine. Here is the best match at 1080p, 1440p and 4K, with estimated FPS and the PSU each build needs.',
 	'content'  => <<<'HTML'
 <p>The AMD Ryzen 7 7800X3D is an 8-core, 16-thread AM5 processor with AMD's 3D V-Cache, a 5.0 GHz boost clock and a 120W TDP (<a href="https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html" rel="noopener" target="_blank">AMD specifications</a>). In our gaming index it scores 87, behind only the Ryzen 7 9800X3D and Ryzen 9 9950X3D, so the question is less "what can it handle?" and more "which card is worth pairing with it at your resolution?"</p>
-<p>We ran all 37 graphics cards in our database against the 7800X3D with the engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a>. These are specs-based estimates, not benchmarks.</p>
+<p>We ran all 37 graphics cards in our database against the 7800X3D with the engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a>. These are estimates from our gaming-performance scores (placed from published review averages), not our own benchmarks.</p>
 
 <h2>Quick answer</h2>
 <ul>
@@ -84,6 +84,6 @@ return array(
 [cs_faq_item q="What PSU do I need for a 7800X3D build?"]With our PSU Calculator's formula: 650W with an RTX 5070, 750W with an RX 9070 XT or RTX 5070 Ti, 850W with an RTX 5080 and 1100W with an RTX 5090.[/cs_faq_item]
 [/cs_faq]
 
-<p><em>All figures are specs-based estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
+<p><em>All figures are estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
 HTML
 );

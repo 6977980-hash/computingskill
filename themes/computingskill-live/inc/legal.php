@@ -26,8 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Disclaimer get their modified date set once, and the page cache is
  * purged once so the new footer and headers reach cached pages.
  */
-define( 'CS_LEGAL_REV', '2026-10-20-e4' );
-define( 'CS_PRIVACY_UPDATED', 'October 20, 2026' );
+define( 'CS_LEGAL_REV', '2026-10-20-u2' );
 
 /* ------------------------------------------------------------------ */
 /* Privacy Policy (6.2)                                                */
@@ -92,9 +91,12 @@ function cs_privacy_policy_text( $content ) {
 	$content = $swap( $content, 'Cookies', 'Third-Party Services', cs_privacy_cookies_html() );
 	$content = $swap( $content, 'Your Rights', 'Changes to This Policy', cs_privacy_rights_html() );
 
+	// U2 (U-47): the byline already shows "Last updated" (the page's
+	// modified date, moved by CS_LEGAL_REV), so the second date line in the
+	// text is dropped instead of kept in sync.
 	$content = preg_replace(
-		'#Last updated:\s*[A-Z][a-z]+ \d{1,2}, \d{4}#',
-		esc_html( sprintf( __( 'Last updated: %s', 'computingskill' ), CS_PRIVACY_UPDATED ) ),
+		'#<p>\s*(?:<em>)?\s*Last updated:\s*[A-Z][a-z]+ \d{1,2}, \d{4}\s*(?:</em>)?\s*</p>\s*#',
+		'',
 		$content,
 		1
 	);
@@ -312,8 +314,9 @@ function cs_legal_rev_apply() {
 	}
 	global $wpdb;
 	$touched = array();
-	// E3: Terms of Use added (its text is built by cs_terms_of_use_html()).
-	foreach ( array( 'privacy-policy', 'disclaimer', 'terms-of-use' ) as $slug ) {
+	// Only the pages whose text changed in this revision (U2: Privacy date
+	// line, Disclaimer method wording; Terms of Use unchanged since E3).
+	foreach ( array( 'privacy-policy', 'disclaimer' ) as $slug ) {
 		$page = get_page_by_path( $slug );
 		if ( $page ) {
 			$touched[] = $page->ID;

@@ -14,7 +14,7 @@ return array(
 	'excerpt'  => 'We paired the GeForce RTX 5070 with 34 CPUs in our bottleneck engine. Here is which processors keep it busy at 1080p and 1440p, and what power supply each build needs.',
 	'content'  => <<<'HTML'
 <p>NVIDIA's GeForce RTX 5070 is a 12GB GDDR7, 250W card aimed at 1440p, and NVIDIA lists 650W as the required system power (<a href="https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5070-family/" rel="noopener" target="_blank">NVIDIA specifications</a>). A card in this class can outrun an older or budget processor, especially at 1080p. So which CPU is enough?</p>
-<p>We paired the RTX 5070 with all 34 processors in our database, using the engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a> and the formula of our <a href="/psu-calculator/">PSU Calculator</a>. These are specs-based estimates, not benchmarks.</p>
+<p>We paired the RTX 5070 with all 34 processors in our database, using the engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a> and the formula of our <a href="/psu-calculator/">PSU Calculator</a>. These are estimates from our gaming-performance scores (placed from published review averages), not our own benchmarks.</p>
 
 <h2>Quick answer</h2>
 <ul>
@@ -85,6 +85,6 @@ return array(
 [cs_faq_item q="What power supply does an RTX 5070 need?"]NVIDIA lists 650W. With our PSU Calculator's formula, most CPUs in our list stay at 650W; the exceptions are: Core i7-12700K, Core i5-13600K and Core i5-14600K 700W; Ryzen 9 7900X and Ryzen 9 9950X3D 750W; Core Ultra 7 265K, Core i7-13700K, Core Ultra 9 285K, Core i7-14700K, Core i9-13900K and Core i9-14900K 800W, because of their higher turbo power.[/cs_faq_item]
 [/cs_faq]
 
-<p><em>All figures are specs-based estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
+<p><em>All figures are estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
 HTML
 );

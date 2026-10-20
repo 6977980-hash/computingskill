@@ -78,6 +78,12 @@ while ( have_posts() ) :
 					<?php endif; ?>
 				</header>
 
+				<?php
+				// U2 (U-43): the full part names are in the title and lede;
+				// below them, cs_bn_short_names() uses short ones ("Ryzen 5
+				// 5600", "RTX 4060") up to the FAQ, whose answers stand alone.
+				ob_start();
+				?>
 				<section class="cs-bn-summary">
 					<h2><?php esc_html_e( 'Quick Summary', 'computingskill' ); ?></h2>
 					<p><?php echo wp_kses_post( cs_bottleneck_summary( $cpu['name'], $gpu['name'], $results, $labels, cs_bn_target_res( $gpu ) ) ); ?></p>
@@ -167,8 +173,9 @@ while ( have_posts() ) :
 						esc_html__( 'How to read this: a CPU bottleneck %% is the share of the graphics card left idle (under 6%% balanced, 6–14%% mild, 15–29%% noticeable, 30%%+ severe). GPU-limited is normal; there the %% is spare CPU headroom. Typical AAA game, high settings (%s).', 'computingskill' ),
 						'<a href="' . esc_url( home_url( '/methodology/' ) ) . '">' . esc_html__( 'how we estimate', 'computingskill' ) . '</a>'
 					); ?></p>
+					<?php $cs_said = array(); ?>
 					<?php foreach ( $results as $res => $r ) : ?>
-						<p><strong><?php echo esc_html( $labels[ $res ] ); ?>:</strong> <?php echo wp_kses_post( cs_bottleneck_sentence( $cpu['name'], $gpu['name'], $labels[ $res ], $r ) ); ?></p>
+						<p><strong><?php echo esc_html( $labels[ $res ] ); ?>:</strong> <?php echo wp_kses_post( function_exists( 'cs_bottleneck_sentence_brief' ) ? cs_bottleneck_sentence_brief( $cpu['name'], $gpu['name'], $r, $cs_said ) : cs_bottleneck_sentence( $cpu['name'], $gpu['name'], $labels[ $res ], $r ) ); ?></p>
 					<?php endforeach; ?>
 				</section>
 
@@ -216,7 +223,7 @@ while ( have_posts() ) :
 					<p><?php esc_html_e( 'Also worth checking before you upgrade anything:', 'computingskill' ); ?></p>
 					<ul>
 						<li><a href="<?php echo esc_url( home_url( '/ram-calculator/' ) ); ?>"><?php esc_html_e( 'Is 16GB or 32GB of RAM enough for this build?', 'computingskill' ); ?></a></li>
-						<li><a href="<?php echo esc_url( home_url( '/psu-calculator/' ) ); ?>"><?php esc_html_e( 'Does your power supply have enough headroom?', 'computingskill' ); ?></a></li>
+						<li><a href="<?php echo esc_url( home_url( '/psu-calculator/' ) ); ?>"><?php esc_html_e( 'Is your power supply big enough?', 'computingskill' ); ?></a></li>
 						<li><a href="<?php echo esc_url( home_url( '/gpu-vram-calculator/' ) ); ?>"><?php esc_html_e( 'Is ' . $gpu['vram_gb'] . 'GB of VRAM enough at your target resolution?', 'computingskill' ); ?></a></li>
 						<?php foreach ( cs_il_posts_for_cpu( $cpu_slug ) as $cs_post ) : ?>
 							<li><a href="<?php echo esc_url( $cs_post[1] ); ?>"><?php echo esc_html( $cs_post[0] ); ?></a></li>
@@ -240,6 +247,11 @@ while ( have_posts() ) :
 				// Oct 2026: same-CPU / same-GPU comparison tables from the
 				// other live combo pages (inc/bottleneck-content.php).
 				echo cs_bn_neighbours_html( $cpu_slug, $gpu_slug, $cpu, $gpu ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+				?>
+
+				<?php
+				$cs_region = ob_get_clean();
+				echo function_exists( 'cs_bn_short_names' ) ? cs_bn_short_names( $cs_region, array( $cpu['name'], $gpu['name'] ) ) : $cs_region; // phpcs:ignore WordPress.Security.EscapeOutput -- only text between tags changes.
 				?>
 
 				<?php

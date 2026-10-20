@@ -778,7 +778,7 @@ function cs_il_hub_guides() {
 				'pc-power-consumption-calculator' => __( 'What does my PC cost to run in electricity?', 'computingskill' ),
 				'pc-cooling-calculator'     => __( 'Is air cooling enough or do I need an AIO?', 'computingskill' ),
 			),
-			'outro' => __( 'Every estimate starts from published specs, and the CPU and GPU tools share one score scale, so the bottleneck, FPS, upgrade and comparison pages never disagree about the same parts.', 'computingskill' ),
+			'outro' => __( 'Hardware specs come from the manufacturers, and the CPU and GPU tools share one gaming-performance score scale, placed from published review averages, so the bottleneck, FPS, upgrade and comparison pages never disagree about the same parts.', 'computingskill' ),
 		),
 		'computer-tools' => array(
 			'intro' => __( 'The questions people bring here most often, and the tool that answers each:', 'computingskill' ),

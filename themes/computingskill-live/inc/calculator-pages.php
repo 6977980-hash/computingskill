@@ -333,7 +333,16 @@ function cs_calculator_page_text( $content ) {
 	if ( empty( $fixes[ $slug ] ) ) {
 		return $content;
 	}
-	foreach ( $fixes[ $slug ] as $fix ) {
+	return cs_page_text_swap( $content, $fixes[ $slug ] );
+}
+add_filter( 'the_content', 'cs_calculator_page_text', 8 );
+
+/**
+ * Applies a list of array( opening words, closing words, new text ) to
+ * $content (shared with the U2 page text in inc/u2-text.php).
+ */
+function cs_page_text_swap( $content, $list ) {
+	foreach ( $list as $fix ) {
 		list( $open, $close, $text ) = $fix;
 		if ( $open === $close || false !== strpos( $open, $close ) ) {
 			// The closing words are part of the opening words: replace just that phrase.
@@ -345,7 +354,6 @@ function cs_calculator_page_text( $content ) {
 	}
 	return $content;
 }
-add_filter( 'the_content', 'cs_calculator_page_text', 8 );
 
 /* ------------------------------------------------------------------ */
 /* "Last updated" on calculator pages (audit 1.22)                      */
@@ -360,18 +368,16 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-u1' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-u2' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// U1 (user-side audit): tools and page text changed. K4 (how-much-
-		// vram-do-i-need), K3, K2, K1, D2, D3, D5 and D10 ran with earlier
-		// revs; their pages are dated already.
-		'can-i-run-it', 'fps-calculator', 'psu-calculator', 'psu', 'how-to-choose-a-psu',
-		'gpu-vram-calculator', 'pc-compatibility-checker', 'cpu-performance-calculator',
-		'pc-build-cost-calculator', 'pc-upgrade-calculator', 'download-time-calculator',
-		'ram-calculator', 'cpu-tier-list', 'pc-bottleneck-calculator', 'cpu-bottleneck-explained',
+		// U2 (user-side audit): page text changed (inc/u2-text.php, the
+		// Methodology upgrade threshold, the contact email). U1, K4, K3, K2,
+		// K1, D2, D3, D5 and D10 ran with earlier revs; their pages are dated
+		// already.
+		'about-us', 'calculators', 'how-much-ram-do-i-need', 'methodology', 'contact',
 	);
 }
 

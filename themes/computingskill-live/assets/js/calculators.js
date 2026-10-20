@@ -150,7 +150,16 @@
 		} );
 	}
 
+	// U2 (U-44): pickers without a default opened on the RTX 3060 (the
+	// first card in the data), so the tools looked a generation old. These
+	// fields have no `default`, so share links always carry the part and
+	// old links are unaffected.
+	var HARDWARE_START = { gpu: 'rtx-5060' };
 	function hardwareStart( source ) {
+		var pick = HARDWARE_START[ source ];
+		if ( pick && HW[ source ] && HW[ source ][ pick ] ) {
+			return pick;
+		}
 		return Object.keys( HW[ source ] || {} )[ 0 ] || '';
 	}
 

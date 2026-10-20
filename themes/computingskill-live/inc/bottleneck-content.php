@@ -681,3 +681,65 @@ function cs_bn_neighbours_html( $cpu_slug, $gpu_slug, $cpu, $gpu ) {
 
 	return $html;
 }
+
+/**
+ * U2 (U-43): combo pages repeated full product names 25-33 times
+ * ("AMD Ryzen 5 5600", "GeForce RTX 4060"). In the HTML given, every CPU
+ * and GPU name in running text becomes its short name (cs_bn_short_name()),
+ * except the first mention of a part not in $named (named earlier on the
+ * page, e.g. the title). Headings, links and tag attributes are left alone.
+ */
+function cs_bn_short_names( $html, $named = array() ) {
+	static $map = null;
+	if ( null === $map ) {
+		$map = array();
+		foreach ( array( cs_get_cpu_data(), cs_get_gpu_data() ) as $parts ) {
+			foreach ( $parts as $p ) {
+				$short = cs_bn_short_name( $p['name'] );
+				if ( $short !== $p['name'] ) {
+					$map[ esc_html( $p['name'] ) ] = esc_html( $short );
+				}
+			}
+		}
+		// Longest first, so "Ryzen 5 5600X" is never read as "Ryzen 5 5600".
+		uksort( $map, function ( $a, $b ) {
+			return strlen( $b ) - strlen( $a );
+		} );
+	}
+	if ( ! $map ) {
+		return $html;
+	}
+	$seen = array();
+	foreach ( $named as $name ) {
+		$seen[ esc_html( $name ) ] = true;
+	}
+	$re = '/(?<![\w-])(' . implode( '|', array_map( function ( $n ) {
+		return preg_quote( $n, '/' );
+	}, array_keys( $map ) ) ) . ')(?![\w-]| (?:Ti|SUPER|Super|XT|XTX|GRE)\b| \(\d)/u';
+
+	$parts = preg_split( '/(<[^>]*>)/', $html, -1, PREG_SPLIT_DELIM_CAPTURE );
+	$skip  = 0;
+	foreach ( $parts as $i => $part ) {
+		if ( '' === $part ) {
+			continue;
+		}
+		if ( '<' === $part[0] ) {
+			if ( preg_match( '#^<(/?)(a|h[1-6]|script|style)\b#i', $part, $m ) ) {
+				$skip += '/' === $m[1] ? -1 : 1;
+				$skip  = max( 0, $skip );
+			}
+			continue;
+		}
+		if ( $skip ) {
+			continue;
+		}
+		$parts[ $i ] = preg_replace_callback( $re, function ( $m ) use ( $map, &$seen ) {
+			if ( empty( $seen[ $m[1] ] ) ) {
+				$seen[ $m[1] ] = true;
+				return $m[1];
+			}
+			return $map[ $m[1] ];
+		}, $part );
+	}
+	return implode( '', $parts );
+}

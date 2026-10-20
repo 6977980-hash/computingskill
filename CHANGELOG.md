@@ -2,6 +2,20 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.60 (20 Oct 2026) — U2 text and trust consistency
+From the 20 Oct user-side audit (U2: U-05, U-06, U-34, U-36, U-42..U-45, U-47, U-48). No scores or engine numbers changed.
+- U-05: one method description site-wide, `cs_method_sentence()` (inc/aeo.php): specs from the makers, CPU/GPU performance from our gaming index placed from review averages, other tools use stated formulas. Applied to the homepage, About and llms.txt quick answers, About (section + FAQ), /calculators/ (intro, accuracy FAQ, "general specs" FAQ, hub outro), Disclaimer (section, FPS paragraph, FAQ) and the published posts ("specs-based" gone; draft files and the K4 generator updated too). Page text is swapped by `inc/u2-text.php` with `cs_page_text_swap()` (shared with inc/calculator-pages.php).
+- U-06: Methodology "CPU bottleneck of 1541r more" → "15% or more" (`%%` in the sprintf string; no other printf string has a bare %).
+- U-34: Can I Run It added to the /calculators/ card grid (16 cards, as the page says).
+- U-36: CPU part pages link the "PC Cooling Calculator" (was an unlinked "CPU Cooler Calculator").
+- U-42: RAM guide: two-sentence intro, "The Short Answer" duplicate of the quick answer removed (table kept under "RAM by Use Case"), RAM Calculator instead of the Bottleneck Calculator, dual channel helps CPU-limited games, one 1080p editing figure (32GB, simple edits 16GB).
+- U-43: combo pages use short part names below the title and lede (`cs_bn_short_names()`, not in headings, links or the FAQ); the per-resolution lines no longer repeat the Quick Summary (`cs_bottleneck_sentence_brief()`, GPU-upgrade advice once).
+- U-44: homepage example pair Ryzen 5 7600 + RTX 5070; popular pairs: 4 current-generation + 2 RTX 4060 pairs; hardware pickers without a default open on the RTX 5060 (`HARDWARE_START`; share links unaffected).
+- U-45: GPU part pages and GPU comparison tables mark VRAM-limited FPS with † and a note; the comparison quick answer says where the slower card wins because of VRAM.
+- U-47: /contact/ shows contact@computingskill.com (mailto, `CS_CONTACT_EMAIL`) above the form; Privacy shows its date once (byline); About links the Editorial Policy and is re-dated.
+- U-48: "an S-tier" / "an A-tier" on part pages (`cs_pp_a_tier()`).
+- Dates: `CS_CALC_PAGES_REV` 2026-10-20-u2 (About, /calculators/, RAM guide, Methodology, Contact), `CS_LEGAL_REV` 2026-10-20-u2 (Privacy, Disclaimer only), new `CS_U2_TOUCH_REV` (all combo pages, CPU/GPU part pages, GPU comparisons, posts that said "specs-based"). `CS_GENERATED_CONTENT_REV` not bumped (game pages unchanged).
+
 ## 1.0.59 (20 Oct 2026) — U1 wrong or misleading answers
 From the 20 Oct user-side audit (U1: U-01..U-04, U-07..U-12, U-40, U-46, U-52, U-53). Scores and the bottleneck engine are unchanged; JS and PHP mirrors stay in sync.
 - U-01: Can I Run It gives no FPS figure for a game the PC is below the publisher minimum for, doesn't count it as reaching the target, and the headline leads with those games. Per-game GPU load (`gameGpuLoad()` / `cs_game_gpu_load()`): sqrt(type median ÷ the game's recommended GPU score), clamped 0.75-1.3, so games of one type no longer show identical FPS (FPS Calculator with a game picked, Can I Run It, the server example table). FPS Calculator warns when the PC is below the picked game's minimum.

@@ -14,7 +14,7 @@ return array(
 	'excerpt'  => 'All 7 AM4 gaming CPUs compared with our bottleneck engine, from the Ryzen 5 3600 to the 5800X3D, plus whether upgrading a Ryzen 5 5600 to a 5700X3D or 5800X3D is worth it.',
 	'content'  => <<<'HTML'
 <p>AM4 is still one of the most common gaming platforms, and it has one big advantage: you can upgrade the processor without changing the motherboard or DDR4 memory. But which AM4 CPU is actually the best for gaming in 2026, and is the jump from a Ryzen 5 5600 to a 5700X3D or 5800X3D worth it?</p>
-<p>We compared all 7 AM4 processors in our database using the gaming score and engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a> and <a href="/cpu-tier-list/">CPU tier list</a>. These are specs-based estimates, not benchmarks.</p>
+<p>We compared all 7 AM4 processors in our database using the gaming score and engine behind our <a href="/pc-bottleneck-calculator/">PC Bottleneck Calculator</a> and <a href="/cpu-tier-list/">CPU tier list</a>. These are estimates from our gaming-performance scores (placed from published review averages), not our own benchmarks.</p>
 
 <h2>Quick answer</h2>
 <ul>
@@ -63,6 +63,6 @@ return array(
 [cs_faq_item q="Is AM4 still worth it in 2026?"]For upgrading an existing AM4 system, yes: an X3D chip matches a Ryzen 5 7600-class AM5 CPU in our index without a new motherboard or DDR5. For a brand-new build, AM5 gives a longer upgrade path.[/cs_faq_item]
 [/cs_faq]
 
-<p><em>All figures are specs-based estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
+<p><em>All figures are estimates from ComputingSkill's engine (typical AAA game, high settings), not measured benchmarks. Real results vary by game, settings, drivers and memory speed.</em></p>
 HTML
 );
