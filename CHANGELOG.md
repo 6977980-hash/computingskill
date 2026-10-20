@@ -2,6 +2,16 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.55 (20 Oct 2026) — K3 tool titles and answers
+From the 20 Oct GSC keyword-gap report (tools with search volume but no Search Console presence). New code in `inc/k3-pages.php`; sections, tables and links reuse the K1 helpers.
+- Title tags (≤60) for 9 pages: Aspect Ratio Calculator (16:9, 21:9), Download Time Calculator (How Long Will It Take?), Monitor Size Calculator (Screen Dimensions in Inches & cm), PPI Calculator (Pixel Density), DPI Calculator (Print vs Mouse DPI), CPU Wattage Calculator, PC Power Consumption Calculator (Wattage & Electricity Cost), PC Part Compatibility Checker, What Is a CPU Bottleneck? Signs & How to Fix It. H1s unchanged.
+- Meta descriptions with a number for all 9 (148-160 characters).
+- Direct answer under each calculator: 16:9 and 21:9 resolutions table + how to work out 16:9; 25-150GB download times at 50 Mbps-1 Gbps; 24/27/32/34-inch screen sizes; common monitor PPI; largest print at 300/150 DPI; CPU watts at idle/gaming/full load; gaming PC wall draw and monthly cost; CPU-GPU compatibility (PCIe across generations, CPUs without integrated graphics, x8 cards).
+- Further sections: best monitor size for 1080p/1440p/4K (PPI table), laptop PPI grid, print DPI vs mouse DPI, cost of gaming time by wall draw, "What has to match in a PC build" table, and a 7-step "How to Fix a CPU Bottleneck" list (the guide's "What to Do About…" H2 is renamed).
+- 23 FAQ items in FAQPage schema (2-3 per page) via `cs_k3_extra_faqs()`.
+- Monitor size worked example corrected to 23.5 × 13.2 in for a 27-inch screen (it said 23.6 × 13.3; the formula and reference table give 23.5 × 13.2).
+- `CS_CALC_PAGES_REV` 2026-10-20-k3 dates the 9 pages today.
+
 ## 1.0.54 (20 Oct 2026) — K2 /vram/ page
 From the 20 Oct GSC keyword-gap report ("vram", "what is vram", "vram vs ram", "how to check vram", "dedicated vs shared gpu memory"). New code in `inc/k2-pages.php`.
 - Title tag "What Is VRAM? VRAM vs RAM & How to Check Your VRAM" (50) and a new meta description; content-index (llms.txt) description updated.
