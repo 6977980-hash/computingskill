@@ -95,7 +95,7 @@ function cs_perf_calc_heights() {
 		'bottleneck'         => array( 510, 310, array( 1620, 850 ) ),
 		'build-cost'         => array( 980, 500, null ),
 		'compatibility'      => array( 1780, 920, null ),
-		'cooling'            => array( 480, 270, null ),
+		'cooling'            => array( 312, 190, null ), // E4: "Other CPU" watts box hidden until picked.
 		'cpu-performance'    => array( 60, 60, null ),
 		'cpu-power'          => array( 140, 60, null ),
 		'cpu-vs-gpu'         => array( 190, 80, null ),
@@ -110,9 +110,9 @@ function cs_perf_calc_heights() {
 		'mbps-to-mbs'        => array( 60, 60, null ),
 		'mbs-to-mbps'        => array( 60, 60, null ),
 		'monitor-size'       => array( 140, 60, null ),
-		'power-consumption'  => array( 880, 520, null ),
+		'power-consumption'  => array( 737, 356, null ), // E4: same.
 		'ppi'                => array( 220, 140, null ),
-		'psu'                => array( 660, 350, array( 1370, 710 ) ),
+		'psu'                => array( 492, 268, array( 1370, 710 ) ), // E4: same.
 		'ram'                => array( 190, 80, null ),
 		'refresh-rate'       => array( 180, 80, null ),
 		'resolution'         => array( 140, 60, null ),

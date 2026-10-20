@@ -44,7 +44,17 @@
 		var d = decimals === undefined ? 1 : decimals;
 		// toLocaleString() alone stops at 3 decimals, so a 4-decimal result
 		// lost its last digit (and tiny values showed as 0).
-		return Number( num.toFixed( d ) ).toLocaleString( undefined, { maximumFractionDigits: d } );
+		// E4 (FUN-07): always en-US, like the page text around it; the
+		// browser locale turned 1234.5 into "1.234,5" next to English words.
+		return Number( num.toFixed( d ) ).toLocaleString( 'en-US', { maximumFractionDigits: d } );
+	}
+
+	// E4 (FUN-07): money always shows 2 decimals ("$1,234.50", not "$1,234.5").
+	function fmtMoney( num ) {
+		if ( ! isFinite( num ) ) {
+			return '—';
+		}
+		return Number( num.toFixed( 2 ) ).toLocaleString( 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 } );
 	}
 
 	function clamp( n, min, max ) {
@@ -408,6 +418,34 @@
 				return;
 			}
 			var input = inputs[ field.id ];
+			// E4 (FUN-05): `cpu_other=1` marks a link made with "Other / not
+			// listed": the part in `cpu` goes into the closest-part picker and
+			// the result keeps its "isn't in our list" note.
+			var otherKey = field.id + '_other';
+			if ( input.csOther && params.get( otherKey ) === '1' ) {
+				var stand = params.get( field.id );
+				var ok = false;
+				for ( var i = 0; i < input.csOther.options.length; i++ ) {
+					if ( input.csOther.options[ i ].value === stand ) {
+						ok = true;
+					}
+				}
+				if ( ! ok ) {
+					params.delete( field.id );
+					params.delete( otherKey );
+					dirty = true;
+					return;
+				}
+				input.value = OTHER_VALUE;
+				input.csOther.value = stand;
+				input.csSyncOther();
+				applied = true;
+				return;
+			}
+			if ( params.has( otherKey ) ) {
+				params.delete( otherKey );
+				dirty = true;
+			}
 			var val = shareValueFor( field, input, params.get( field.id ) );
 			if ( val === null ) {
 				params.delete( field.id );
@@ -430,13 +468,20 @@
 		return applied && ! dirty;
 	}
 
-	function updateShareUrl( def, values ) {
+	function updateShareUrl( def, values, inputs ) {
 		var params = shareParams();
 		if ( ! params ) {
 			return;
 		}
 		def.fields.forEach( function ( field ) {
 			var v = values[ field.id ];
+			if ( inputs[ field.id ] && inputs[ field.id ].csOther ) {
+				if ( inputs[ field.id ].value === OTHER_VALUE ) {
+					params.set( field.id + '_other', '1' );
+				} else {
+					params.delete( field.id + '_other' );
+				}
+			}
 			var isDefault = field.default !== undefined && ( field.type === 'checkbox' ? !! field.default === !! v : String( field.default ) === String( v ) );
 			if ( isDefault || v === '' || v === undefined ) {
 				params.delete( field.id );
@@ -452,7 +497,10 @@
 		if ( ! params ) {
 			return;
 		}
-		def.fields.forEach( function ( field ) { params.delete( field.id ); } );
+		def.fields.forEach( function ( field ) {
+			params.delete( field.id );
+			params.delete( field.id + '_other' );
+		} );
 		writeShareUrl( params );
 	}
 
@@ -509,12 +557,32 @@
 		var fieldsRoot = container.querySelector( '[data-role="fields"]' );
 		var resultRoot = container.querySelector( '[data-role="result"]' );
 		var inputs = {};
+		var wrappers = {};
 
 		def.fields.forEach( function ( field ) {
 			var built = buildField( field );
 			fieldsRoot.appendChild( built.wrapper );
 			inputs[ field.id ] = built.input;
+			wrappers[ field.id ] = built.wrapper;
 		} );
+
+		// E4 (FUN-04): a field with `showIf: { field, value }` is shown only
+		// while that other field has that value (the PSU, PC Power and
+		// Cooling calculators' "Other CPU" watts box). While hidden it is
+		// neither read nor checked: calculate() uses its default.
+		function syncShown() {
+			def.fields.forEach( function ( field ) {
+				if ( field.showIf && inputs[ field.showIf.field ] ) {
+					wrappers[ field.id ].hidden = inputs[ field.showIf.field ].value !== field.showIf.value;
+				}
+			} );
+		}
+		def.fields.forEach( function ( field ) {
+			if ( field.showIf && inputs[ field.showIf.field ] ) {
+				inputs[ field.showIf.field ].addEventListener( 'change', syncShown );
+			}
+		} );
+		syncShown();
 
 		// Mutually-exclusive field pairs (a field definition sets
 		// `clears: '<other field id>'`, e.g. the Refresh Rate calculator's
@@ -548,6 +616,10 @@
 
 			try {
 				def.fields.forEach( function ( field ) {
+					if ( field.showIf && wrappers[ field.id ].hidden ) {
+						values[ field.id ] = field.default;
+						return;
+					}
 					var result = readField( inputs[ field.id ], field );
 					values[ field.id ] = result.value;
 					if ( result.warning ) {
@@ -586,7 +658,7 @@
 				html += comboPageLink( values.cpu, values.gpu, HW );
 			}
 			if ( shares ) {
-				updateShareUrl( def, values );
+				updateShareUrl( def, values, inputs );
 				html += shareBarHtml();
 			}
 			resultRoot.innerHTML = html;
@@ -601,8 +673,10 @@
 			submitBtn.addEventListener( 'click', calculate );
 		}
 
+		// E4 (FUN-01): only Enter in an input or select calculates; Enter on
+		// a link in the result (combo page, game, methodology) follows it.
 		container.addEventListener( 'keydown', function ( e ) {
-			if ( e.key === 'Enter' && e.target.tagName !== 'BUTTON' ) {
+			if ( e.key === 'Enter' && ( e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' ) ) {
 				e.preventDefault();
 				calculate();
 			}
@@ -627,6 +701,7 @@
 						input.csSyncOther();
 					}
 				} );
+				syncShown();
 				resultRoot.classList.remove( 'has-error' );
 				resultRoot.innerHTML = '';
 				if ( shares ) {
@@ -651,7 +726,9 @@
 					}
 				} );
 			} );
-			if ( applyShareParams( def, inputs ) ) {
+			var fromLink = applyShareParams( def, inputs );
+			syncShown();
+			if ( fromLink ) {
 				calculate();
 			}
 		}
@@ -898,7 +975,8 @@
 		opts.push( { value: 'custom', label: 'Other CPU — enter its watts below' } );
 		return [
 			{ id: 'cpu', type: 'select', label: 'CPU', icon: 'cpu', default: HW.cpu && HW.cpu[ 'ryzen-5-7600' ] ? 'ryzen-5-7600' : ( opts[ 0 ] ? opts[ 0 ].value : 'custom' ), options: opts },
-			{ id: 'cpuTdp', type: 'number', label: wattsLabel, default: 125, min: 15, max: 400, help: wattsHelp }
+			// E4 (FUN-04): shown, read and checked only with "Other CPU".
+			{ id: 'cpuTdp', type: 'number', label: wattsLabel, default: 125, min: 15, max: 400, help: wattsHelp, showIf: { field: 'cpu', value: 'custom' } }
 		];
 	}
 	// D5 (Oct 2026, audit 1.19): gaming draw as a share of the max
@@ -925,7 +1003,7 @@
 		share: true,
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
-		].concat( cpuPickerFields( 'Other CPU: max turbo/boost power in watts (only used with "Other CPU")', 'Intel lists this as "Maximum Turbo Power"; for AMD Ryzen use the PPT figure (about TDP × 1.35).' ) ).concat( [
+		].concat( cpuPickerFields( 'Other CPU: max turbo/boost power in watts', 'Intel lists this as "Maximum Turbo Power"; for AMD Ryzen use the PPT figure (about TDP × 1.35).' ) ).concat( [
 			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8 },
 			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8 },
 			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12 },
@@ -973,7 +1051,7 @@
 	CS_DEFS['power-consumption'] = {
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
-		].concat( cpuPickerFields( 'Other CPU: rated TDP in watts (only used with "Other CPU")', 'Used as its gaming draw, a rough stand-in: X3D chips usually draw less in games, unlocked Intel K chips more.' ) ).concat( [
+		].concat( cpuPickerFields( 'Other CPU: rated TDP in watts', 'Used as its gaming draw, a rough stand-in: X3D chips usually draw less in games, unlocked Intel K chips more.' ) ).concat( [
 			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8 },
 			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8 },
 			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12 },
@@ -1013,11 +1091,11 @@
 				[ 'Estimated draw from the wall at idle / light use', fmt( idleW, 0 ) + 'W' ],
 				[ 'Parts’ own draw while gaming (before PSU loss)', fmt( loadDc, 0 ) + 'W, incl. ' + ( cpu.custom ? 'your CPU' : 'the ' + cpu.name ) + ' at about ' + fmt( cpu.gaming, 0 ) + 'W and the ' + gpu.name + ' at ' + gpu.tdp_w + 'W' ],
 				[ 'Daily energy use', fmt( dailyKwh, 2 ) + ' kWh' ],
-				[ 'Estimated daily cost', '$' + fmt( dailyCost, 2 ) ],
-				[ 'Estimated monthly cost (30 days)', '$' + fmt( monthlyCost, 2 ) ],
-				[ 'Estimated yearly cost (365 days)', '$' + fmt( yearlyCost, 2 ) ]
+				[ 'Estimated daily cost', '$' + fmtMoney( dailyCost ) ],
+				[ 'Estimated monthly cost (30 days)', '$' + fmtMoney( monthlyCost ) ],
+				[ 'Estimated yearly cost (365 days)', '$' + fmtMoney( yearlyCost ) ]
 			];
-			return resultBlock( 'About <strong>' + fmt( loadW, 0 ) + 'W</strong> from the wall while gaming and <strong>' + fmt( idleW, 0 ) + 'W</strong> at idle — roughly <strong>$' + fmt( monthlyCost, 2 ) + '/month</strong> at your hours and rate.', rows, 'wall figures include typical PSU efficiency loss (about 88% efficient while gaming, 80% at idle). Real draw varies by game, settings, frame-rate caps and power-saving options.' );
+			return resultBlock( 'About <strong>' + fmt( loadW, 0 ) + 'W</strong> from the wall while gaming and <strong>' + fmt( idleW, 0 ) + 'W</strong> at idle — roughly <strong>$' + fmtMoney( monthlyCost ) + '/month</strong> at your hours and rate.', rows, 'wall figures include typical PSU efficiency loss (about 88% efficient while gaming, 80% at idle). Real draw varies by game, settings, frame-rate caps and power-saving options.' );
 		}
 	};
 
@@ -1053,7 +1131,7 @@
 		],
 		compute: function ( v ) {
 			var sym = { USD: '$', EUR: '€', GBP: '£', CAD: 'C$', AUD: 'A$', INR: '₹', PKR: 'Rs ' }[ v.currency ] || '$';
-			var money = function ( n ) { return sym + fmt( n, 2 ); };
+			var money = function ( n ) { return sym + fmtMoney( n ); };
 			var parts = BUILD_PARTS.reduce( function ( sum, p ) { return sum + v[ p[ 0 ] ]; }, 0 );
 			var total = parts + v.extras + v.taxShipping;
 			if ( total <= 0 ) {
@@ -1168,6 +1246,13 @@
 			var preset = BN_PRESET_FACTOR[ v.preset ] ? v.preset : 'high';
 			var c = fpsCeilings( cpu, gpu, v.resolution, preset, gameType );
 			var upscale = UPSCALE_GAIN[ v.upscaling ] ? v.upscaling : 'off';
+			// E4 (FUN-06): a picked game without its own upscaling or frame
+			// generation option (data/games-data.php) gets neither, with a note.
+			var gameNotes = [];
+			if ( game && game.upscaling === false && upscale !== 'off' ) {
+				gameNotes.push( game.name + ' has no built-in upscaling (DLSS / FSR / XeSS), so this estimate is at native resolution.' );
+				upscale = 'off';
+			}
 			var gpuFps = c.gpu * ( upscale !== 'off' ? UPSCALE_GAIN[ upscale ][ v.resolution ] : 1 );
 			var cpuCap = c.cpu;
 			var estimate = Math.min( gpuFps, cpuCap );
@@ -1179,6 +1264,10 @@
 			var spread = closeness >= 0.85 ? 0.22 : 0.15;
 			// Frame generation: 3x/4x is RTX 50 only; other cards top out at 2x.
 			var fg = v.framegen === '2' || v.framegen === '3' || v.framegen === '4' ? Number( v.framegen ) : 1;
+			if ( game && game.framegen === false && fg > 1 ) {
+				gameNotes.push( game.name + ' has no frame generation option, so none is added.' );
+				fg = 1;
+			}
 			var fgNote = '';
 			if ( fg > 2 && gpu.fg !== 'mfg' ) {
 				fgNote = gpu.name + ' supports up to 2x frame generation, so 2x is used.';
@@ -1215,8 +1304,11 @@
 				rows.push( [ game.name + ' — publisher recommended', escapeHtml( game.rec.cpu + ' · ' + game.rec.gpu + ' · ' + game.rec.ram + 'GB RAM' ) ] );
 				rows.push( [ 'Full requirements', '<a href="' + escapeHtml( game.url ) + '">' + escapeHtml( game.name ) + ' system requirements</a>' ] );
 			}
+			var noteHtml = gameNotes.length ? '<div class="cs-warnings">' + gameNotes.map( function ( n ) {
+				return '<p class="cs-warning">⚠ ' + escapeHtml( n ) + '</p>';
+			} ).join( '' ) + '</div>' : '';
 			var extras = upscale !== 'off' || fg > 1;
-			return resultBlock( 'Estimated average: <strong>' + Math.round( shown ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( extras ? ' with ' + [ upscale !== 'off' ? escapeHtml( tech ) + ' ' + upscale : '', fg > 1 ? fg + 'x frame generation' : '' ].filter( Boolean ).join( ' and ' ) : '' ) + ( game ? ' — a general estimate for this type of game, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers. Ray tracing isn’t modelled, and upscaling and frame generation gains are typical averages that need game support (<a href="/dlss-fsr-frame-generation-explained/">how they work</a>); ' + SCORE_NOTE );
+			return noteHtml + resultBlock( 'Estimated average: <strong>' + Math.round( shown ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( extras ? ' with ' + [ upscale !== 'off' ? escapeHtml( tech ) + ' ' + upscale : '', fg > 1 ? fg + 'x frame generation' : '' ].filter( Boolean ).join( ' and ' ) : '' ) + ( game ? ' — a general estimate for this type of game, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers. Ray tracing isn’t modelled, and upscaling and frame generation gains are typical averages that need game support (<a href="/dlss-fsr-frame-generation-explained/">how they work</a>); ' + SCORE_NOTE );
 		}
 	};
 
@@ -1254,6 +1346,7 @@
 	}
 
 	CS_DEFS.canirun = {
+		share: true, // E4 (UX-03)
 		fields: [
 			{ id: 'cpu', type: 'select-hardware', source: 'cpu', other: true, label: 'Your CPU', icon: 'cpu' },
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', other: true, label: 'Your GPU', icon: 'gpu' },
@@ -1346,6 +1439,7 @@
 
 	/* ---- 7. PC Upgrade Calculator ---- */
 	CS_DEFS.upgrade = {
+		share: true, // E4 (UX-03)
 		fields: [
 			{ id: 'cpu', type: 'select-hardware', source: 'cpu', other: true, label: 'Current CPU', icon: 'cpu' },
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', other: true, label: 'Current GPU', icon: 'gpu' },
@@ -1773,7 +1867,7 @@
 	CS_DEFS.cooling = {
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
-		].concat( cpuPickerFields( 'Other CPU: max turbo/boost power in watts (only used with "Other CPU")', 'Intel lists this as "Maximum Turbo Power"; for AMD Ryzen use the PPT figure (about TDP × 1.35).' ) ).concat( [
+		].concat( cpuPickerFields( 'Other CPU: max turbo/boost power in watts', 'Intel lists this as "Maximum Turbo Power"; for AMD Ryzen use the PPT figure (about TDP × 1.35).' ) ).concat( [
 			{ id: 'caseSize', type: 'select', label: 'Case size', default: 'mid', options: [
 				{ value: 'compact', label: 'Small form factor / compact' }, { value: 'mid', label: 'Mid tower' }, { value: 'full', label: 'Full tower' }
 			] },
@@ -1873,10 +1967,10 @@
 		compute: function ( v ) {
 			var years = ( v.tbw * 1000 ) / ( v.dailyWrites * 365 );
 			var rows = [
-				[ 'Rated endurance', v.tbw + ' TBW' ],
+				[ 'Rated endurance', fmt( v.tbw, 2 ) + ' TBW' ],
 				[ 'Estimated lifespan at this write rate', fmt( years, 1 ) + ' years' ]
 			];
-			return resultBlock( 'At ' + v.dailyWrites + 'GB/day, this SSD is rated to last roughly <strong>' + fmt( years, 1 ) + ' years</strong>.', rows, 'TBW is a warranty floor, not a hard cutoff — most SSDs keep working well beyond their rated TBW.' );
+			return resultBlock( 'At ' + fmt( v.dailyWrites, 2 ) + 'GB/day, this SSD is rated to last roughly <strong>' + fmt( years, 1 ) + ' years</strong>.', rows, 'TBW is a warranty floor, not a hard cutoff — most SSDs keep working well beyond their rated TBW.' );
 		}
 	};
 
@@ -1976,7 +2070,8 @@
 			var bytes = v.amount * units[ v.from ];
 			var result = bytes / units[ v.to ];
 			var rows = Object.keys( units ).map( function ( u ) { return [ name( u ), fmtStorage( bytes / units[ u ] ) ]; } );
-			return resultBlock( v.amount + ' ' + name( v.from ) + ' = <strong>' + fmtStorage( result ) + ' ' + name( v.to ) + '</strong>', rows, false );
+			// E4 (FUN-08): the echoed amount gets separators too.
+			return resultBlock( fmtStorage( v.amount ) + ' ' + name( v.from ) + ' = <strong>' + fmtStorage( result ) + ' ' + name( v.to ) + '</strong>', rows, false );
 		}
 	};
 
@@ -2107,11 +2202,11 @@
 	/* ---- 25. Internet Data Usage Calculator ---- */
 	CS_DEFS['data-usage'] = {
 		fields: [
-			{ id: 'streamingHours', type: 'number', label: 'Video streaming (hours/day)', default: 2, min: 0, max: 24, required: false },
+			{ id: 'streamingHours', type: 'number', label: 'Video streaming (hours/day)', default: 2, min: 0, max: 24, required: false, blankValue: 0 },
 			{ id: 'streamingQuality', type: 'select', label: 'Streaming quality', default: 'hd', options: [ { value: 'sd', label: 'SD' }, { value: 'hd', label: 'HD' }, { value: '4k', label: '4K' } ] },
-			{ id: 'browsingHours', type: 'number', label: 'Browsing / social media (hours/day)', default: 2, min: 0, max: 24, required: false },
-			{ id: 'gamingHours', type: 'number', label: 'Online gaming (hours/day)', default: 1, min: 0, max: 24, required: false },
-			{ id: 'callHours', type: 'number', label: 'Video calls (hours/day)', default: 0.5, min: 0, max: 24, required: false }
+			{ id: 'browsingHours', type: 'number', label: 'Browsing / social media (hours/day)', default: 2, min: 0, max: 24, required: false, blankValue: 0 },
+			{ id: 'gamingHours', type: 'number', label: 'Online gaming (hours/day)', default: 1, min: 0, max: 24, required: false, blankValue: 0 },
+			{ id: 'callHours', type: 'number', label: 'Video calls (hours/day)', default: 0.5, min: 0, max: 24, required: false, blankValue: 0 }
 		],
 		compute: function ( v ) {
 			// GB per hour. Matches Netflix's own published help-center figures
@@ -2124,6 +2219,11 @@
 			// 2026) lists up to 1GB/h SD, 3GB/h HD, 7GB/h 4K. Video calls use
 			// 1GB/h: a 720p HD call at Zoom's published ~1.2 Mbps each way is
 			// about 1.1GB/h, matching the page's worked example.
+			// E4 (FUN-02): a cleared field counts as 0 hours (blankValue), not
+			// its default, so an all-blank form is an error, not 201.6 GB.
+			if ( v.streamingHours + v.browsingHours + v.gamingHours + v.callHours <= 0 ) {
+				throw { msg: 'Enter the hours per day for at least one activity.' };
+			}
 			var streamRate = { sd: 1.0, hd: 3.0, '4k': 7.0 }[ v.streamingQuality ];
 			var dailyGb = ( v.streamingHours * streamRate ) + ( v.browsingHours * 0.06 ) + ( v.gamingHours * 0.1 ) + ( v.callHours * 1.0 );
 			var monthlyGb = dailyGb * 30;

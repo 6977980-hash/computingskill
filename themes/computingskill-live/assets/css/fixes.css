@@ -39,6 +39,8 @@
    under the CPU/GPU field. */
 .cs-field-other { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--cs-border); }
 .cs-field-other[hidden] { display: none; }
+/* E4 (FUN-04): fields shown only for one choice ("Other CPU" watts). */
+.cs-field[hidden] { display: none; }
 .cs-field-other label { font-size: 0.9rem; }
 
 /* GPU/CPU tier lists and calculator reference tables (deep audit 3.2/3.7, D8). */

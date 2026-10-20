@@ -124,6 +124,9 @@ function cs_enqueue_calculators( $type = '' ) {
 					'min'     => array( 'cpu' => $g['min']['cpu'], 'gpu' => $g['min']['gpu'], 'ram' => $g['min']['ram'] ),
 					'rec'     => array( 'cpu' => $g['rec']['cpu'], 'gpu' => $g['rec']['gpu'], 'ram' => $g['rec']['ram'] ),
 					'req'     => isset( $g['req'] ) ? $g['req'] : null, // D10: Can I Run It.
+					// E4 (FUN-06): false = the game has no such option.
+					'upscaling' => isset( $g['upscaling'] ) ? (bool) $g['upscaling'] : null,
+					'framegen'  => isset( $g['framegen'] ) ? (bool) $g['framegen'] : null,
 				);
 			}
 		}

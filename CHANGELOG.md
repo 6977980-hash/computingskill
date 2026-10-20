@@ -2,6 +2,17 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.57 (20 Oct 2026) — E4 calculator fixes
+From the 20 Oct full audit (E4: FUN-01, FUN-02, FUN-04..08, UX-03). No engine constants changed; PHP and JS engines stay in sync.
+- FUN-01: Enter only calculates from an input or select; Enter on a link in a result (combo page, game, methodology) now follows the link.
+- FUN-02: Internet Data Usage: a cleared hours field counts as 0, not its default; all four blank shows "Enter the hours per day for at least one activity."
+- FUN-04: PSU, PC Power Consumption and PC Cooling: the "Other CPU" watts field shows (and is required) only when "Other CPU" is picked (`showIf` field option). Reserved field heights in `cs_perf_calc_heights()` lowered to match.
+- FUN-05: share links made with "Other / not listed" carry `cpu_other=1` / `gpu_other=1`; the link reopens with the closest-part picker and keeps the "isn't in our list" note. An invalid stand-in part is dropped and nothing is auto-calculated.
+- FUN-06: `upscaling` / `framegen` flags per game in `data/games-data.php` (checked 20 Oct 2026; missing = not confirmed). FPS Calculator ignores upscaling or frame generation for a picked game that has none (Valorant, League of Legends, Elden Ring, Minecraft Java; frame generation also CS2, BG3, RDR2) and says so above the result.
+- FUN-07: numbers always use en-US separators (was the browser locale, "1.234,5"); money always 2 decimals (`fmtMoney()`): Build Cost and PC Power Consumption.
+- FUN-08: Storage Converter and SSD Lifespan echo the typed amount with separators ("999,999,999 GB").
+- UX-03: PC Upgrade Calculator and Can I Run It get share links ("Copy link to this result"). `cs_share_param_keys()` adds `cpu_other`, `gpu_other`, `ram`, `storageType`, `target` (canonical stays clean); Privacy Policy share sentence names the two tools; `CS_LEGAL_REV` 2026-10-20-e4.
+
 ## 1.0.56 (20 Oct 2026) — K4 new keyword content
 From the 20 Oct GSC keyword-gap report (K4 in `audit/handoff/K-phases-handoff.md`). New code in `inc/k4-pages.php`; posts are created as WordPress **drafts** for Ali to review and publish.
 - New draft posts (`data/blog-drafts/`): "Best AM4 CPU for Gaming (2026): Ryzen 5600 to 5800X3D" (7 AM4 CPUs, 5600 → 5700X3D/5800X3D upgrade table, AM4 vs AM5), "Best CPU for RTX 5060: How Much Processor Is Enough?" (34 CPUs), "Best GPU for Ryzen 7 7800X3D at 1080p, 1440p and 4K" (37 GPUs). Every number generated from `cs_calculate_bottleneck()`, `cs_tl_fps()` and `cs_aeo_psu()`.

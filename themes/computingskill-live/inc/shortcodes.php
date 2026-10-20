@@ -89,7 +89,7 @@ function cs_calculator_shortcode( $atts ) {
 
 	// D9 (audit 4.2): a share link fills in and calculates on load, so the
 	// result area reserves its height too (fixes.css).
-	$shared = in_array( $type, array( 'bottleneck', 'fps', 'psu' ), true ) && function_exists( 'cs_share_param_keys' ) && array_intersect( array_keys( $_GET ), cs_share_param_keys() ); // phpcs:ignore WordPress.Security.NonceVerification
+	$shared = in_array( $type, array( 'bottleneck', 'fps', 'psu', 'upgrade', 'canirun' ), true ) && function_exists( 'cs_share_param_keys' ) && array_intersect( array_keys( $_GET ), cs_share_param_keys() ); // phpcs:ignore WordPress.Security.NonceVerification
 
 	ob_start();
 	?>

@@ -446,7 +446,9 @@ add_filter( 'rank_math/frontend/description', 'cs_improve_short_descriptions', 2
  * Keep the list in sync with the field ids of share-enabled calculators.
  */
 function cs_share_param_keys() {
-	return array( 'cpu', 'gpu', 'resolution', 'preset', 'gametype', 'game', 'cpuTdp', 'ramSticks', 'storageDrives', 'fans', 'overclock', 'upscaling', 'framegen' );
+	// E4: + the "Other / not listed" markers (FUN-05) and the Upgrade
+	// Calculator / Can I Run It fields (UX-03).
+	return array( 'cpu', 'gpu', 'resolution', 'preset', 'gametype', 'game', 'cpuTdp', 'ramSticks', 'storageDrives', 'fans', 'overclock', 'upscaling', 'framegen', 'cpu_other', 'gpu_other', 'ram', 'storageType', 'target' );
 }
 
 function cs_canonical_without_share_params( $url ) {
@@ -471,7 +473,7 @@ function cs_privacy_share_link_text( $content ) {
 	if ( false === strpos( $content, $needle ) || false !== strpos( $content, 'cs-privacy-share' ) ) {
 		return $content;
 	}
-	$extra = ' <span class="cs-privacy-share">' . esc_html__( 'On the Bottleneck, FPS and PSU calculators, your selections are also added to the page address after you press Calculate, so you can copy or bookmark a link to that result. We do not save results on our side. When you or anyone you share the link with opens it, those selections reach our server as part of the address, like any web request, and can appear in the standard server logs described under Log Data.', 'computingskill' ) . '</span>';
+	$extra = ' <span class="cs-privacy-share">' . esc_html__( 'On the Bottleneck, FPS, PSU and PC Upgrade calculators and Can I Run It, your selections are also added to the page address after you press Calculate, so you can copy or bookmark a link to that result. We do not save results on our side. When you or anyone you share the link with opens it, those selections reach our server as part of the address, like any web request, and can appear in the standard server logs described under Log Data.', 'computingskill' ) . '</span>';
 	return preg_replace( '/' . preg_quote( $needle, '/' ) . '/', $needle . $extra, $content, 1 );
 }
 add_filter( 'the_content', 'cs_privacy_share_link_text', 20 );

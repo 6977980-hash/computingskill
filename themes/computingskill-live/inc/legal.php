@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Disclaimer get their modified date set once, and the page cache is
  * purged once so the new footer and headers reach cached pages.
  */
-define( 'CS_LEGAL_REV', '2026-10-20-e3' );
+define( 'CS_LEGAL_REV', '2026-10-20-e4' );
 define( 'CS_PRIVACY_UPDATED', 'October 20, 2026' );
 
 /* ------------------------------------------------------------------ */
