@@ -254,6 +254,7 @@ function cs_title_overrides() {
 		'cpu-vs-gpu-calculator'     => __( 'CPU vs GPU Calculator: Side-by-Side Score Comparison', 'computingskill' ),
 		'ram'                       => __( 'What Is RAM? How Memory Works & Which Specs Matter', 'computingskill' ),
 		'psu'                       => __( 'What Is a PSU? How Power Supplies Work & Their Ratings', 'computingskill' ),
+		'vram'                      => __( 'What Is VRAM? VRAM vs RAM & How to Check Your VRAM', 'computingskill' ),
 		'gpu'                       => __( 'What Is a GPU? How Graphics Cards Work & Key Specs', 'computingskill' ),
 		'comparisons'               => __( 'PC Hardware Comparisons: SSD vs HDD, DDR4 vs DDR5', 'computingskill' ),
 		'contact'                   => __( 'Contact Computing Skill: Questions & Spec Corrections', 'computingskill' ),
@@ -362,6 +363,8 @@ function cs_page_description_overrides() {
 		'ssd' => __( 'How SSDs work, NVMe vs SATA, and the specs that matter — interface, NAND type, DRAM cache, TBW endurance — plus how to choose the right SSD for your PC.', 'computingskill' ),
 		// K1: descriptions with a number from the page's own tables (inc/k1-pages.php).
 		'storage-calculator' => __( 'How many photos, hours of 4K video and games fit on 512GB, 1TB, 2TB or 4TB? A 1TB drive holds about 225,000 photos or 9 big games. Check your own files.', 'computingskill' ),
+		// K2 (inc/k2-pages.php).
+		'vram' => __( 'VRAM (video RAM) is your graphics card\'s own memory. See VRAM vs RAM, dedicated vs shared GPU memory, and how to check how much VRAM you have.', 'computingskill' ),
 		'storage-tools' => __( 'Free storage calculators: SSD lifespan and TBW/DWPD endurance, drive space planning, and storage unit conversions, plus SSD, HDD and NVMe background guides.', 'computingskill' ),
 		'pc-compatibility-checker' => __( 'Check socket and BIOS support, DDR4 vs DDR5, board size, cooler height and GPU length vs your case, PSU headroom and the 16-pin GPU cable before you build a PC.', 'computingskill' ),
 		'ssd-lifespan-calculator' => __( 'How long does an SSD last? A 600 TBW drive at 50GB of writes a day takes about 33 years to reach its rating. Enter yours, and learn to check SSD health.', 'computingskill' ),

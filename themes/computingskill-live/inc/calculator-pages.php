@@ -273,6 +273,11 @@ function cs_calculator_page_fixes() {
 			),
 		),
 
+		// K2: a one-sentence definition with the full name first.
+		'vram' => array(
+			array( 'VRAM, or video memory, is', 'VRAM, or video memory, is', __( 'VRAM (video RAM, short for video random access memory) is', 'computingskill' ) ),
+		),
+
 		// Audit 1.14 / 1.15: the tool now has the breakdown and budget field.
 		'pc-build-cost-calculator' => array(
 			array( 'what percentage of your budget went to each category', 'each category', __( 'what percentage of your PC parts spending went to each category', 'computingskill' ) ),
@@ -321,14 +326,14 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-k1' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-k2' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// K1 sections, tables and FAQ (inc/k1-pages.php). D2, D3, D5 and
-		// D10 ran with earlier revs; their pages are dated already.
-		'storage-calculator', 'ssd-tbw-calculator', 'ssd-lifespan-calculator', 'resolution-calculator', 'upload-time-calculator',
+		// K2 sections and FAQ (inc/k2-pages.php). K1, D2, D3, D5 and D10
+		// ran with earlier revs; their pages are dated already.
+		'vram',
 	);
 }
 

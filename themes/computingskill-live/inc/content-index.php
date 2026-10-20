@@ -108,7 +108,7 @@ function cs_content_index_groups() {
 				array( 'slug' => 'psu', 'title' => __( 'What Is a PSU? How a Power Supply Works and Its Ratings', 'computingskill' ), 'desc' => __( 'Learn what a power supply does and what its wattage, efficiency and cable ratings mean; the buying steps are in How to Choose a PSU.', 'computingskill' ) ),
 				array( 'slug' => 'ram', 'title' => __( 'What Is RAM? How Memory Works and Which Specs Matter', 'computingskill' ), 'desc' => __( 'Learn what RAM does and which memory specs (speed, timings, channels) matter; GB figures by use case are in How Much RAM Do I Need?', 'computingskill' ) ),
 				array( 'slug' => 'ssd', 'title' => __( 'SSD: What It Is & How to Choose One', 'computingskill' ), 'desc' => __( 'Learn how SSDs work, the difference between NVMe and SATA, and how to choose the right drive for your PC.', 'computingskill' ) ),
-				array( 'slug' => 'vram', 'title' => __( 'VRAM: What It Is & Why It Matters', 'computingskill' ), 'desc' => __( 'Learn what VRAM does, why it\'s different from system RAM, and how much video memory you actually need for gaming.', 'computingskill' ) ),
+				array( 'slug' => 'vram', 'title' => __( 'VRAM: What It Is & Why It Matters', 'computingskill' ), 'desc' => __( 'What VRAM is, VRAM vs system RAM, dedicated vs shared GPU memory, how to check how much VRAM you have, and how much you need for gaming.', 'computingskill' ) ),
 			),
 		),
 		'guides' => array(

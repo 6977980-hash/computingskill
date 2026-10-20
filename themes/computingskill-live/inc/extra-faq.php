@@ -26,13 +26,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  * existing FAQ rather than a second, redundant section.
  */
 function cs_extra_faq_definitions() {
-	return array_merge( cs_extra_faq_base(), function_exists( 'cs_k1_extra_faqs' ) ? cs_k1_extra_faqs() : array() );
+	return array_merge(
+		cs_extra_faq_base(),
+		function_exists( 'cs_k1_extra_faqs' ) ? cs_k1_extra_faqs() : array(),
+		function_exists( 'cs_k2_extra_faqs' ) ? cs_k2_extra_faqs() : array()
+	);
 }
 
 function cs_extra_faq_base() {
 	return array(
 		array(
-			'slugs' => array( 'gpu-vram-calculator', 'vram' ),
+			// K2: not on /vram/, whose own FAQ already answers it.
+			'slugs' => array( 'gpu-vram-calculator' ),
 			'q'     => __( 'How much VRAM do I need for 1440p gaming specifically?', 'computingskill' ),
 			'a'     => __( "For 1440p at high settings in most current titles, 12GB is the more realistic comfortable minimum — 8GB can still work, but leaves little headroom for texture packs, ray tracing or heavy modding, and you may need to drop a texture setting even when the frame rate itself still looks fine. 16GB is only worth specifically chasing at 1440p if you want ray tracing or 4K-quality texture packs turned on; for standard high/ultra settings without ray tracing, 12GB clears comfortably.", 'computingskill' ),
 		),

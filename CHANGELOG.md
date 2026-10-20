@@ -2,6 +2,14 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.54 (20 Oct 2026) — K2 /vram/ page
+From the 20 Oct GSC keyword-gap report ("vram", "what is vram", "vram vs ram", "how to check vram", "dedicated vs shared gpu memory"). New code in `inc/k2-pages.php`.
+- Title tag "What Is VRAM? VRAM vs RAM & How to Check Your VRAM" (50) and a new meta description; content-index (llms.txt) description updated.
+- Opening sentence now starts "VRAM (video RAM, short for video random access memory) is…" (text swap in `inc/calculator-pages.php`).
+- Three new H2 sections after "How VRAM Works": "VRAM vs RAM" (comparison table; bandwidth computed from bus width × data rate), "Dedicated vs Shared GPU Memory", "How to Check How Much VRAM You Have" (Task Manager, dxdiag, Windows Settings, GPU-Z, NVIDIA/AMD software, Mac/Linux), with links to How Much VRAM Do I Need?, the GPU VRAM Calculator and What Is RAM?.
+- 4 FAQ (VRAM meaning, is VRAM faster than RAM, what uses VRAM, shared GPU memory vs VRAM), in FAQPage schema. The duplicate 1440p extra question no longer shows on /vram/ (its own FAQ answers it; it stays on the GPU VRAM Calculator).
+- `CS_CALC_PAGES_REV` 2026-10-20-k2 dates /vram/ today.
+
 ## 1.0.53 (20 Oct 2026) — K1 ranking calculators
 From the 20 Oct GSC keyword-gap report (calculators already at positions 10-20). New code in `inc/k1-pages.php`.
 - Title tags (≤60) and meta descriptions with a number for /storage-calculator/, /ssd-tbw-calculator/ (now "TBW & DWPD"), /ssd-lifespan-calculator/, /resolution-calculator/ and /upload-time-calculator/.
