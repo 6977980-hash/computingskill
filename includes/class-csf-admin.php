@@ -38,9 +38,20 @@ class CSF_Admin {
 			echo '<p>Theme not synced yet.</p>';
 		} else {
 			printf(
-				'<p>Last sync: %s — %s</p>',
+				'<p>Last sync: %s — %s%s</p>',
 				esc_html( wp_date( 'Y-m-d H:i:s', $state['time'] ) ),
-				! empty( $state['ok'] ) ? 'OK' : '<strong>FAILED (check file permissions)</strong>'
+				! empty( $state['ok'] ) ? 'OK' : '<strong>FAILED, live theme left as it was</strong>',
+				! empty( $state['note'] ) ? ' (' . esc_html( $state['note'] ) . ')' : ''
+			);
+		}
+
+		// Written by the theme's inc/hardening.php (root .htaccess block).
+		$harden = get_option( 'cs_harden' );
+		if ( is_array( $harden ) && ! empty( $harden['status'] ) ) {
+			printf(
+				'<p>.htaccess hardening: %s (checked %s).</p>',
+				'ok' === $harden['status'] ? 'OK' : '<strong>' . esc_html( $harden['status'] ) . '</strong>',
+				esc_html( wp_date( 'Y-m-d H:i', (int) $harden['checked'] ) )
 			);
 		}
 

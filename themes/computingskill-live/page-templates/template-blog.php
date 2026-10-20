@@ -13,6 +13,10 @@
  * @package ComputingSkill
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 get_header();
 
 while ( have_posts() ) :

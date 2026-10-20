@@ -4,7 +4,8 @@
  *
  * Sends to the site's own admin email (get_option('admin_email')) via
  * wp_mail(), never a hard-coded address. Uses a nonce + honeypot field
- * for basic spam/CSRF protection. No third-party form plugin required,
+ * for basic spam/CSRF protection, plus a send limit and a minimum fill
+ * time (E2 audit WP-04), because the nonce is public by design. No third-party form plugin required,
  * but nothing here conflicts with installing one later.
  *
  * @package ComputingSkill
@@ -39,18 +40,62 @@ function cs_handle_contact_form() {
 		return;
 	}
 
+	$too_fast = isset( $_POST['cs_contact_t'] ) && time() - (int) $_POST['cs_contact_t'] < CS_CONTACT_MIN_SECONDS;
+	if ( $too_fast || ! cs_contact_rate_ok() ) {
+		$GLOBALS['cs_contact_status'] = array( 'type' => 'error', 'message' => $too_fast
+			? __( 'That was quick! Please check your message and press Send again.', 'computingskill' )
+			: __( 'Several messages were sent from here in the last few minutes. Please wait about 10 minutes and try again.', 'computingskill' ) );
+		return;
+	}
+
 	$to      = get_option( 'admin_email' );
 	$subject = sprintf( '[%s] New contact form message from %s', get_bloginfo( 'name' ), $name );
 	$body    = "Name: {$name}\nEmail: {$email}\n\nMessage:\n{$message}";
 	$headers = array( 'Reply-To: ' . $name . ' <' . $email . '>' );
 
 	$sent = wp_mail( $to, $subject, $body, $headers );
+	if ( $sent ) {
+		cs_contact_rate_count();
+	}
 
 	$GLOBALS['cs_contact_status'] = $sent
 		? array( 'type' => 'success', 'message' => __( 'Thanks — your message has been sent. We\'ll get back to you as soon as we can.', 'computingskill' ) )
 		: array( 'type' => 'error', 'message' => __( 'Sorry, something went wrong sending your message. Please try again later.', 'computingskill' ) );
 }
 add_action( 'template_redirect', 'cs_handle_contact_form' );
+
+/*
+ * Send limits: 3 messages per visitor per 10 minutes, 20 per hour for the
+ * whole site (so a bot rotating addresses still can't flood the inbox).
+ * The visitor key is a salted hash of the address the request came from
+ * (plus the CDN's forwarded address), kept for 10 minutes only.
+ */
+define( 'CS_CONTACT_MIN_SECONDS', 3 );
+define( 'CS_CONTACT_PER_VISITOR', 3 );
+define( 'CS_CONTACT_PER_HOUR', 20 );
+
+function cs_contact_rate_keys() {
+	$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	$fwd = isset( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ? trim( explode( ',', (string) $_SERVER['HTTP_X_FORWARDED_FOR'] )[0] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	return array(
+		'visitor' => 'cs_contact_v_' . substr( hash_hmac( 'sha256', $ip . '|' . $fwd, wp_salt( 'nonce' ) ), 0, 20 ),
+		'site'    => 'cs_contact_site',
+	);
+}
+
+function cs_contact_rate_ok() {
+	$keys = cs_contact_rate_keys();
+	return (int) get_transient( $keys['visitor'] ) < CS_CONTACT_PER_VISITOR && (int) get_transient( $keys['site'] ) < CS_CONTACT_PER_HOUR;
+}
+
+function cs_contact_rate_count() {
+	$keys = cs_contact_rate_keys();
+	set_transient( $keys['visitor'], (int) get_transient( $keys['visitor'] ) + 1, 10 * MINUTE_IN_SECONDS );
+	// The site counter keeps its first expiry, so the hour is a fixed window.
+	$site = get_option( '_transient_timeout_' . $keys['site'] );
+	$left = $site ? max( 60, (int) $site - time() ) : HOUR_IN_SECONDS;
+	set_transient( $keys['site'], (int) get_transient( $keys['site'] ) + 1, $left );
+}
 
 /**
  * The page cache kept /contact/ for days (deep audit 6.3, Oct 2026), so
@@ -94,6 +139,7 @@ function cs_contact_form_shortcode() {
 		<form class="cs-contact-form" method="post" action="">
 			<?php wp_nonce_field( 'cs_contact_form', 'cs_contact_nonce' ); ?>
 			<p class="cs-hp-field" aria-hidden="true"><label>Website<input type="text" name="cs_contact_website" tabindex="-1" autocomplete="off"></label></p>
+			<input type="hidden" name="cs_contact_t" value="<?php echo esc_attr( (string) time() ); ?>">
 
 			<div class="cs-field">
 				<label for="cs-contact-name"><?php esc_html_e( 'Name', 'computingskill' ); ?></label>

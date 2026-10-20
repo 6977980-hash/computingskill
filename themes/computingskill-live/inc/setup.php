@@ -64,10 +64,6 @@ function cs_scripts() {
 	wp_enqueue_style( 'computingskill-style', get_template_directory_uri() . '/assets/css/style.css', array(), $theme_version );
 
 	wp_enqueue_script( 'computingskill-main', get_template_directory_uri() . '/assets/js/main.js', array(), $theme_version, true );
-
-	if ( is_singular() ) {
-		wp_enqueue_script( 'computingskill-comment-reply' );
-	}
 }
 add_action( 'wp_enqueue_scripts', 'cs_scripts' );
 

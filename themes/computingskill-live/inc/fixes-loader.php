@@ -3,8 +3,11 @@
  * Loads every fix file from the theme's /fixes folder and enqueues the
  * CSS/JS fix files.
  *
- * Each fix is loaded on its own inside try/catch, so one broken fix is
- * logged and skipped instead of taking the whole site down.
+ * Each fix is loaded on its own inside try/catch, so a fix that throws
+ * (including a ParseError) is logged and skipped instead of taking the
+ * whole site down. Compile-time fatals such as "Cannot redeclare
+ * function" can't be caught this way: prefix new function names with the
+ * fix number (cs_fix_012_...) to avoid them.
  * Prefix a fix file with "_" to disable it.
  * Emergency off switch: define( 'CS_DISABLE_FIXES', true ); in wp-config.php.
  *
@@ -63,7 +66,7 @@ function cs_enqueue_fix_assets() {
 			continue; // Skip the empty placeholder files.
 		}
 		if ( 'css' === $type ) {
-			// Inlined after the main stylesheet: it's under 1 KB, and a second
+			// Inlined after the main stylesheet (about 5 KB): a second
 			// render-blocking request costs more on mobile than the bytes do.
 			wp_add_inline_style( 'computingskill-style', (string) file_get_contents( $file ) );
 		} else {

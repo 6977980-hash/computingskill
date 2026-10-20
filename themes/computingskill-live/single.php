@@ -13,6 +13,10 @@
  * @package ComputingSkill
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 get_header();
 
 $cs_is_blog_post = ( 'post' === get_post_type() );
@@ -58,9 +62,6 @@ $cs_is_blog_post = ( 'post' === get_post_type() );
 				?>
 			</article>
 
-			<?php if ( $cs_is_blog_post && ( comments_open() || get_comments_number() ) ) : ?>
-				<?php comments_template(); ?>
-			<?php endif; ?>
 		<?php endwhile; ?>
 	</div>
 </main>

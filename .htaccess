@@ -1,0 +1,10 @@
+# This plugin folder is only the deployer: nothing in it is meant to be
+# opened in a browser (it serves no assets, and themes/ is just the source
+# that gets copied to wp-content/themes). E2 audit DEP-03.
+<IfModule mod_authz_core.c>
+	Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+	Order allow,deny
+	Deny from all
+</IfModule>

@@ -349,14 +349,21 @@ function cs_security_headers() {
 	if ( headers_sent() || is_admin() ) {
 		return;
 	}
-	if ( is_ssl() ) {
-		header( 'Strict-Transport-Security: max-age=31536000' );
+	// Once the .htaccess block from inc/hardening.php is live, the server
+	// sends these four on every response (E2 SEC-02); sending them here too
+	// would only duplicate them.
+	if ( ! function_exists( 'cs_harden_server_headers' ) || ! cs_harden_server_headers() ) {
+		if ( is_ssl() ) {
+			header( 'Strict-Transport-Security: max-age=31536000' );
+		}
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Referrer-Policy: strict-origin-when-cross-origin' );
+		header( 'Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()' );
 	}
-	header( 'X-Content-Type-Options: nosniff' );
-	header( 'Referrer-Policy: strict-origin-when-cross-origin' );
 	header( 'X-Frame-Options: SAMEORIGIN' );
-	header( "Content-Security-Policy: frame-ancestors 'self'", false );
-	header( 'Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()' );
+	// No script-src: the theme has inline scripts (D1). object-src and
+	// base-uri cost nothing and block plugin embeds and <base> hijacks (SEC-03).
+	header( "Content-Security-Policy: frame-ancestors 'self'; object-src 'none'; base-uri 'self'", false );
 }
 add_action( 'send_headers', 'cs_security_headers' );
 

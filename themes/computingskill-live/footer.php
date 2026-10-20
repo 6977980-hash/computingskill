@@ -4,6 +4,10 @@
  *
  * @package ComputingSkill
  */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 ?>
 </div><!-- #cs-content -->
 

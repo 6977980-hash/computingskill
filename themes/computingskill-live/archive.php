@@ -8,6 +8,10 @@
  * @package ComputingSkill
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 get_header();
 
 $post_type = get_post_type();

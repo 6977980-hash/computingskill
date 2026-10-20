@@ -6,6 +6,10 @@
  * @package ComputingSkill
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 get_header();
 ?>
 <main id="cs-main" class="cs-main">

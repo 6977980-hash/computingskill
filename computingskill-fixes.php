@@ -3,7 +3,7 @@
  * Plugin Name:       ComputingSkill Fixes
  * Plugin URI:        https://github.com/6977980-hash/computingskill
  * Description:       Deploys the ComputingSkill Live theme (with all site fixes) from GitHub into wp-content/themes. Fixes stay even if this plugin is removed.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            ComputingSkill
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CSF_VERSION', '1.2.0' );
+define( 'CSF_VERSION', '1.3.0' );
 define( 'CSF_FILE', __FILE__ );
 define( 'CSF_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CSF_URL', plugin_dir_url( __FILE__ ) );

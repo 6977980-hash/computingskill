@@ -12,7 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CS_THEME_VERSION', '1.0.50' );
+// Same as style.css "Version" (assets use it for ?ver= cache busting).
+define( 'CS_THEME_VERSION', (string) wp_get_theme( get_template() )->get( 'Version' ) );
 define( 'CS_THEME_DIR', get_template_directory() );
 define( 'CS_THEME_URI', get_template_directory_uri() );
 
@@ -46,6 +47,7 @@ require_once CS_THEME_DIR . '/inc/redirects.php';
 require_once CS_THEME_DIR . '/inc/technical-seo.php';
 require_once CS_THEME_DIR . '/inc/analytics.php';
 require_once CS_THEME_DIR . '/inc/legal.php';
+require_once CS_THEME_DIR . '/inc/hardening.php';
 require_once CS_THEME_DIR . '/inc/performance.php';
 require_once CS_THEME_DIR . '/inc/fixes-loader.php';
 
@@ -53,7 +55,7 @@ require_once CS_THEME_DIR . '/inc/fixes-loader.php';
  * Security hardening basics (per project spec section 37).
  */
 remove_action( 'wp_head', 'wp_generator' );                 // Don't broadcast exact WP version.
-add_filter( 'xmlrpc_enabled', '__return_false' );             // Disable XML-RPC (common attack surface).
+// XML-RPC, feed generator, comments: inc/hardening.php.
 
 /**
  * Make sure only logged-in users with edit_theme_options can see PHP

@@ -11,6 +11,10 @@
  * @package ComputingSkill
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 get_header();
 
 $games_data  = cs_get_games_data();

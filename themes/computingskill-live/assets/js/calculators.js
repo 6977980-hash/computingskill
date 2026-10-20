@@ -1225,7 +1225,7 @@
 	// highest preset that reaches the target frame rate (same formula as
 	// the FPS Calculator, by game type), plus RAM against the publisher's
 	// minimum and recommended. Server-side mirror of the example table:
-	// cs_cir_best() in inc/can-i-run.php.
+	// cs_cir_best() in inc/d10-pages.php.
 	var CIR_PRESETS = [ 'ultra', 'high', 'medium', 'low' ];
 	function cirBest( cpu, gpu, res, target, gameType ) {
 		var fps = 0;
