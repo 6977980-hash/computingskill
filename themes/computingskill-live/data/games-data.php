@@ -46,6 +46,16 @@
  * generation; Minecraft: Java Edition, Valorant, League of Legends and
  * Elden Ring have neither. Re-check when a game adds either.
  *
+ * 'fps_cap' (U1, Oct 2026): a frame-rate lock built into the game itself.
+ * The FPS Calculator and Can I Run It never show more than this for the
+ * game. Elden Ring is locked to 60 FPS on PC (FromSoftware's own settings
+ * offer no higher limit; mods don't count).
+ *
+ * 'fps_varies' (U1): the game's frame rate depends far more on its own
+ * settings than on the CPU and GPU, so no per-game FPS figure is shown.
+ * Minecraft: Java Edition, where render distance, mods and shader packs
+ * swing FPS from well over 200 (vanilla) to under 60 on the same PC.
+ *
  * @package ComputingSkill
  */
 
@@ -164,7 +174,7 @@ function cs_get_games_data() {
 			'min'  => array( 'cpu' => 'Intel Core i3-10100 / AMD Ryzen 3 3100', 'gpu' => 'Vulkan 1.3-compatible, 2GB VRAM (e.g. NVIDIA GTX 950 / AMD RX 460)', 'ram' => 8, 'storage_gb' => 4, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i5-12400 / AMD Ryzen 5 5600', 'gpu' => 'NVIDIA RTX 2060 / AMD RX 5600 XT 6GB', 'ram' => 16, 'storage_gb' => 4, 'os' => 'Windows 11 64-bit' ),
 			'req'  => array( 'min' => array( 'cpu' => 34, 'gpu' => 9 ), 'rec' => array( 'cpu' => 52, 'gpu' => 30 ) ),
-			'upscaling' => false, 'framegen' => false,
+			'upscaling' => false, 'framegen' => false, 'fps_varies' => true,
 			'source_url' => 'https://www.minecraft.net/en-us/article/minecraft-java-edition-system-requirements',
 		),
 		// Corrected during Sep 2026 audit against Respawn/EA's own Steam listing
@@ -236,7 +246,7 @@ function cs_get_games_data() {
 			'min'  => array( 'cpu' => 'Intel Core i5-8400 / AMD Ryzen 3 3300X', 'gpu' => 'NVIDIA GTX 1060 3GB / AMD RX 580 4GB', 'ram' => 12, 'storage_gb' => 60, 'os' => 'Windows 10 64-bit' ),
 			'rec'  => array( 'cpu' => 'Intel Core i7-8700K / AMD Ryzen 5 3600X', 'gpu' => 'NVIDIA GTX 1070 8GB / AMD RX Vega 56 8GB', 'ram' => 16, 'storage_gb' => 60, 'os' => 'Windows 10/11 64-bit' ),
 			'req'  => array( 'min' => array( 'cpu' => 33, 'gpu' => 18 ), 'rec' => array( 'cpu' => 40, 'gpu' => 25 ) ),
-			'upscaling' => false, 'framegen' => false,
+			'upscaling' => false, 'framegen' => false, 'fps_cap' => 60,
 			'source_url' => 'https://store.steampowered.com/app/1245620/ELDEN_RING/',
 		),
 		// Corrected during Sep 2026 audit (citation pass) against Steam's official

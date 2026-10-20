@@ -176,6 +176,18 @@ function cs_bn_top_cpu() {
 }
 
 /**
+ * U1 (U-04): true for the fastest gaming CPUs we list, on any socket
+ * (within 3% of the top score: the 9800X3D and the 9950X3D one point
+ * behind it). Their combo pages must not suggest a CPU or platform
+ * upgrade, because nothing faster exists; a CPU limit with them is a
+ * flagship card outrunning every current CPU at that resolution.
+ */
+function cs_bn_is_top_cpu( $cpu ) {
+	$top = cs_bn_top_cpu();
+	return $top && $cpu['score'] >= $top['score'] * 0.97;
+}
+
+/**
  * Lowest-scoring faster GPU in the dataset that, with this CPU, takes the
  * 1440p estimate out of the "GPU-limited 15%+" range.
  */
@@ -254,6 +266,11 @@ function cs_bottleneck_verdict( $cpu_slug, $cpu, $gpu, $results ) {
 				$cpu['name'], $step['gpu']['name'], cs_bn_phrases( $step['results'] )
 			);
 		}
+	} elseif ( 'cpu' === $primary && cs_bn_is_top_cpu( $cpu ) ) {
+		$p2 = sprintf(
+			__( 'No faster gaming CPU exists to upgrade to: the %1$s is at the top of our list on any socket, so a new CPU or motherboard would not help. The %2$s simply outruns every current CPU at lower resolutions such as 1080p, which is normal for a card this fast. Play at 1440p or 4K, or raise the settings, to put its extra speed to use.', 'computingskill' ),
+			$cpu['name'], $gpu['name']
+		);
 	} elseif ( 'cpu' === $primary ) {
 		$p2  = sprintf( __( 'The %s is the real bottleneck here, so a CPU upgrade is what lets the graphics card run at full speed.', 'computingskill' ), $cpu['name'] );
 		$up  = cs_bn_socket_upgrade( $cpu_slug, $cpu );
@@ -405,7 +422,15 @@ function cs_bottleneck_faq_items( $cpu_slug, $cpu, $gpu, $results ) {
 	// 3. Same-socket CPU upgrade.
 	$up  = cs_bn_socket_upgrade( $cpu_slug, $cpu );
 	$mem = cs_bn_socket_memory( $cpu['socket'] );
-	if ( $up ) {
+	if ( cs_bn_is_top_cpu( $cpu ) ) {
+		$a = sprintf(
+			__( 'There is nothing faster to move to: the %1$s is one of the fastest gaming CPUs available on any socket, so neither a new CPU nor a new motherboard would add FPS with the %2$s.', 'computingskill' ),
+			$cpu['name'], $gpu['name']
+		);
+		if ( 'cpu' === $results['1080p']['component'] ) {
+			$a .= ' ' . __( 'Where it holds the card back (mostly at 1080p), a higher resolution or higher settings is the fix.', 'computingskill' );
+		}
+	} elseif ( $up ) {
 		$r2 = cs_calculate_bottleneck( $up, $gpu );
 		$a  = sprintf(
 			__( 'Yes, within %1$s. The strongest gaming CPU on that socket in our database is the %2$s; our engine rates it with the %3$s as %4$s, compared with %5$s for the %6$s. Check your motherboard’s CPU support list first, as an older board may need a BIOS update.', 'computingskill' ),

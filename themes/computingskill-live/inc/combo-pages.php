@@ -167,3 +167,78 @@ function cs_generated_pages_touch() {
 	delete_option( 'cs_generated_content_lock' );
 }
 add_action( 'init', 'cs_generated_pages_touch', 31 );
+
+/**
+ * U1 (Oct 2026): the same one-time date refresh, but only for the
+ * generated posts whose text that push changed, so the other combo and
+ * game pages keep their honest dates. Bump CS_U1_TOUCH_REV only with a
+ * change to cs_u1_touch_targets().
+ *  - combo pages with the fastest CPUs (U-04 upgrade advice),
+ *  - CPU part pages (U-10 gaming tiers, U-40 "fastest GPU it keeps up
+ *    with"), every comparison page (U-10 CPU tiers, U-46 differences
+ *    from the shown FPS).
+ */
+if ( ! defined( 'CS_U1_TOUCH_REV' ) ) {
+	define( 'CS_U1_TOUCH_REV', '2026-10-20-u1' );
+}
+
+function cs_u1_touch_targets() {
+	$top = array();
+	if ( function_exists( 'cs_bn_is_top_cpu' ) ) {
+		foreach ( cs_get_cpu_data() as $slug => $c ) {
+			if ( cs_bn_is_top_cpu( $c ) ) {
+				$top[] = $slug;
+			}
+		}
+	}
+	$ids = array();
+	foreach ( get_posts( array( 'post_type' => array( 'cs_bottleneck', 'cs_hardware', 'cs_comparison' ), 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true ) ) as $p ) {
+		if ( 'cs_comparison' === $p->post_type ) {
+			$ids[] = $p->ID;
+		} elseif ( 'cs_hardware' === $p->post_type ) {
+			if ( isset( cs_get_cpu_data()[ $p->post_name ] ) ) {
+				$ids[] = $p->ID;
+			}
+		} else {
+			foreach ( $top as $slug ) {
+				if ( 0 === strpos( $p->post_name, $slug . '-' ) ) {
+					$ids[] = $p->ID;
+				}
+			}
+		}
+	}
+	return $ids;
+}
+
+function cs_u1_pages_touch() {
+	if ( wp_installing() || get_option( 'cs_u1_touch_rev' ) === CS_U1_TOUCH_REV ) {
+		return;
+	}
+	if ( ! add_option( 'cs_u1_touch_lock', time(), '', 'no' ) ) {
+		if ( time() - (int) get_option( 'cs_u1_touch_lock' ) > 300 ) {
+			delete_option( 'cs_u1_touch_lock' );
+		}
+		return;
+	}
+	global $wpdb;
+	$ids = cs_u1_touch_targets();
+	foreach ( $ids as $id ) {
+		$wpdb->update(
+			$wpdb->posts,
+			array( 'post_modified' => current_time( 'mysql' ), 'post_modified_gmt' => current_time( 'mysql', true ) ),
+			array( 'ID' => $id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+		clean_post_cache( $id );
+	}
+	if ( class_exists( '\RankMath\Sitemap\Cache' ) && method_exists( '\RankMath\Sitemap\Cache', 'invalidate_storage' ) ) {
+		\RankMath\Sitemap\Cache::invalidate_storage();
+	}
+	if ( function_exists( 'cs_perf_purge_posts' ) ) {
+		cs_perf_purge_posts( $ids );
+	}
+	update_option( 'cs_u1_touch_rev', CS_U1_TOUCH_REV, true );
+	delete_option( 'cs_u1_touch_lock' );
+}
+add_action( 'init', 'cs_u1_pages_touch', 33 );

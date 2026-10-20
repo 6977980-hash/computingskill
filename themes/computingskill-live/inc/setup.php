@@ -127,6 +127,10 @@ function cs_enqueue_calculators( $type = '' ) {
 					// E4 (FUN-06): false = the game has no such option.
 					'upscaling' => isset( $g['upscaling'] ) ? (bool) $g['upscaling'] : null,
 					'framegen'  => isset( $g['framegen'] ) ? (bool) $g['framegen'] : null,
+					// U1 (U-03): a built-in frame-rate lock, and games whose FPS
+					// follows their own settings more than the hardware.
+					'fps_cap'    => isset( $g['fps_cap'] ) ? (int) $g['fps_cap'] : null,
+					'fps_varies' => ! empty( $g['fps_varies'] ),
 				);
 			}
 		}

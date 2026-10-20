@@ -390,7 +390,7 @@ function cs_page_description_overrides() {
 		'pc-compatibility-checker' => __( 'PC part compatibility checker: CPU socket and BIOS, DDR4 vs DDR5, case fit for board, cooler and GPU, PSU wattage and 16-pin cable, plus CPU-GPU compatibility.', 'computingskill' ),
 		'ssd-lifespan-calculator' => __( 'How long does an SSD last? A 600 TBW drive at 50GB of writes a day takes about 33 years to reach its rating. Enter yours, and learn to check SSD health.', 'computingskill' ),
 		'ssd-tbw-calculator' => __( 'TBW means terabytes written, an SSD\'s rated write endurance; many 1TB TLC drives are rated 600 TBW. Convert DWPD to TBW and compare typical ratings.', 'computingskill' ),
-		'cpu-performance-calculator' => __( 'See a CPU\'s gaming-performance score and tier, from Entry-level to Flagship, placed from published review averages, with its cores, clocks, TDP and socket.', 'computingskill' ),
+		'cpu-performance-calculator' => __( 'See a CPU\'s gaming-performance score and gaming tier, from budget to high-end, placed from published review averages, with its cores, clocks, TDP and socket.', 'computingskill' ),
 		'gpu-performance-calculator' => __( 'See a graphics card\'s gaming-performance score (RTX 4090 = 100) and tier, placed from published review averages, with its VRAM, memory bus, TDP and PSU need.', 'computingskill' ),
 		'pc-build-cost-calculator' => __( 'Add up your PC build part by part, see what share goes to the CPU, GPU, motherboard, RAM, storage, PSU, case and cooling, and how much of your budget is left.', 'computingskill' ),
 		'pc-case' => __( 'How PC case size, airflow, GPU clearance, cooler height and radiator support affect your build, and how to choose the right case form factor and layout.', 'computingskill' ),

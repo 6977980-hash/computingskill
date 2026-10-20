@@ -50,8 +50,10 @@ function cs_extra_faq_base() {
 		),
 		array(
 			'slugs' => array( 'psu-calculator', 'how-to-choose-a-psu', 'psu' ),
-			'q'     => __( 'How many watts of PSU do I actually need for a card like the RTX 4070 or RX 7800 XT?', 'computingskill' ),
-			'a'     => __( "As a rule of thumb: an RTX 4070 (200W TDP) is comfortable on a 650W PSU, an RTX 4070 Super or RX 7800 XT (220-265W) is comfortable on 650-750W, and anything at the RTX 4080/4090 or RX 7900 XT/XTX tier (320W and up) is safer on 750-850W or more. These figures already build in headroom for the rest of a typical build and for the GPU's real transient power spikes, which briefly exceed its rated TDP. Enter your exact GPU and CPU in the calculator above for a number specific to your build rather than a generic rule of thumb.", 'computingskill' ),
+			// U1 (U-02): built from the PSU Calculator's own sum (cs_aeo_psu()),
+			// so it can never undercut the table above it or the GPU maker.
+			'q'     => __( 'How many watts of PSU do I actually need for a card like the RTX 4070, RTX 5070 or RX 7800 XT?', 'computingskill' ),
+			'a'     => cs_extra_faq_psu_answer(),
 		),
 		array(
 			'slugs' => array( 'storage-calculator', 'drive-space-calculator' ),
@@ -83,6 +85,58 @@ function cs_extra_faq_base() {
 			'q'     => __( 'How can I tell if my CPU is bottlenecking my GPU without using a calculator?', 'computingskill' ),
 			'a'     => __( "Open Task Manager's Performance tab (or a live overlay like MSI Afterburner/HWiNFO) while playing and watch both usage numbers: if GPU usage sits well below 95-99% while the CPU sits near 100%, the CPU is the more likely limiting part; if the GPU sits near 99-100% while the CPU has spare headroom, the GPU is the limiting part. Lowering only the resolution is a useful second check — if FPS barely changes when resolution drops, that points to a CPU bottleneck, since a true GPU bottleneck usually improves noticeably at a lower resolution.", 'computingskill' ),
 		),
+	);
+}
+
+/**
+ * U1 (U-02): the PSU rule of thumb used to say 750-850W for an RTX 4090
+ * and 650W for an RX 7800 XT, below the makers' own figures and the
+ * calculator's table on the same page. It is now built from the same
+ * numbers: per card, the PSU Calculator's result with a Ryzen 5 7600 (it
+ * matches the GPU maker's figure for every card listed), plus a few
+ * results with a Core i7-14700K to show what a power-hungry CPU adds.
+ */
+function cs_extra_faq_psu_answer() {
+	$fallback = __( 'Start from the GPU maker’s recommended PSU, which already allows for the rest of a typical build and for brief power spikes, and never go below it. A power-hungry CPU such as a Core i7-14700K adds 100-200W on top. Enter your exact GPU and CPU in the calculator above for a number specific to your build.', 'computingskill' );
+	if ( ! function_exists( 'cs_aeo_psu' ) || ! function_exists( 'cs_get_gpu_data' ) || ! function_exists( 'cs_bn_short_name' ) ) {
+		return $fallback;
+	}
+	$gpus = cs_get_gpu_data();
+	$cpus = cs_get_cpu_data();
+	if ( ! isset( $cpus['ryzen-5-7600'], $cpus['core-i7-14700k'] ) ) {
+		return $fallback;
+	}
+	$mid    = $cpus['ryzen-5-7600'];
+	$hot    = $cpus['core-i7-14700k'];
+	$groups = array();
+	foreach ( array( 'rtx-4060', 'rtx-5060', 'rx-9060-xt', 'rtx-4070', 'rtx-4070-super', 'rtx-5070', 'rx-7800-xt', 'rx-9070-xt', 'rtx-5070-ti', 'rtx-4080', 'rtx-5080', 'rtx-4090', 'rtx-5090' ) as $slug ) {
+		if ( isset( $gpus[ $slug ] ) ) {
+			list( , $w ) = cs_aeo_psu( $mid, $gpus[ $slug ] );
+			$groups[ $w ][] = cs_bn_short_name( $gpus[ $slug ]['name'] );
+		}
+	}
+	ksort( $groups );
+	$parts = array();
+	foreach ( $groups as $w => $names ) {
+		$parts[] = sprintf( __( '%1$s: %2$dW', 'computingskill' ), implode( ', ', $names ), $w );
+	}
+	$hot_parts = array();
+	foreach ( array( 'rtx-4070-super', 'rx-9070-xt', 'rtx-4090', 'rtx-5090' ) as $slug ) {
+		if ( isset( $gpus[ $slug ] ) ) {
+			list( , $w ) = cs_aeo_psu( $hot, $gpus[ $slug ] );
+			$hot_parts[] = sprintf( __( '%1$dW for the %2$s', 'computingskill' ), $w, cs_bn_short_name( $gpus[ $slug ]['name'] ) );
+		}
+	}
+	if ( ! $parts || ! $hot_parts ) {
+		return $fallback;
+	}
+	return sprintf(
+		/* translators: 1: "card: watts" list, 2: CPU name, 3: CPU name, 4: "watts for card" list */
+		__( 'Never go below the GPU maker’s recommended PSU: it already allows for the rest of a typical build and for the card’s brief power spikes above its rated power. With a mid-range CPU such as the %2$s, that is also what our calculator gives: %1$s. A power-hungry CPU raises it: with a %3$s the calculator gives %4$s. Enter your exact GPU and CPU in the calculator above for a number specific to your build.', 'computingskill' ),
+		implode( '; ', $parts ),
+		cs_bn_short_name( $mid['name'] ),
+		cs_bn_short_name( $hot['name'] ),
+		cs_bn_join( $hot_parts )
 	);
 }
 

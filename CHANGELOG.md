@@ -2,6 +2,25 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.59 (20 Oct 2026) — U1 wrong or misleading answers
+From the 20 Oct user-side audit (U1: U-01..U-04, U-07..U-12, U-40, U-46, U-52, U-53). Scores and the bottleneck engine are unchanged; JS and PHP mirrors stay in sync.
+- U-01: Can I Run It gives no FPS figure for a game the PC is below the publisher minimum for, doesn't count it as reaching the target, and the headline leads with those games. Per-game GPU load (`gameGpuLoad()` / `cs_game_gpu_load()`): sqrt(type median ÷ the game's recommended GPU score), clamped 0.75-1.3, so games of one type no longer show identical FPS (FPS Calculator with a game picked, Can I Run It, the server example table). FPS Calculator warns when the PC is below the picked game's minimum.
+- U-02: PSU FAQ on /psu-calculator/, /psu/ and /how-to-choose-a-psu/ is built from the calculator's own sum (`cs_extra_faq_psu_answer()`), RTX 50 / RX 9000 included; never below the GPU maker's figure.
+- U-03: `fps_cap` (Elden Ring 60) and `fps_varies` (Minecraft Java: no per-game FPS figure) in `data/games-data.php`, applied in the FPS Calculator, Can I Run It and its PHP table.
+- U-04: combo pages and the Upgrade Calculator never suggest a CPU or motherboard upgrade for the fastest CPUs (`cs_bn_is_top_cpu()`: within 3% of the top score, i.e. 9800X3D and 9950X3D).
+- U-07: "Other / not listed" closest-part picker starts empty and must be chosen; the note no longer says "you picked".
+- U-08: VRAM minimum = today's need; ray tracing and 3+ years raise only the recommended figure; card lists say "speed not checked" and link the FPS Calculator. VRAM page worked example reworded.
+- U-09: Compatibility checker GPU length, case limit and PSU wattage start blank; blank checks are skipped and listed as "Not checked".
+- U-10 (Ali's decision): CPU gaming tiers Budget <60, Mid-range 60+, Upper mid-range 70+, High-end 80+ (were Entry-level/Mid-range/High-end/Flagship at 54/66/77); CPU Performance shows "% of the fastest gaming CPU" instead of "/ 95". Same lines in the CPU tier list (A 80, B 70, C 60), part pages, methodology and page text.
+- U-11: Build Cost GPU guide 35-50% of the parts budget (was 25-33%), JS, reference table and page text.
+- U-12: Upgrade Calculator names the GPU score target with three current example cards and links (FPS Calculator, GPU tier list); CPU item names the fastest same-socket CPU with a Bottleneck Calculator link; no "no upgrade needed … a faster GPU would add FPS" contradiction.
+- U-40: CPU part pages: "Best GPU for X: the Fastest Card It Keeps Up With", worded as a ceiling, with a GPU tier list link.
+- U-46: comparison FPS differences come from the FPS shown in the table.
+- U-52: Download/Upload Time shows a realistic range (speed 10-20% below rated) with the best case; speed 0 is an error.
+- U-53: RAM Calculator: 8GB = 1 × 8GB (or 16GB as 2 × 8GB); RAM sticks, drives and fans must be whole numbers.
+- Also: a duplicate `cpu-bottleneck-explained` key in `cs_calculator_page_fixes()` had dropped the D3 sentence on that guide; merged.
+- Dates: `CS_CALC_PAGES_REV` 2026-10-20-u1 (changed tool pages), `CS_U1_TOUCH_REV` (top-CPU combo pages, CPU part pages, comparison pages only).
+
 ## 1.0.58 (20 Oct 2026) — E5 mobile + accessibility
 From the 20 Oct full audit (E5: UX-01, UX-02, A11Y-01..07). Markup, CSS and JS only; no text, numbers or URLs changed.
 - UX-01: tables typed into page/post content are wrapped in a `.cs-table-wrap` scroller by a `the_content` filter (`inc/a11y.php`, priority 100), so on phones they scroll sideways instead of being cut off (/psu/, /how-much-ram-do-i-need/, /1080p-vs-1440p-vs-4k/, /cpu-cooler/, /ddr4-vs-ddr5/, /hdd/, /ssd-vs-hdd/ …). Under 600px their cells keep a readable width. Reference tables (D8 `.cs-ref-table`, K1-K4 tables) now wrap text cells: they were 830-1,275px wide and scrolled even on desktop.

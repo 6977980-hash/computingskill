@@ -262,7 +262,10 @@
 			otherLabel.textContent = 'Closest listed ' + noun + ' in performance';
 			var otherSelect = document.createElement( 'select' );
 			otherSelect.id = inputId + '-other';
-			fillSelect( otherSelect, closestPartOptions( field.source ) );
+			// U1 (U-07): starts empty and must be picked. It used to start on
+			// the fastest part (9800X3D / RTX 5090), so an unknown, likely older
+			// part was estimated as the best one.
+			fillSelect( otherSelect, [ { value: '', label: 'Choose the closest listed ' + noun + '…' } ].concat( closestPartOptions( field.source ) ) );
 			var otherHelp = document.createElement( 'p' );
 			otherHelp.className = 'cs-field-help';
 			otherHelp.textContent = 'Fastest first. Pick the listed ' + noun + ' that reviews place closest to yours; the estimate uses that ' + noun + '’s data.';
@@ -300,7 +303,11 @@
 		if ( field.type === 'select-hardware' && input.csOther && input.value === OTHER_VALUE ) {
 			var picked = input.csOther.value;
 			var part = HW[ field.source ] && HW[ field.source ][ picked ];
-			return { value: picked, warning: part ? 'Your ' + ( field.source === 'cpu' ? 'CPU' : 'GPU' ) + ' isn’t in our list, so this estimate uses the closest listed part you picked: ' + part.name + '.' : null };
+			var noun = field.source === 'cpu' ? 'CPU' : 'GPU';
+			if ( ! part ) {
+				throw { msg: 'You chose "Other / not listed" for your ' + noun + ': pick the listed ' + noun + ' closest to yours in performance under "Closest listed ' + noun + ' in performance", or choose your ' + noun + ' from the main list.' };
+			}
+			return { value: picked, warning: 'Your ' + noun + ' isn’t in our list, so this estimate uses the closest listed ' + noun + ': ' + part.name + '.' };
 		}
 		if ( field.type === 'select' || field.type === 'select-hardware' ) {
 			return { value: input.value };
@@ -327,6 +334,11 @@
 		var num = parseFloat( raw );
 		if ( isNaN( num ) ) {
 			throw { msg: '"' + field.label + '" must be a number.' };
+		}
+
+		// U1 (U-53): counts (RAM sticks, drives, fans) are whole numbers.
+		if ( field.integer && num !== Math.floor( num ) ) {
+			throw { msg: '"' + field.label + '" must be a whole number.' };
 		}
 
 		var warning = null;
@@ -426,7 +438,7 @@
 				var stand = params.get( field.id );
 				var ok = false;
 				for ( var i = 0; i < input.csOther.options.length; i++ ) {
-					if ( input.csOther.options[ i ].value === stand ) {
+					if ( stand && input.csOther.options[ i ].value === stand ) {
 						ok = true;
 					}
 				}
@@ -696,6 +708,9 @@
 						input.value = hardwareStart( field.source );
 					} else {
 						input.value = '';
+					}
+					if ( input.csOther ) {
+						input.csOther.value = '';
 					}
 					if ( input.csSyncOther ) {
 						input.csSyncOther();
@@ -1004,9 +1019,9 @@
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
 		].concat( cpuPickerFields( 'Other CPU: max turbo/boost power in watts', 'Intel lists this as "Maximum Turbo Power"; for AMD Ryzen use the PPT figure (about TDP × 1.35).' ) ).concat( [
-			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8 },
-			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8 },
-			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12 },
+			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8, step: 1, integer: true },
+			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8, step: 1, integer: true },
+			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12, step: 1, integer: true },
 			{ id: 'overclock', type: 'checkbox', label: 'I plan to overclock the CPU and/or GPU', default: false }
 		] ),
 		compute: function ( v, hw ) {
@@ -1052,9 +1067,9 @@
 		fields: [
 			{ id: 'gpu', type: 'select-hardware', source: 'gpu', label: 'GPU', icon: 'gpu' }
 		].concat( cpuPickerFields( 'Other CPU: rated TDP in watts', 'Used as its gaming draw, a rough stand-in: X3D chips usually draw less in games, unlocked Intel K chips more.' ) ).concat( [
-			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8 },
-			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8 },
-			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12 },
+			{ id: 'ramSticks', type: 'number', label: 'Number of RAM sticks', default: 2, min: 1, max: 8, step: 1, integer: true },
+			{ id: 'storageDrives', type: 'number', label: 'Storage drives (SSD/HDD)', default: 2, min: 0, max: 8, step: 1, integer: true },
+			{ id: 'fans', type: 'number', label: 'Case/AIO fans', default: 3, min: 0, max: 12, step: 1, integer: true },
 			{ id: 'hoursPerDay', type: 'number', label: 'Gaming / heavy-load hours per day', default: 3, min: 0, max: 24 },
 			{ id: 'idleHours', type: 'number', label: 'Idle / light-use hours per day (desktop, browsing, video)', default: 3, min: 0, max: 24, required: false, blankValue: 0 },
 			{ id: 'rate', type: 'number', label: 'Electricity price ($ per kWh)', default: 0.15, min: 0.01, max: 1, step: 0.01, help: 'Check a recent utility bill for your actual rate.' }
@@ -1151,11 +1166,13 @@
 			}
 			rows.push( [ 'Total build cost', '<strong>' + money( total ) + '</strong>' ] );
 			if ( parts > 0 ) {
-				// The page's general guide: GPU about a quarter to a third of a
-				// gaming build, CPU + motherboard + RAM a comparable share.
+				// U1 (U-11): gaming build guides put the GPU at about 35-50% of
+				// the parts budget (was 25-33%, which called a normal 5600 +
+				// RTX 4070 build GPU-heavy); CPU + motherboard + RAM a comparable
+				// share. Mirror: cs_aeo_reference_data( 'build-cost' ).
 				var gpuShare = Math.round( pct( v.gpu ) );
-				var guide = gpuShare < 25 ? 'below' : gpuShare > 33 ? 'above' : 'within';
-				rows.push( [ 'GPU share vs the usual 25–33% gaming guide', fmt( gpuShare, 0 ) + '%, ' + guide + ' that range' ] );
+				var guide = gpuShare < 35 ? 'below' : gpuShare > 50 ? 'above' : 'within';
+				rows.push( [ 'GPU share vs the typical 35–50% for a gaming build', fmt( gpuShare, 0 ) + '%, ' + guide + ' that range' + ( guide === 'within' ? '' : ' (fine if intentional, e.g. a work PC or a high-refresh esports build)' ) ] );
 				rows.push( [ 'CPU + motherboard + RAM share', money( v.cpu + v.motherboard + v.ram ) + ' (' + fmt( pct( v.cpu + v.motherboard + v.ram ), 0 ) + '%)' ] );
 			}
 			var headline = 'Estimated total build cost: <strong>' + money( total ) + '</strong>';
@@ -1165,7 +1182,7 @@
 				rows.push( left >= 0 ? [ 'Left in your budget', money( left ) ] : [ 'Over your budget by', money( -left ) ] );
 				headline += left >= 0 ? ', leaving <strong>' + money( left ) + '</strong> of your ' + money( v.budget ) + ' budget.' : ', <strong>' + money( -left ) + ' over</strong> your ' + money( v.budget ) + ' budget.';
 			}
-			return resultBlock( headline, rows, 'the total only adds up the prices you enter (no live prices), and the 25–33% GPU range is a general guide for gaming builds, not a rule.' );
+			return resultBlock( headline, rows, 'the total only adds up the prices you enter (no live prices), and the 35–50% GPU range is a general guide for gaming builds, not a rule.' );
 		}
 	};
 
@@ -1188,12 +1205,33 @@
 	// D10: shared by the FPS Calculator and Can I Run It. PHP mirror:
 	// cs_tl_fps() in inc/tier-list.php (keep the two in sync).
 	var FPS_PER_POINT = 2.5;
-	function fpsCeilings( cpu, gpu, res, preset, gameType ) {
+	function fpsCeilings( cpu, gpu, res, preset, gameType, gpuLoad ) {
 		var profile = BN_GAME_PROFILE[ gameType ] || BN_GAME_PROFILE.aaa;
 		return {
-			gpu: gpu.score * FPS_PER_POINT * BN_GPU_RES_FACTOR[ res ] * BN_PRESET_FACTOR[ preset ] * profile.gpu * bnMemoryFactor( gpu, res, preset, gameType ),
+			gpu: gpu.score * FPS_PER_POINT * BN_GPU_RES_FACTOR[ res ] * BN_PRESET_FACTOR[ preset ] * profile.gpu * bnMemoryFactor( gpu, res, preset, gameType ) * ( gpuLoad || 1 ),
 			cpu: cpu.score * BN_CPU_PARITY * FPS_PER_POINT * profile.cpu
 		};
+	}
+
+	// U1 (Oct 2026, U-01): with only the game-type profile, every AAA game
+	// got the same FPS (a 5600 + RTX 3060 showed "Ultra ~68" for Cyberpunk,
+	// Starfield and RDR2 alike). A picked game now also scales the GPU's
+	// ceiling by how heavy its publisher-recommended GPU is (data/
+	// games-data.php 'req', on our score scale) next to the median for its
+	// type: a game that asks for a faster card than its peers runs slower.
+	// Half weight (square root), because publishers aim their recommended
+	// tier at different settings and years, and kept within 0.75-1.3 of the
+	// type's figure. GAME_LOAD_REF = median recommended GPU score per type
+	// in the games list (AAA 30, esports 11, CPU-heavy 32). Only per-game
+	// tools use it: the bottleneck engine and part pages stay per type.
+	// PHP mirror: cs_game_gpu_load() in inc/d10-pages.php.
+	var GAME_LOAD_REF = { aaa: 30, esports: 11, 'cpu-heavy': 32 };
+	function gameGpuLoad( g, type ) {
+		var rec = g && g.req && g.req.rec ? Number( g.req.rec.gpu ) : 0;
+		if ( ! rec || ! GAME_LOAD_REF[ type ] ) {
+			return 1;
+		}
+		return clamp( Math.sqrt( GAME_LOAD_REF[ type ] / rec ), 0.75, 1.3 );
 	}
 
 	// D10 (audit 5.7): upscaling (DLSS / FSR / XeSS) renders fewer pixels,
@@ -1244,11 +1282,24 @@
 			var game = v.game && GAMES[ v.game ] ? GAMES[ v.game ] : null;
 			var gameType = game && BN_GAME_PROFILE[ game.profile ] ? game.profile : ( BN_GAME_PROFILE[ v.gametype ] ? v.gametype : 'aaa' );
 			var preset = BN_PRESET_FACTOR[ v.preset ] ? v.preset : 'high';
-			var c = fpsCeilings( cpu, gpu, v.resolution, preset, gameType );
+			// U1 (U-01): the picked game's own load (gameGpuLoad()).
+			var load = game ? gameGpuLoad( game, gameType ) : 1;
+			var c = fpsCeilings( cpu, gpu, v.resolution, preset, gameType, load );
 			var upscale = UPSCALE_GAIN[ v.upscaling ] ? v.upscaling : 'off';
 			// E4 (FUN-06): a picked game without its own upscaling or frame
 			// generation option (data/games-data.php) gets neither, with a note.
 			var gameNotes = [];
+			// U1 (U-01): a PC below the game's published minimum is told so
+			// first, before any FPS figure.
+			if ( game && game.req ) {
+				var lvl = cirLevel( cpu, gpu, Infinity, game );
+				if ( lvl.level === 'below' ) {
+					gameNotes.push( 'Your ' + lvl.short.join( ' and ' ) + ' is below ' + game.name + '’s published minimum, so the game may not start or may run under 30 FPS even at low settings. Treat the figure below as a best case.' );
+				}
+			}
+			if ( game && game.fps_varies ) {
+				gameNotes.push( game.name + '’s frame rate depends mostly on its render distance, mods and shader packs, so this is only the general estimate for its game type; vanilla at the default render distance often runs much higher.' );
+			}
 			if ( game && game.upscaling === false && upscale !== 'off' ) {
 				gameNotes.push( game.name + ' has no built-in upscaling (DLSS / FSR / XeSS), so this estimate is at native resolution.' );
 				upscale = 'off';
@@ -1276,18 +1327,33 @@
 			var shown = fg > 1 ? estimate * FG_COST * fg : estimate;
 			var low = Math.round( shown * ( 1 - spread ) );
 			var high = Math.round( shown * ( 1 + spread ) );
+			// U1 (U-03): a game's built-in frame-rate lock caps everything shown.
+			var cap = game && game.fps_cap ? Number( game.fps_cap ) : 0;
+			var capped = cap && low >= cap ? 'all' : ( cap && high > cap ? 'part' : '' );
+			if ( cap ) {
+				shown = Math.min( shown, cap );
+				low = Math.min( low, cap );
+				high = Math.min( high, cap );
+				if ( capped ) {
+					gameNotes.push( game.name + ' is locked to ' + cap + ' FPS on PC, so the estimate stops there' + ( capped === 'all' ? '; this PC would otherwise run it faster.' : '.' ) );
+				}
+			}
 			// Same "under 6% = balanced" rule as the bottleneck calculator.
 			var limiter = Math.round( ( 1 - closeness ) * 100 ) < 6 ? 'Balanced (CPU and GPU about even)' : ( gpuFps < cpuCap ? gpu.name + ' (GPU-bound)' : cpu.name + ' (CPU-bound)' );
 			var rows = [
-				[ 'Estimated FPS range', low + ' – ' + high + ' FPS' ],
+				[ 'Estimated FPS range', capped === 'all' ? cap + ' FPS (the game’s cap)' : low + ' – ' + high + ' FPS' ],
 				[ 'Midpoint estimate', Math.round( shown ) + ' FPS' ],
-				[ 'Likely limiting part', limiter ]
+				[ 'Likely limiting part', capped === 'all' ? 'The game’s ' + cap + ' FPS cap' : limiter ]
 			];
 			// Game selection (Sep 2026 audit): shows the publisher's own
 			// minimum/recommended specs from data/games-data.php beside the
-			// estimate. The FPS number is scaled only by the game's broad type
-			// (D3), never by a per-game multiplier we haven't measured.
-			rows.push( [ 'Game type used', escapeHtml( GAME_TYPE_OPTIONS.filter( function ( o ) { return o.value === gameType; } )[ 0 ].label ) ] );
+			// estimate. The FPS number follows the game's broad type (D3) and,
+			// since U1, how heavy its published recommended GPU is
+			// (gameGpuLoad()); no game is benchmarked by us.
+			rows.push( [ 'Game type used', escapeHtml( GAME_TYPE_OPTIONS.filter( function ( o ) { return o.value === gameType; } )[ 0 ].label ) + ( game ? ' (set by the game)' : '' ) ] );
+			if ( game && Math.round( ( load - 1 ) * 100 ) !== 0 ) {
+				rows.push( [ 'Adjusted for this game', 'graphics load about ' + Math.abs( Math.round( ( 1 / load - 1 ) * 100 ) ) + '% ' + ( load < 1 ? 'heavier' : 'lighter' ) + ' than a typical game of its type, going by its published recommended graphics card' ] );
+			}
 			var tech = gpu.upscaler ? gpu.upscaler : 'FSR';
 			if ( upscale !== 'off' ) {
 				var native = Math.min( c.gpu, cpuCap );
@@ -1308,7 +1374,7 @@
 				return '<p class="cs-warning">⚠ ' + escapeHtml( n ) + '</p>';
 			} ).join( '' ) + '</div>' : '';
 			var extras = upscale !== 'off' || fg > 1;
-			return noteHtml + resultBlock( 'Estimated average: <strong>' + Math.round( shown ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( extras ? ' with ' + [ upscale !== 'off' ? escapeHtml( tech ) + ' ' + upscale : '', fg > 1 ? fg + 'x frame generation' : '' ].filter( Boolean ).join( ' and ' ) : '' ) + ( game ? ' — a general estimate for this type of game, not a ' + escapeHtml( game.name ) + '-specific benchmark' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers. Ray tracing isn’t modelled, and upscaling and frame generation gains are typical averages that need game support (<a href="/dlss-fsr-frame-generation-explained/">how they work</a>); ' + SCORE_NOTE );
+			return noteHtml + resultBlock( 'Estimated average: <strong>' + Math.round( shown ) + ' FPS</strong> at ' + RES_LABELS[ v.resolution ] + ', ' + v.preset + ' settings' + ( extras ? ' with ' + [ upscale !== 'off' ? escapeHtml( tech ) + ' ' + upscale : '', fg > 1 ? fg + 'x frame generation' : '' ].filter( Boolean ).join( ' and ' ) : '' ) + ( game ? ' in ' + escapeHtml( game.name ) + ' — an estimate from its game type and published requirements, not a benchmark of the game' : '' ) + '.', rows, 'actual FPS varies significantly by game engine, optimization, RAM speed and drivers. Ray tracing isn’t modelled, and upscaling and frame generation gains are typical averages that need game support (<a href="/dlss-fsr-frame-generation-explained/">how they work</a>); ' + SCORE_NOTE );
 		}
 	};
 
@@ -1318,17 +1384,23 @@
 	// the FPS Calculator, by game type), plus RAM against the publisher's
 	// minimum and recommended. Server-side mirror of the example table:
 	// cs_cir_best() in inc/d10-pages.php.
+	// U1: plus the game's own load (gameGpuLoad()) and frame-rate cap.
 	var CIR_PRESETS = [ 'ultra', 'high', 'medium', 'low' ];
-	function cirBest( cpu, gpu, res, target, gameType ) {
+	function cirBest( cpu, gpu, res, target, gameType, g ) {
 		var fps = 0;
+		var load = gameGpuLoad( g, gameType );
+		var cap = g && g.fps_cap ? Number( g.fps_cap ) : 0;
 		for ( var i = 0; i < CIR_PRESETS.length; i++ ) {
-			var c = fpsCeilings( cpu, gpu, res, CIR_PRESETS[ i ], gameType );
+			var c = fpsCeilings( cpu, gpu, res, CIR_PRESETS[ i ], gameType, load );
 			fps = Math.min( c.gpu, c.cpu );
+			if ( cap ) {
+				fps = Math.min( fps, cap );
+			}
 			if ( fps >= target ) {
-				return { preset: CIR_PRESETS[ i ], fps: fps };
+				return { preset: CIR_PRESETS[ i ], fps: fps, capped: !! cap && fps >= cap };
 			}
 		}
-		return { preset: '', fps: fps };
+		return { preset: '', fps: fps, capped: false };
 	}
 
 	// Publisher tier the PC meets: 'rec', 'min' or 'below', and which parts
@@ -1369,36 +1441,61 @@
 				throw { msg: 'The games list didn’t load. Please refresh the page.' };
 			}
 			var label = { ultra: 'Ultra', high: 'High', medium: 'Medium', low: 'Low' };
-			var count = { rec: 0, min: 0, below: 0 }, playable = 0;
+			var count = { rec: 0, min: 0, below: 0 }, playable = 0, estimated = 0;
+			var belowNames = [];
 			var rows = keys.map( function ( key ) {
 				var g = GAMES[ key ];
 				var type = BN_GAME_PROFILE[ g.profile ] ? g.profile : 'aaa';
 				var lvl = cirLevel( cpu, gpu, ram, g );
 				count[ lvl.level ]++;
 				var req = lvl.level === 'rec' ? '<strong>Meets recommended</strong>' : ( lvl.level === 'min' ? 'Meets minimum' + ( lvl.short.length ? ' (' + lvl.short.join( ', ' ) + ' below recommended)' : '' ) : '<strong>Below minimum</strong> (' + lvl.short.join( ', ' ) + ')' );
-				var best = cirBest( cpu, gpu, v.resolution, target, type );
 				var cell;
+				// U1 (U-01): a game the PC is below the publisher minimum for
+				// gets no FPS figure and is not counted as reaching the target.
+				if ( lvl.level === 'below' ) {
+					belowNames.push( g.name );
+					cell = 'Not counted: your ' + lvl.short.join( ' and ' ) + ' is below the publisher’s minimum, so it may not start or may run under 30 FPS even at Low';
+					return [ '<a href="' + escapeHtml( g.url ) + '">' + escapeHtml( g.name ) + '</a>', req, cell ];
+				}
+				if ( g.fps_varies ) {
+					cell = 'No estimate: its FPS depends mostly on render distance, mods and shader packs';
+					return [ '<a href="' + escapeHtml( g.url ) + '">' + escapeHtml( g.name ) + '</a>', req, cell ];
+				}
+				estimated++;
+				var cap = g.fps_cap ? Number( g.fps_cap ) : 0;
+				var best = cirBest( cpu, gpu, v.resolution, target, type, g );
 				if ( best.preset ) {
 					playable++;
-					cell = label[ best.preset ] + ' · ~' + Math.round( best.fps ) + ' FPS';
-					// The estimate is for the game's type; a publisher asking for a
-					// faster card than yours marks a heavier-than-typical game.
+					cell = label[ best.preset ] + ' · ~' + Math.round( best.fps ) + ' FPS' + ( best.capped ? ' <small>(the game’s ' + cap + ' FPS cap)</small>' : '' );
+					// The estimate is for the game's type and published specs; a
+					// publisher asking for a faster part than yours marks a game that
+					// can run slower.
 					if ( lvl.short.indexOf( 'GPU' ) !== -1 || lvl.short.indexOf( 'CPU' ) !== -1 ) {
-						cell += ' <small>(typical for its type; this game asks for more, so expect lower)</small>';
+						cell += ' <small>(this game asks for more than your ' + lvl.short.filter( function ( p ) { return p !== 'RAM'; } ).join( ' and ' ) + ', so expect lower)</small>';
 					}
+				} else if ( cap && target > cap ) {
+					// U1 (U-03): a target above the game's own frame-rate lock.
+					var atCap = cirBest( cpu, gpu, v.resolution, cap, type, g );
+					cell = 'Locked at ' + cap + ' FPS by the game' + ( atCap.preset ? ' <small>(' + label[ atCap.preset ] + ' reaches it)</small>' : '' );
 				} else {
 					cell = 'Under ' + target + ' FPS at Low (~' + Math.round( best.fps ) + ')';
 				}
 				return [ '<a href="' + escapeHtml( g.url ) + '">' + escapeHtml( g.name ) + '</a>', req, cell ];
 			} );
 			var html = '<div class="cs-result-block">';
-			html += '<p class="cs-result-headline">Your PC meets the <strong>recommended specs of ' + count.rec + ' of ' + keys.length + ' games</strong>' + ( count.min ? ' and the minimum of ' + count.min + ' more' : '' ) + ( count.below ? ', and is below the minimum for ' + count.below : '' ) + '. ' + playable + ' reach ' + target + '+ FPS at ' + RES_LABELS[ v.resolution ] + ' at some preset.</p>';
+			var headline = '';
+			if ( count.below ) {
+				headline += 'Your PC is <strong>below the minimum specs of ' + count.below + ' of ' + keys.length + ' games</strong> (' + escapeHtml( belowNames.join( ', ' ) ) + '). ';
+			}
+			headline += ( count.below ? 'It' : 'Your PC' ) + ' meets the ' + ( count.below ? '' : '<strong>' ) + 'recommended specs of ' + count.rec + ' of ' + keys.length + ' games' + ( count.below ? '' : '</strong>' ) + ( count.min ? ' and the minimum of ' + count.min + ' more' : '' ) + '. ';
+			headline += ( count.below ? 'Of the rest, ' : '' ) + playable + ' of ' + estimated + ' games we estimate reach ' + target + '+ FPS at ' + RES_LABELS[ v.resolution ] + ' at some preset.';
+			html += '<p class="cs-result-headline">' + headline + '</p>';
 			html += '<div class="cs-table-wrap"><table class="cs-result-table cs-cir-table"><thead><tr><th scope="col">Game</th><th scope="col">Publisher specs</th><th scope="col">Highest settings at ' + target + '+ FPS</th></tr></thead><tbody>';
 			rows.forEach( function ( r ) {
 				html += '<tr><th scope="row">' + r[ 0 ] + '</th><td>' + r[ 1 ] + '</td><td>' + r[ 2 ] + '</td></tr>';
 			} );
 			html += '</tbody></table></div>';
-			html += '<p class="cs-disclaimer"><strong>Estimate only:</strong> the publisher’s minimum and recommended parts are placed on our score scale (approximate where a part isn’t in our database). FPS is estimated by game type (typical AAA, esports or CPU-heavy) with the FPS Calculator’s formula, not a per-game benchmark, so a demanding game in a class can run slower than shown. Ray tracing is off; ' + ( gpu.upscaler ? escapeHtml( gpu.upscaler ) + ' upscaling' : 'upscaling' ) + ' can add more; ' + SCORE_NOTE + '</p>';
+			html += '<p class="cs-disclaimer"><strong>Estimate only:</strong> the publisher’s minimum and recommended parts are placed on our score scale (approximate where a part isn’t in our database). FPS uses the FPS Calculator’s formula for the game’s type (typical AAA, esports or CPU-heavy), adjusted for how demanding its published recommended graphics card is and capped where the game locks its frame rate. It is not a benchmark of each game, and games you’re below the minimum for aren’t counted. Ray tracing is off; ' + ( gpu.upscaler ? escapeHtml( gpu.upscaler ) + ' upscaling' : 'upscaling' ) + ' can add more; ' + SCORE_NOTE + '</p>';
 			return html + '</div>';
 		}
 	};
@@ -1431,13 +1528,34 @@
 			// shown now.
 			var rows = [
 				[ 'Recommended RAM (kit size)', suggestedKit + ' GB' ],
-				[ 'Typical setup', ( suggestedKit / 2 ) + ' GB × 2 sticks (dual channel)' ]
+				// U1 (U-53): an 8GB kit is one 8GB stick or 2 × 4GB, and 4GB DDR5
+				// sticks aren't made, so 8GB is shown as one stick with 16GB
+				// (2 × 8GB) as the dual-channel step up.
+				[ 'Typical setup', suggestedKit === 8 ? '1 × 8 GB stick, or 16 GB (2 × 8 GB) for dual channel and headroom' : ( suggestedKit / 2 ) + ' GB × 2 sticks (dual channel)' ]
 			];
 			return resultBlock( 'We recommend at least <strong>' + suggestedKit + 'GB</strong> of RAM for this use case.', rows, 'a general guideline for each use case, not measured memory use. Some games, mods and large projects need more.' );
 		}
 	};
 
 	/* ---- 7. PC Upgrade Calculator ---- */
+	// U1 (U-12): the three slowest current cards (released 2024 or later)
+	// that reach a GPU score target, slowest first.
+	function upgradeGpuPicks( hw, target ) {
+		return Object.keys( hw.gpu ).filter( function ( k ) {
+			return hw.gpu[ k ].score >= target && Number( hw.gpu[ k ].release_year ) >= 2024;
+		} ).sort( function ( a, b ) { return hw.gpu[ a ].score - hw.gpu[ b ].score; } ).slice( 0, 3 );
+	}
+	// The fastest gaming CPU on the same socket, when it beats this one
+	// (cs_bn_socket_upgrade() on the combo pages).
+	function upgradeCpuPick( hw, slug, cpu ) {
+		var best = '';
+		Object.keys( hw.cpu ).forEach( function ( k ) {
+			if ( k !== slug && hw.cpu[ k ].socket === cpu.socket && hw.cpu[ k ].score > cpu.score && ( ! best || hw.cpu[ k ].score > hw.cpu[ best ].score ) ) {
+				best = k;
+			}
+		} );
+		return best;
+	}
 	CS_DEFS.upgrade = {
 		share: true, // E4 (UX-03)
 		fields: [
@@ -1470,36 +1588,53 @@
 			// biggest everyday speed-up); RAM = 40 at 8GB or less, 20 under 16GB.
 			var gaming = v.target !== 'productivity';
 			var targetGpuScore = { '1080p': 33, '1440p': 50, '4k': 70, productivity: 55 }[ v.target ];
+			var resParam = gaming ? '&resolution=' + encodeURIComponent( v.target ) : '';
 			var items = [];
 			var notes = [];
 			if ( v.storageType === 'hdd' ) {
-				items.push( { sev: 30, text: 'Storage — moving to an NVMe SSD is the single biggest everyday speed upgrade you can make.' } );
+				items.push( { sev: 30, html: escapeHtml( 'Storage — moving to an NVMe SSD is the single biggest everyday speed upgrade you can make.' ) } );
 			}
 			if ( v.ram < 16 ) {
-				items.push( { sev: v.ram <= 8 ? 40 : 20, text: 'RAM — ' + v.ram + 'GB is tight for modern games and multitasking; 16GB is the current sensible minimum.' } );
+				items.push( { sev: v.ram <= 8 ? 40 : 20, html: escapeHtml( 'RAM — ' + v.ram + 'GB is tight for modern games and multitasking; 16GB is the current sensible minimum.' ) } );
 			}
 			if ( gpu.score < targetGpuScore ) {
-				items.push( { sev: Math.round( ( targetGpuScore - gpu.score ) / targetGpuScore * 100 ), text: 'GPU — the ' + gpu.name + ' is below the performance level typically needed for ' + ( gaming ? RES_LABELS[ v.target ] + ' gaming' : 'GPU-accelerated creative work' ) + '.' } );
+				// U1 (U-12): name the level and the slowest current cards that
+				// reach it, with a link to try one in the FPS Calculator.
+				var picks = upgradeGpuPicks( hw, targetGpuScore );
+				var gpuHtml = escapeHtml( 'GPU — the ' + gpu.name + ' is below the performance level typically needed for ' + ( gaming ? RES_LABELS[ v.target ] + ' gaming' : 'GPU-accelerated creative work' ) + ' (a gaming score of ' + targetGpuScore + ' or more' + ( picks.length ? ', for example the ' + picks.map( function ( k ) { return hw.gpu[ k ].name; } ).join( ', ' ) + ' or faster' : '' ) + ').' );
+				if ( picks.length ) {
+					gpuHtml += ' <a href="/fps-calculator/?cpu=' + encodeURIComponent( v.cpu ) + '&amp;gpu=' + encodeURIComponent( picks[ 0 ] ) + resParam + '">' + escapeHtml( 'Try the ' + hw.gpu[ picks[ 0 ] ].name + ' with your CPU in the FPS Calculator' ) + '</a>, or see the <a href="/gpu-tier-list/">GPU tier list</a>.';
+				}
+				items.push( { sev: Math.round( ( targetGpuScore - gpu.score ) / targetGpuScore * 100 ), html: gpuHtml } );
 			}
+			var up = upgradeCpuPick( hw, v.cpu, cpu );
+			var cpuNext = up ? ' On the same ' + cpu.socket + ' motherboard, the fastest gaming option in our list is the ' + hw.cpu[ up ].name + ' (check the board’s CPU support list for a BIOS update).' : ' No faster ' + cpu.socket + ' CPU is in our list, so a bigger step means a new motherboard.';
+			var cpuLink = up ? ' <a href="/pc-bottleneck-calculator/?cpu=' + encodeURIComponent( up ) + '&amp;gpu=' + encodeURIComponent( v.gpu ) + resParam + '">' + escapeHtml( 'Check the ' + hw.cpu[ up ].name + ' with your GPU' ) + '</a>.' : ' See the <a href="/cpu-tier-list/">CPU tier list</a>.';
 			if ( gaming ) {
 				var r = bottleneckEstimate( cpu, gpu )[ v.target ];
-				if ( r.component === 'cpu' && r.percent >= 15 ) {
-					items.push( { sev: r.percent, text: 'CPU — the ' + cpu.name + ' holds the ' + gpu.name + ' back at ' + RES_LABELS[ v.target ] + ': ' + BN_SEV_WORD[ r.severity ].toLowerCase() + ' CPU bottleneck of about ' + bnPct( r ) + ' in our Bottleneck Calculator.' } );
+				var topCpu = cpu.score >= hwScoreMax( hw.cpu ) * 0.97;
+				if ( r.component === 'cpu' && r.percent >= 15 && topCpu ) {
+					// U1 (U-04): same rule as cs_bn_is_top_cpu(): nothing faster exists.
+					notes.push( 'The ' + gpu.name + ' outruns even the ' + cpu.name + ' at ' + RES_LABELS[ v.target ] + ' (CPU bottleneck of about ' + bnPct( r ) + '), but no faster gaming CPU exists on any socket. That is normal for a card this fast; a higher resolution or settings puts its extra speed to use.' );
+				} else if ( r.component === 'cpu' && r.percent >= 15 ) {
+					items.push( { sev: r.percent, html: escapeHtml( 'CPU — the ' + cpu.name + ' holds the ' + gpu.name + ' back at ' + RES_LABELS[ v.target ] + ': ' + BN_SEV_WORD[ r.severity ].toLowerCase() + ' CPU bottleneck of about ' + bnPct( r ) + ' in our Bottleneck Calculator.' + cpuNext ) + cpuLink } );
 				} else if ( r.component === 'cpu' ) {
 					notes.push( 'The ' + cpu.name + ' shows only a mild CPU bottleneck (' + bnPct( r ) + ') with this card at ' + RES_LABELS[ v.target ] + ', so a CPU upgrade isn’t a priority.' );
 				} else if ( r.component === 'gpu' ) {
-					notes.push( 'Your CPU isn’t the limit at ' + RES_LABELS[ v.target ] + ': the ' + gpu.name + ' sets the frame rate (normal) and the CPU has about ' + bnPct( r ) + ' headroom, so a faster GPU is what would add FPS.' );
+					// U1 (U-12): no "faster GPU would add FPS" right after "no
+					// upgrade is necessary"; worded as a later option instead.
+					notes.push( 'Your CPU isn’t the limit at ' + RES_LABELS[ v.target ] + ': the ' + gpu.name + ' sets the frame rate (normal) and the CPU has about ' + bnPct( r ) + ' headroom. ' + ( gpu.score < targetGpuScore ? 'So the GPU upgrade above is what adds FPS, not a new CPU.' : 'If you want more FPS later, a faster graphics card is the upgrade that would add it.' ) );
 				} else {
 					notes.push( 'The ' + cpu.name + ' and ' + gpu.name + ' are balanced at ' + RES_LABELS[ v.target ] + '.' );
 				}
 			} else if ( cpu.score < 59 ) {
-				items.push( { sev: Math.round( ( 59 - cpu.score ) / 59 * 100 ), text: 'CPU — the ' + cpu.name + ' is below the level typically wanted for productivity and creative work.' } );
+				items.push( { sev: Math.round( ( 59 - cpu.score ) / 59 * 100 ), html: escapeHtml( 'CPU — the ' + cpu.name + ' is below the level typically wanted for productivity and creative work.' + cpuNext ) + ( up ? '' : cpuLink ) } );
 			}
 			items.sort( function ( a, b ) { return b.sev - a.sev; } );
 			var html = '<div class="cs-result-block"><p class="cs-result-headline">' + ( items.length ? 'Suggested upgrade priority (biggest gain first):' : 'Your current CPU, GPU, RAM and storage already look well suited to this target — no upgrade is strictly necessary yet.' ) + '</p>';
 			if ( items.length ) {
 				html += '<ol class="cs-priority-list">';
-				items.forEach( function ( it ) { html += '<li>' + escapeHtml( it.text ) + '</li>'; } );
+				items.forEach( function ( it ) { html += '<li>' + it.html + '</li>'; } );
 				html += '</ol>';
 			}
 			notes.forEach( function ( n ) { html += '<p>' + escapeHtml( n ) + '</p>'; } );
@@ -1678,10 +1813,12 @@
 			{ id: 'coolerHeight', type: 'number', label: 'CPU air cooler height (mm, optional)', min: 20, max: 250, required: false, blankValue: 0, placeholder: 'e.g. 155', help: 'Leave blank for an AIO liquid cooler or to skip this check.' },
 			{ id: 'caseCoolerMax', type: 'number', label: 'Case max CPU cooler height (mm, optional)', min: 20, max: 250, required: false, blankValue: 0, placeholder: 'e.g. 165' },
 			{ id: 'gpu', type: 'select', label: 'GPU', icon: 'gpu', default: HW.gpu && HW.gpu[ 'rtx-4070' ] ? 'rtx-4070' : 'custom', options: pickerWithOther( 'gpu', 'Other GPU — enter system power below' ) },
-			{ id: 'gpuLength', type: 'number', label: 'GPU length (mm, check your exact model)', default: 320, min: 100, max: 450, help: 'Length differs between brands of the same GPU, so take it from your card\'s spec page.' },
-			{ id: 'caseMaxLength', type: 'number', label: 'Case max GPU length (mm)', default: 380, min: 100, max: 600 },
+			// U1 (U-09): start blank and skip the check when either is empty;
+			// prefilled 320 / 380 mm made every result say "Fits".
+			{ id: 'gpuLength', type: 'number', label: 'GPU length (mm, optional, check your exact model)', min: 100, max: 450, required: false, blankValue: 0, placeholder: 'e.g. 320', help: 'Length differs between brands of the same GPU, so take it from your card\'s spec page. Leave blank to skip this check.' },
+			{ id: 'caseMaxLength', type: 'number', label: 'Case max GPU length (mm, optional)', min: 100, max: 600, required: false, blankValue: 0, placeholder: 'e.g. 380' },
 			{ id: 'gpuPlug', type: 'select', label: 'GPU power plug', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: '8pin', label: '8-pin PCIe' }, { value: '16pin', label: '16-pin 12V-2x6 / 12VHPWR' } ], help: 'Every RTX 4080, 4090, 5080 and 5090 uses the 16-pin plug, and many RTX 4070- and 5070-class cards do; most other cards use 8-pin. Check your exact model.' },
-			{ id: 'psuWattage', type: 'number', label: 'PSU wattage', default: 650, min: 150, max: 1600 },
+			{ id: 'psuWattage', type: 'number', label: 'PSU wattage (optional)', min: 150, max: 1600, required: false, blankValue: 0, placeholder: 'e.g. 750', help: 'Leave blank to see the recommended wattage without checking a PSU.' },
 			{ id: 'psuCable', type: 'select', label: 'PSU has a native 12V-2x6 (16-pin) cable', default: 'skip', options: [ { value: 'skip', label: 'Not sure / skip this check' }, { value: 'yes', label: 'Yes (ATX 3.0 / 3.1 PSU)' }, { value: 'no', label: 'No, 8-pin PCIe cables only' } ] },
 			{ id: 'systemNeed', type: 'number', label: 'Other CPU/GPU: estimated system power need in watts (only used if either is "Other")', default: 450, min: 50, max: 1500 }
 		],
@@ -1722,7 +1859,9 @@
 				var coolerOk = v.coolerHeight <= v.caseCoolerMax;
 				checks.push( [ 'CPU cooler height vs case', coolerOk, coolerOk ? 'Fits (' + ( v.caseCoolerMax - v.coolerHeight ) + 'mm to spare)' : 'Too tall by ' + ( v.coolerHeight - v.caseCoolerMax ) + 'mm — pick a lower cooler or an AIO liquid cooler.' ] );
 			}
-			checks.push( [ 'GPU length vs case clearance', v.gpuLength <= v.caseMaxLength, v.gpuLength <= v.caseMaxLength ? 'Fits (' + ( v.caseMaxLength - v.gpuLength ) + 'mm clearance)' : 'Too long by ' + ( v.gpuLength - v.caseMaxLength ) + 'mm.' ] );
+			if ( v.gpuLength > 0 && v.caseMaxLength > 0 ) {
+				checks.push( [ 'GPU length vs case clearance', v.gpuLength <= v.caseMaxLength, v.gpuLength <= v.caseMaxLength ? 'Fits (' + ( v.caseMaxLength - v.gpuLength ) + 'mm clearance)' : 'Too long by ' + ( v.gpuLength - v.caseMaxLength ) + 'mm.' ] );
+			}
 
 			// Same sum as the PSU Calculator with its default extras
 			// (2 RAM sticks, 2 drives, 3 fans, 50W board), no overclock.
@@ -1730,9 +1869,17 @@
 			var tally = Math.ceil( ( need * 1.3 ) / 50 ) * 50;
 			var vendor = gpu && gpu.recommended_psu_w ? gpu.recommended_psu_w : 0;
 			var recommended = Math.max( tally, vendor );
-			var psuOk = v.psuWattage >= recommended;
 			var basis = ( cpu && gpu ? 'about ' + Math.round( need ) + 'W estimated load' : v.systemNeed + 'W system need you entered' ) + ' + 30% headroom' + ( vendor ? ', and ' + gpu.brand + '’s own ' + vendor + 'W recommendation for the ' + gpu.name : '' );
-			checks.push( [ 'PSU wattage vs recommended', psuOk, ( psuOk ? 'Sufficient — ' + v.psuWattage + 'W meets the ' + recommended + 'W recommended' : 'Too low — get at least ' + recommended + 'W' ) + ' (' + basis + ').' ] );
+			var skipped = [];
+			if ( v.psuWattage > 0 ) {
+				var psuOk = v.psuWattage >= recommended;
+				checks.push( [ 'PSU wattage vs recommended', psuOk, ( psuOk ? 'Sufficient — ' + v.psuWattage + 'W meets the ' + recommended + 'W recommended' : 'Too low — get at least ' + recommended + 'W' ) + ' (' + basis + ').' ] );
+			} else {
+				checks.push( [ 'Recommended PSU wattage', true, 'At least ' + recommended + 'W (' + basis + '). Enter your PSU’s wattage above to check it.' ] );
+			}
+			if ( ! ( v.gpuLength > 0 && v.caseMaxLength > 0 ) ) {
+				skipped.push( 'GPU length vs case (enter both lengths to check it)' );
+			}
 
 			// 16-pin plug: from the user's answer, or known for every RTX
 			// 4080/4090/5080/5090 (gpuPlug()).
@@ -1753,7 +1900,10 @@
 			var notes = checks.some( function ( c ) { return c[ 1 ] === 'warn'; } );
 			var rows = checks.map( function ( c ) { return [ c[ 0 ], ( c[ 1 ] === 'warn' ? '⚠ ' : '' ) + c[ 2 ] ]; } );
 			var headline = failed ? '<strong>⚠ One or more compatibility issues found — see below.</strong>' : ( notes ? '<strong>✅ These components fit together</strong>, with a step or two to check below.' : '<strong>✅ These components look compatible.</strong>' );
-			return resultBlock( headline, rows, 'only the checks listed above are made; checks left on "Not sure" are skipped. Also confirm radiator space for an AIO, RAM height under a large air cooler, and the motherboard’s power connectors on each manufacturer’s spec page.' );
+			if ( skipped.length ) {
+				rows.push( [ 'Not checked', escapeHtml( skipped.join( '; ' ) ) ] );
+			}
+			return resultBlock( headline, rows, 'only the checks listed above are made; checks left on "Not sure" or blank are skipped. Also confirm radiator space for an AIO, RAM height under a large air cooler, and the motherboard’s power connectors on each manufacturer’s spec page.' );
 		}
 	};
 
@@ -1776,15 +1926,19 @@
 			// cs_bottleneck_vram_need() and the combo VRAM FAQ.
 			var base = { '1080p': { medium: 6, high: 6, ultra: 8 }, '1440p': { medium: 6, high: 8, ultra: 10 }, '4k': { medium: 8, high: 12, ultra: 14 } };
 			var needed = base[ v.resolution ][ v.quality ];
+			// U1 (Oct 2026, U-08): the minimum is what these settings need today.
+			// Ray tracing and "hold up for 3+ years" used to be added to the
+			// minimum too (4K Ultra + both = "at least 18GB", so a 16GB RTX 5080
+			// "failed"); they now raise only the recommended figure, 2GB each.
 			var extra = ( v.rayTracing ? 2 : 0 ) + ( v.futureProof ? 2 : 0 );
-			needed += extra;
-			// Oct 2026: "needed" is the minimum. The comfortable figure follows
-			// the site's VRAM guides (about 8GB at 1080p, 12GB at 1440p, 16GB
-			// at 4K, the guides' ray-tracing ranges included), never below the
-			// minimum and rounded up to a VRAM size cards actually ship with. inc/bottleneck-content.php uses the same
-			// numbers for the combo-page VRAM FAQ.
+			// Oct 2026: the comfortable figure follows the site's VRAM guides
+			// (about 8GB at 1080p, 12GB at 1440p, 16GB at 4K, the guides'
+			// ray-tracing ranges included), never below the minimum plus the
+			// extras picked, rounded up to a VRAM size cards actually ship with.
+			// inc/bottleneck-content.php uses the same numbers for the
+			// combo-page VRAM FAQ.
 			var comfyBase = { '1080p': 8, '1440p': 12, '4k': 16 }[ v.resolution ];
-			var comfy = Math.max( needed, comfyBase );
+			var comfy = Math.max( needed + extra, comfyBase );
 			comfy = [ 8, 10, 12, 16, 20, 24, 32 ].find( function ( g ) { return g >= comfy; } ) || comfy;
 			var gpusWith = function ( gb ) {
 				return Object.keys( hw.gpu ).filter( function ( k ) { return hw.gpu[ k ].vram_gb >= gb; } )
@@ -1792,16 +1946,24 @@
 					.slice( 0, 5 )
 					.map( function ( k ) { return /GB\)$/.test( hw.gpu[ k ].name ) ? hw.gpu[ k ].name : hw.gpu[ k ].name + ' (' + hw.gpu[ k ].vram_gb + 'GB)'; } );
 			};
-			var rows = [ [ 'Minimum VRAM', needed + ' GB' ], [ 'Comfortable VRAM (headroom for newer games)', comfy + ' GB' ] ];
+			var why = [ v.rayTracing ? 'ray tracing' : '', v.futureProof ? '3+ years of newer games' : '' ].filter( Boolean ).join( ' and ' );
+			var rows = [ [ 'Minimum VRAM (these settings today)', needed + ' GB' ] ];
+			if ( v.rayTracing ) {
+				rows.push( [ 'Recommended with ray tracing', ( needed + 2 ) + ' GB or more' ] );
+			}
+			if ( v.futureProof ) {
+				rows.push( [ 'Recommended to hold up for 3+ years' + ( v.rayTracing ? ' (with ray tracing)' : '' ), ( needed + extra ) + ' GB or more' ] );
+			}
+			rows.push( [ 'Recommended VRAM (comfortable headroom' + ( why ? ', incl. ' + why : '' ) + ')', comfy + ' GB' ] );
 			var matches = gpusWith( needed );
 			if ( matches.length ) {
-				rows.push( [ 'GPUs that meet the minimum', matches.join( ', ' ) ] );
+				rows.push( [ 'Cards with enough VRAM for the minimum (speed not checked)', matches.join( ', ' ) ] );
 			}
 			var comfyMatches = gpusWith( comfy );
 			if ( comfy > needed && comfyMatches.length && comfyMatches.join() !== matches.join() ) {
-				rows.push( [ 'GPUs with comfortable headroom', comfyMatches.join( ', ' ) ] );
+				rows.push( [ 'Cards with the recommended VRAM (speed not checked)', comfyMatches.join( ', ' ) ] );
 			}
-			return resultBlock( 'You need at least <strong>' + needed + 'GB</strong> of VRAM for this scenario' + ( comfy > needed ? ', and <strong>' + comfy + 'GB</strong> gives comfortable headroom.' : ', which also gives comfortable headroom.' ), rows, 'based on typical VRAM use at these settings, not a measurement of a specific game. High-resolution texture packs and mods can use more.' );
+			return resultBlock( 'These settings need at least <strong>' + needed + 'GB</strong> of VRAM today' + ( comfy > needed ? '; <strong>' + comfy + 'GB</strong> is recommended for comfortable headroom' + ( why ? ' with ' + why : '' ) + '.' : ', which also gives comfortable headroom.' ), rows, 'based on typical VRAM use at these settings, not a measurement of a specific game. High-resolution texture packs and mods can use more. This checks memory only: a card can have enough VRAM and still be too slow for these settings, so check its frame rate in the <a href="/fps-calculator/">FPS Calculator</a>.' );
 		}
 	};
 
@@ -1834,18 +1996,31 @@
 	};
 
 	/* ---- 11. CPU Performance Calculator ---- */
+	// U1 (U-10): gaming tier from the score. Mirror: cs_tl_cpu_label().
+	function cpuGamingTier( score ) {
+		return score >= 80 ? 'High-end' : score >= 70 ? 'Upper mid-range' : score >= 60 ? 'Mid-range' : 'Budget';
+	}
 	CS_DEFS['cpu-performance'] = {
 		fields: [ { id: 'cpu', type: 'select-hardware', source: 'cpu', label: 'CPU' } ],
 		compute: function ( v, hw ) {
 			var cpu = hw.cpu[ v.cpu ];
-			// Thresholds re-set for the Phase 2 gaming-index scale (Oct 2026).
-			var tier = cpu.score >= 77 ? 'Flagship' : cpu.score >= 66 ? 'High-end' : cpu.score >= 54 ? 'Mid-range' : 'Entry-level';
+			// U1 (Oct 2026, U-10, Ali's decision): scores unchanged; the labels
+			// follow where a chip sits for gamers today (Ryzen 5 5600 / Core
+			// i5-12400F budget, Ryzen 5 7600 mid-range, 7800X3D / 9800X3D class
+			// high-end), and the score is shown as a share of the fastest gaming
+			// CPU instead of "/ 95", which read as a perfect score. Same lines
+			// as cs_tl_cpu_label() and the CPU tier list (inc/tier-list.php).
+			var tier = cpuGamingTier( cpu.score );
+			var topKey = Object.keys( hw.cpu ).sort( function ( a, b ) { return hw.cpu[ b ].score - hw.cpu[ a ].score; } )[ 0 ];
+			var share = Math.round( cpu.score / hwScoreMax( hw.cpu ) * 100 );
 			var rows = [
-				[ 'Performance score', fmt( cpu.score, 0 ) + ' / ' + fmt( hwScoreMax( hw.cpu ), 0 ) ], [ 'Tier', tier ],
+				[ 'Gaming performance', share + '% of the fastest gaming CPU in our list' + ( topKey !== v.cpu ? ' (the ' + escapeHtml( hw.cpu[ topKey ].name ) + ')' : ' (this is it)' ) ],
+				[ 'Gaming tier', tier ],
+				[ 'Gaming score (our index)', fmt( cpu.score, 0 ) ],
 				[ 'Cores / Threads', cpu.cores + ' / ' + cpu.threads ], [ 'Base / Boost clock', cpu.base_clock_ghz + ' GHz / ' + cpu.boost_clock_ghz + ' GHz' ],
 				[ 'TDP', cpu.tdp_w + 'W' ], [ 'Socket', cpu.socket ]
 			];
-			return resultBlock( cpu.name + ' is a <strong>' + tier + '</strong> CPU.', rows, 'heavily multi-threaded work such as video export can rank CPUs differently; ' + SCORE_NOTE );
+			return resultBlock( escapeHtml( cpu.name ) + ': gaming tier <strong>' + tier.toLowerCase() + '</strong>, about <strong>' + share + '%</strong> of the fastest gaming CPU we list.', rows, 'the tier and percentage are for games; heavily multi-threaded work such as video export can rank CPUs differently. ' + SCORE_NOTE.charAt( 0 ).toUpperCase() + SCORE_NOTE.slice( 1 ) );
 		}
 	};
 
@@ -2081,15 +2256,22 @@
 			fields: [
 				{ id: 'size', type: 'number', label: 'File size', default: 5, min: 0.001, max: 1000000 },
 				{ id: 'sizeUnit', type: 'select', label: 'Size unit', default: 'GB', options: [ { value: 'MB', label: 'MB' }, { value: 'GB', label: 'GB' }, { value: 'TB', label: 'TB' } ] },
-				{ id: 'speed', type: 'number', label: label + ' speed', default: 100, min: 0.01, max: 100000 },
+				// U1 (U-52): no min clamp, so 0 is an error instead of "925d".
+				{ id: 'speed', type: 'number', label: label + ' speed', default: 100, max: 100000 },
 				{ id: 'speedUnit', type: 'select', label: 'Speed unit', default: 'Mbps', options: [ { value: 'Mbps', label: 'Mbps (megabits/sec)' }, { value: 'MBps', label: 'MB/s (megabytes/sec)' }, { value: 'Gbps', label: 'Gbps' } ] }
 			],
 			compute: function ( v ) {
+				if ( ! ( v.speed > 0 ) ) {
+					throw { msg: 'Enter a ' + label.toLowerCase() + ' speed above 0.' };
+				}
 				var sizeMB = v.size * ( { MB: 1, GB: 1000, TB: 1000000 }[ v.sizeUnit ] );
 				var speedMBs = v.speedUnit === 'Mbps' ? v.speed / 8 : v.speedUnit === 'Gbps' ? ( v.speed * 1000 ) / 8 : v.speed;
 				var seconds = sizeMB / speedMBs;
-				var rows = [ [ 'Estimated time', secondsToHuman( seconds ) ], [ 'Effective speed', fmt( speedMBs, 2 ) + ' MB/s' ] ];
-				return resultBlock( 'Estimated ' + label.toLowerCase() + ' time: <strong>' + secondsToHuman( seconds ) + '</strong>', rows, 'real-world transfer speed is usually 10–20% below your rated connection speed due to overhead.' );
+				// U1 (U-52): the headline is the realistic range (real speed
+				// 10-20% below the rated speed), the full-speed time is the best case.
+				var range = secondsToHuman( seconds / 0.9 ) + ' – ' + secondsToHuman( seconds / 0.8 );
+				var rows = [ [ 'Realistic time (speed 10–20% below rated)', range ], [ 'Best case at the full rated speed', secondsToHuman( seconds ) ], [ 'Rated speed in MB/s', fmt( speedMBs, 2 ) + ' MB/s' ] ];
+				return resultBlock( 'Estimated ' + label.toLowerCase() + ' time: about <strong>' + range + '</strong> (' + secondsToHuman( seconds ) + ' at the full rated speed)', rows, 'real-world transfer speed is usually 10–20% below your rated connection speed due to protocol overhead, Wi-Fi and server load, so the range uses 80–90% of it.' );
 			}
 		};
 	}

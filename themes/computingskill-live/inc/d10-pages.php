@@ -96,13 +96,34 @@ add_filter( 'rank_math/frontend/description', 'cs_d10_meta_description', 20 );
 /* ------------------------------------------------------------------ */
 
 /**
- * Highest preset that reaches $target FPS (CS_DEFS.canirun cirBest()):
- * [ preset or '', fps ].
+ * U1 (U-01): a game's GPU load next to others of its type, from its
+ * publisher-recommended GPU on our score scale (gameGpuLoad() in
+ * calculators.js, same constants): sqrt( type median / recommended ),
+ * kept within 0.75-1.3. Medians of the games list: AAA 30, esports 11,
+ * CPU-heavy 32.
  */
-function cs_cir_best( $cpu, $gpu, $res, $target, $game_type ) {
-	$fps = 0;
+function cs_game_gpu_load( $g, $type ) {
+	$ref = array( 'aaa' => 30, 'esports' => 11, 'cpu-heavy' => 32 );
+	$rec = isset( $g['req']['rec']['gpu'] ) ? (float) $g['req']['rec']['gpu'] : 0;
+	if ( ! $rec || ! isset( $ref[ $type ] ) ) {
+		return 1.0;
+	}
+	return max( 0.75, min( 1.3, sqrt( $ref[ $type ] / $rec ) ) );
+}
+
+/**
+ * Highest preset that reaches $target FPS (CS_DEFS.canirun cirBest()):
+ * [ preset or '', fps ]. U1: with the game's load and frame-rate cap.
+ */
+function cs_cir_best( $cpu, $gpu, $res, $target, $game_type, $g = null ) {
+	$fps  = 0;
+	$load = $g ? cs_game_gpu_load( $g, $game_type ) : 1.0;
+	$cap  = $g && ! empty( $g['fps_cap'] ) ? (int) $g['fps_cap'] : 0;
 	foreach ( array( 'ultra', 'high', 'medium', 'low' ) as $preset ) {
-		list( $fps ) = cs_tl_fps( $cpu, $gpu, $res, $preset, $game_type );
+		list( $fps ) = cs_tl_fps( $cpu, $gpu, $res, $preset, $game_type, $load );
+		if ( $cap ) {
+			$fps = min( $fps, $cap );
+		}
 		if ( $fps >= $target ) {
 			return array( $preset, $fps );
 		}
@@ -169,7 +190,7 @@ function cs_can_i_run_shortcode() {
 
 	if ( $ex ) {
 		$html .= '<h2>' . esc_html__( 'What Typical Gaming PCs Can Run', 'computingskill' ) . '</h2>';
-		$html .= '<p>' . esc_html__( 'Four common builds with 16GB of RAM: whether each meets the publisher’s recommended or minimum specs, and the highest preset that holds 60 FPS or more (estimated FPS in brackets; “under 60” means not even at low settings). The FPS is typical for the game’s type; where a build only meets the minimum, that game asks for more than most, so expect less.', 'computingskill' ) . '</p>';
+		$html .= '<p>' . esc_html__( 'Four common builds with 16GB of RAM: whether each meets the publisher’s recommended or minimum specs, and the highest preset that holds 60 FPS or more (estimated FPS in brackets; “under 60” means not even at low settings). The FPS follows the game’s type and how demanding its published recommended graphics card is; where a build only meets the minimum, expect less. Elden Ring is locked to 60 FPS, a build below a game’s minimum gets no FPS figure, and Minecraft’s FPS depends on render distance and mods more than on the parts, so it has none.', 'computingskill' ) . '</p>';
 		$html .= '<div class="cs-table-wrap"><table class="cs-hardware-table cs-cir-ref"><caption>' . esc_html__( 'Publisher specs met, and highest settings at 60+ FPS (estimated)', 'computingskill' ) . '</caption><thead><tr><th scope="col">' . esc_html__( 'Game', 'computingskill' ) . '</th>';
 		foreach ( $ex as $e ) {
 			$html .= '<th scope="col">' . esc_html( $e[0] ) . '<br><small>' . cs_pp_part_link( $e[1], $cpus[ $e[1] ] ) . ' + ' . cs_pp_part_link( $e[2], $gpus[ $e[2] ] ) . ', ' . esc_html( $res_l[ $e[3] ] ) . '</small></th>';
@@ -181,8 +202,15 @@ function cs_can_i_run_shortcode() {
 			$html .= '<tr><th scope="row"><a href="' . esc_url( home_url( '/games/' . $slug . '/' ) ) . '">' . esc_html( $g['name'] ) . '</a></th>';
 			foreach ( $ex as $e ) {
 				list( $lvl ) = cs_cir_level( $cpus[ $e[1] ], $gpus[ $e[2] ], 16, $g );
-				list( $preset, $fps ) = cs_cir_best( $cpus[ $e[1] ], $gpus[ $e[2] ], $e[3], 60, $type );
-				$html .= '<td>' . esc_html( $lvl_l[ $lvl ] ) . ' · ' . ( $preset ? esc_html( $labels[ $preset ] ) : esc_html__( 'under 60', 'computingskill' ) ) . ' (' . (int) round( $fps ) . ')</td>';
+				// U1 (U-01): no FPS figure below the publisher minimum or for a
+				// game whose FPS follows its own settings.
+				if ( 'below' === $lvl || ! empty( $g['fps_varies'] ) ) {
+					$html .= '<td>' . esc_html( $lvl_l[ $lvl ] ) . ( 'below' === $lvl ? '' : ' · ' . esc_html__( 'no FPS estimate', 'computingskill' ) ) . '</td>';
+					continue;
+				}
+				list( $preset, $fps ) = cs_cir_best( $cpus[ $e[1] ], $gpus[ $e[2] ], $e[3], 60, $type, $g );
+				$capped = ! empty( $g['fps_cap'] ) && $fps >= (int) $g['fps_cap'];
+				$html .= '<td>' . esc_html( $lvl_l[ $lvl ] ) . ' · ' . ( $preset ? esc_html( $labels[ $preset ] ) : esc_html__( 'under 60', 'computingskill' ) ) . ' (' . (int) round( $fps ) . ( $capped ? ' ' . esc_html__( 'cap', 'computingskill' ) : '' ) . ')</td>';
 			}
 			$html .= '</tr>';
 		}
@@ -192,7 +220,8 @@ function cs_can_i_run_shortcode() {
 	$html .= '<h2>' . esc_html__( 'How the Checker Works', 'computingskill' ) . '</h2><ol>';
 	$html .= '<li>' . esc_html__( 'Each game in our database has a type: typical AAA, esports (light competitive shooters and MOBAs) or CPU-heavy (strategy, simulation, MMOs, big open worlds).', 'computingskill' ) . '</li>';
 	$html .= '<li>' . sprintf( esc_html__( 'For each game the tool estimates FPS at ultra, high, medium and low settings with the %s’s formula: the lower of what your graphics card can draw and what your CPU can prepare.', 'computingskill' ), cs_tl_link( 'fps-calculator', __( 'FPS Calculator', 'computingskill' ) ) ) . '</li>';
-	$html .= '<li>' . esc_html__( 'It shows the highest preset that reaches your target frame rate, and the FPS there.', 'computingskill' ) . '</li>';
+	$html .= '<li>' . esc_html__( 'Each game’s estimate is then scaled by how demanding its published recommended graphics card is next to other games of its type, so a heavier game shows lower FPS. Games that lock their frame rate (Elden Ring at 60 FPS) never show more than the lock.', 'computingskill' ) . '</li>';
+	$html .= '<li>' . esc_html__( 'It shows the highest preset that reaches your target frame rate, and the FPS there. A game your PC is below the publisher’s minimum for gets no FPS figure and isn’t counted as playable.', 'computingskill' ) . '</li>';
 	$html .= '<li>' . esc_html__( 'Your CPU, graphics card and RAM are compared with the publisher’s own minimum and recommended specs for that game. Those parts are placed on our score scale (where a listed part isn’t in our database, approximately, from public review averages), so a newer chip of a different brand is compared fairly.', 'computingskill' ) . '</li></ol>';
 	$html .= '<p>' . sprintf(
 		/* translators: 1, 2: links */

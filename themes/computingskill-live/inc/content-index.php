@@ -33,7 +33,7 @@ function cs_content_index_groups() {
 			'cpt'     => 'cs_calculator',
 			'archive' => '/calculators/',
 			'items'   => array(
-				array( 'slug' => 'cpu-performance-calculator', 'title' => __( 'CPU Performance Calculator', 'computingskill' ), 'desc' => __( 'See a CPU\'s gaming-performance score and tier, from entry-level to flagship, with its cores, clocks and TDP shown for reference.', 'computingskill' ) ),
+				array( 'slug' => 'cpu-performance-calculator', 'title' => __( 'CPU Performance Calculator', 'computingskill' ), 'desc' => __( 'See a CPU\'s gaming-performance score and gaming tier, from budget to high-end, with its cores, clocks and TDP shown for reference.', 'computingskill' ) ),
 				array( 'slug' => 'cpu-power-consumption-calculator', 'title' => __( 'CPU Power Consumption Calculator', 'computingskill' ), 'desc' => __( 'Estimate how much power your CPU actually draws at idle, typical, and full load compared to its rated TDP.', 'computingskill' ) ),
 				array( 'slug' => 'cpu-vs-gpu-calculator', 'title' => __( 'CPU vs GPU Calculator', 'computingskill' ), 'desc' => __( 'Put a CPU\'s and a GPU\'s scores side by side with the balance at 1080p, 1440p and 4K, without game or settings inputs.', 'computingskill' ) ),
 				array( 'slug' => 'can-i-run-it', 'title' => __( 'Can I Run It?', 'computingskill' ), 'desc' => __( 'Pick your CPU, graphics card and RAM to see which games your PC runs, at which settings and roughly how many FPS.', 'computingskill' ) ),

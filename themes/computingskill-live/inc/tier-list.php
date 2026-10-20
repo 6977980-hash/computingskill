@@ -10,8 +10,9 @@
  *  - GPU tiers follow the PC Upgrade Calculator's own targets (score 33 for
  *    1080p, 50 for 1440p, 70 for 4K, cs_bn_upgrade_targets()), so a card the
  *    tier list calls "1440p" is never one that tool calls too weak.
- *  - CPU tiers follow the CPU Performance Calculator's labels (Flagship 77+,
- *    High-end 66+, Mid-range 54+), with an S tier for the X3D-class chips.
+ *  - CPU tiers follow the CPU Performance Calculator's gaming tiers
+ *    (High-end 80+, Upper mid-range 70+, Mid-range 60+, Budget below; U1),
+ *    with an S tier for the X3D-class chips.
  *  - FPS figures use the FPS Calculator's formula (cs_tl_fps(), a mirror of
  *    CS_DEFS.fps in calculators.js): keep the two in sync.
  *
@@ -110,16 +111,20 @@ function cs_tl_gpu_tiers() {
 }
 
 /**
- * CPU tiers, highest first. A-C match the CPU Performance Calculator's
- * Flagship / High-end / Mid-range thresholds (calculators.js).
+ * CPU tiers, highest first. A-D match the CPU Performance Calculator's
+ * gaming tiers (cpuGamingTier() in calculators.js): High-end 80+, Upper
+ * mid-range 70+, Mid-range 60+, Budget below. U1 (Oct 2026, U-10, Ali's
+ * decision): the lines were 77 / 66 / 54 with Flagship / High-end /
+ * Mid-range / Entry-level, which called a Ryzen 5 5600 entry-level and a
+ * Ryzen 5 7600 high-end; the scores themselves are unchanged.
  */
 function cs_tl_cpu_tiers() {
 	return array(
 		'S' => array( 85, __( 'Fastest gaming CPUs (large-cache X3D chips)', 'computingskill' ) ),
-		'A' => array( 77, __( 'Flagship: a match for flagship cards like the RTX 4090', 'computingskill' ) ),
-		'B' => array( 66, __( 'High-end: a strong match for high-end cards', 'computingskill' ) ),
-		'C' => array( 54, __( 'Mid-range: fine for mid-range cards', 'computingskill' ) ),
-		'D' => array( 0, __( 'Entry-level: pair with budget cards', 'computingskill' ) ),
+		'A' => array( 80, __( 'High-end: a match for flagship cards like the RTX 4090', 'computingskill' ) ),
+		'B' => array( 70, __( 'Upper mid-range: a strong match for high-end cards', 'computingskill' ) ),
+		'C' => array( 60, __( 'Mid-range: fine for mid-range cards', 'computingskill' ) ),
+		'D' => array( 0, __( 'Budget: pair with budget and mainstream cards', 'computingskill' ) ),
 	);
 }
 
@@ -136,7 +141,7 @@ function cs_tl_tier_of( $score, $tiers ) {
  * The CPU Performance Calculator's own label for a score.
  */
 function cs_tl_cpu_label( $score ) {
-	return $score >= 77 ? __( 'Flagship', 'computingskill' ) : ( $score >= 66 ? __( 'High-end', 'computingskill' ) : ( $score >= 54 ? __( 'Mid-range', 'computingskill' ) : __( 'Entry-level', 'computingskill' ) ) );
+	return $score >= 80 ? __( 'High-end', 'computingskill' ) : ( $score >= 70 ? __( 'Upper mid-range', 'computingskill' ) : ( $score >= 60 ? __( 'Mid-range', 'computingskill' ) : __( 'Budget', 'computingskill' ) ) );
 }
 
 function cs_tl_sorted( $parts ) {
@@ -150,10 +155,11 @@ function cs_tl_sorted( $parts ) {
  * FPS Calculator estimate (CS_DEFS.fps): the lower of the GPU's and the
  * CPU's frame-rate ceilings. Returns [ fps, 'cpu'|'gpu' limiter ].
  */
-function cs_tl_fps( $cpu, $gpu, $res, $preset = 'high', $game = 'aaa' ) {
+function cs_tl_fps( $cpu, $gpu, $res, $preset = 'high', $game = 'aaa', $gpu_load = 1.0 ) {
 	$profiles = cs_bottleneck_game_profiles();
 	$profile  = $profiles[ $game ];
-	$gpu_fps  = $gpu['score'] * CS_TL_FPS_PER_POINT * cs_bottleneck_gpu_res_factors()[ $res ] * cs_bottleneck_preset_factors()[ $preset ] * $profile['gpu'] * cs_bottleneck_gpu_memory_factor( $gpu, $res, $preset, $game );
+	// U1: $gpu_load = one game's load (cs_game_gpu_load()), as in fpsCeilings().
+	$gpu_fps  = $gpu['score'] * CS_TL_FPS_PER_POINT * cs_bottleneck_gpu_res_factors()[ $res ] * cs_bottleneck_preset_factors()[ $preset ] * $profile['gpu'] * cs_bottleneck_gpu_memory_factor( $gpu, $res, $preset, $game ) * $gpu_load;
 	$cpu_cap  = $cpu['score'] * CS_BN_CPU_PARITY * CS_TL_FPS_PER_POINT * $profile['cpu'];
 	return $gpu_fps <= $cpu_cap ? array( $gpu_fps, 'gpu' ) : array( $cpu_cap, 'cpu' );
 }
@@ -400,7 +406,7 @@ function cs_tl_cpu_html() {
 	$html .= '<h2>' . esc_html__( 'How the CPU Tiers Work', 'computingskill' ) . '</h2>';
 	$html .= '<p>' . sprintf(
 		/* translators: %s: link */
-		esc_html__( 'Tiers A to D use the same lines as the %s (Flagship 77+, High-end 66+, Mid-range 54+, Entry-level below that). S tier is the group of large-cache chips well above the rest.', 'computingskill' ),
+		esc_html__( 'Tiers A to D use the same gaming tiers as the %s (High-end 80+, Upper mid-range 70+, Mid-range 60+, Budget below that). S tier is the group of large-cache chips well above the rest.', 'computingskill' ),
 		cs_tl_link( 'cpu-performance-calculator', __( 'CPU Performance Calculator', 'computingskill' ) )
 	) . '</p>';
 	$html .= cs_tl_tier_summary( $by_tier, $tiers, __( 'Processors', 'computingskill' ) );

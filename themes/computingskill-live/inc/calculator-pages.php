@@ -119,6 +119,10 @@ function cs_calculator_page_fixes() {
 				'more likely to be limiting your performance at a given resolution.', 'more likely to be limiting your performance at a given resolution.',
 				__( 'more likely to be limiting your performance at a given resolution. Its CPU bottleneck percentage is the same signal seen from the other side: it estimates the share of the GPU left idle, so a 20% CPU bottleneck corresponds to GPU usage of roughly 80%. When the GPU is the limit (usage near 100%), the calculator calls the result GPU-limited, which is normal, and shows the CPU’s spare headroom instead.', 'computingskill' ),
 			),
+			// K3: "How to fix" is what the searches ask (steps in inc/k3-pages.php).
+			// U1: moved here; a second 'cpu-bottleneck-explained' key further
+			// down replaced this whole list, so the D3 sentence above was lost.
+			array( 'What to Do About a CPU Bottleneck', 'What to Do About a CPU Bottleneck', __( 'How to Fix a CPU Bottleneck', 'computingskill' ) ),
 		),
 		'gpu-bottleneck-explained' => array(
 			array(
@@ -137,7 +141,7 @@ function cs_calculator_page_fixes() {
 			// old specs-based method.
 			array(
 				'This calculator takes a CPU', 'without needing to memorize benchmark charts.',
-				__( 'This calculator shows a CPU’s gaming-performance score and the tier it falls in, so you can quickly gauge whether a chip is entry-level, mid-range, high-end or flagship for gaming without needing to memorize benchmark charts.', 'computingskill' ),
+				__( 'This calculator shows a CPU’s gaming-performance score and the tier it falls in, so you can quickly gauge whether a chip is a budget, mid-range, upper mid-range or high-end choice for gaming without needing to memorize benchmark charts.', 'computingskill' ),
 			),
 			array(
 				'Clock speed and architecture generation both affect performance', 'differ substantially in real performance.',
@@ -149,17 +153,22 @@ function cs_calculator_page_fixes() {
 			),
 			array(
 				'The estimate weighs core and thread count', 'several generations apart.',
-				__( 'The tier comes from the CPU’s gaming-performance score: ComputingSkill’s own index of the frame rate a CPU can sustain in games when the graphics card isn’t the limit, placed from publicly reported third-party review averages (we don’t benchmark parts ourselves). A score of 77 or more is Flagship, 66 to 76 High-end, 54 to 65 Mid-range, and below 54 Entry-level. Cores, threads, clocks and TDP are shown next to the result for reference, but they don’t set the score, because they predict gaming speed poorly: the 8-core Ryzen 7 9800X3D outscores the 24-core Core i9-13900K in games.', 'computingskill' ),
+				__( 'The tier comes from the CPU’s gaming-performance score: ComputingSkill’s own index of the frame rate a CPU can sustain in games when the graphics card isn’t the limit, placed from publicly reported third-party review averages (we don’t benchmark parts ourselves). The tier follows where a chip sits for gamers today: a score of 80 or more is High-end, 70 to 79 Upper mid-range, 60 to 69 Mid-range, and below 60 Budget. The result also shows the score as a share of the fastest gaming CPU we list (the Ryzen 7 9800X3D, score 95), so the Ryzen 5 5600 at 52 reads as about 55% of it. Cores, threads, clocks and TDP are shown next to the result for reference, but they don’t set the score, because they predict gaming speed poorly: the 8-core Ryzen 7 9800X3D outscores the 24-core Core i9-13900K in games.', 'computingskill' ),
 			),
 			array(
 				'As a worked example, compare the AMD Ryzen 5 7600', 'real-world CPU performance.',
-				__( 'As a worked example, compare the AMD Ryzen 5 7600 (6C/12T, Zen 4) with the Intel Core i5-12400F (6C/12T, Alder Lake). Both have six cores and twelve threads, but the Ryzen 5 7600 scores 67 (High-end) and the i5-12400F scores 55 (Mid-range), because published reviews show the 7600 running games noticeably faster. It is a reminder that core count alone is a poor proxy for real-world CPU performance.', 'computingskill' ),
+				__( 'As a worked example, compare the AMD Ryzen 5 7600 (6C/12T, Zen 4) with the Intel Core i5-12400F (6C/12T, Alder Lake). Both have six cores and twelve threads, but the Ryzen 5 7600 scores 67 (Mid-range) and the i5-12400F scores 55 (Budget), because published reviews show the 7600 running games noticeably faster. It is a reminder that core count alone is a poor proxy for real-world CPU performance.', 'computingskill' ),
 			),
 			array(
 				'At the other end, a chip like the Intel Core i9-13900K', 'trading off against each other.',
-				__( 'At the other end, the Intel Core i9-13900K (24C/32T) scores 78, a Flagship result well above the Ryzen 5 5600 (6C/12T) at 52 (Entry-level). It still sits behind the 8-core Ryzen 7 9800X3D at 95, whose large 3D V-Cache helps games far more than extra cores do.', 'computingskill' ),
+				__( 'At the other end, the Intel Core i9-13900K (24C/32T) scores 78, an Upper mid-range result for gaming well above the Ryzen 5 5600 (6C/12T) at 52 (Budget). It still sits behind the 8-core Ryzen 7 9800X3D at 95, whose large 3D V-Cache helps games far more than extra cores do.', 'computingskill' ),
 			),
 			array( 'This is a relative estimate built from published specifications', 'published specifications', __( 'This is a relative estimate built from published specifications and third-party review averages', 'computingskill' ) ),
+			// U1 (U-10): the gaming tiers were renamed (budget, mid-range, upper
+			// mid-range, high-end) and the score is shown as a share of the
+			// fastest gaming CPU.
+			array( 'relative performance tier', 'from its gaming score', __( 'gaming tier (budget, mid-range, upper mid-range or high-end) from its gaming score', 'computingskill' ) ),
+			array( 'such as entry-level, mid-range, high-end, or flagship) along with an approximate score', 'not an absolute unit of measurement.', __( 'budget, mid-range, upper mid-range or high-end for gaming) along with the score as a share of the fastest gaming CPU we list, meant for comparison against other CPUs, not an absolute unit of measurement.', 'computingskill' ) ),
 		),
 
 		// Audit 1.6.
@@ -273,10 +282,6 @@ function cs_calculator_page_fixes() {
 			),
 		),
 
-		// K3: "How to fix" is what the searches ask (steps in inc/k3-pages.php).
-		'cpu-bottleneck-explained' => array(
-			array( 'What to Do About a CPU Bottleneck', 'What to Do About a CPU Bottleneck', __( 'How to Fix a CPU Bottleneck', 'computingskill' ) ),
-		),
 		// K3: the worked example said 23.6 × 13.3 for a 27-inch screen; the
 		// formula and the reference table give 23.5 × 13.2.
 		'monitor-size-calculator' => array(
@@ -296,6 +301,25 @@ function cs_calculator_page_fixes() {
 				__( 'That breakdown is the more useful part for planning purposes: it lets you see at a glance whether, say, your GPU is eating an unusually large or small share of the total compared to general build-planning guidance. If you enter your budget, the result also shows how much is left or how far over you are. Peripherals and tax or shipping are added to the total but kept out of the percentage split, so they don’t skew the balance between parts.', 'computingskill' ),
 			),
 			array( 'It does not track sales, regional pricing differences, currency', 'currency', __( 'It does not track sales, regional pricing differences, currency conversion (the currency choice only changes the symbol)', 'computingskill' ) ),
+			// U1 (U-11): the GPU guide was "a quarter to a third", which flagged a
+			// normal 5600 + RTX 4070 build (GPU 50%) as too GPU-heavy. Gaming
+			// build guides put the GPU at about 35-50% of the parts budget; the
+			// calculator now uses that band.
+			array( 'such as the GPU commonly taking roughly a quarter', 'a gaming budget.', __( 'such as the GPU commonly taking roughly 35–50% of a gaming build’s parts budget.', 'computingskill' ) ),
+			array( 'commonly landing somewhere in the neighborhood of a quarter', 'of total budget,', __( 'commonly landing at roughly 35–50% of the PC parts budget,', 'computingskill' ) ),
+			array(
+				'works out to about 38% of the $1,040 spent', 'intentional.',
+				__( 'works out to about 38% of the $1,040 spent, inside the 35–50% range many gaming build guides use, while the CPU, motherboard and RAM together ($370, about 36%) take a similar share. Had one part landed far outside its usual range, the breakdown is where you would spot it and decide whether that is intentional.', 'computingskill' ),
+			),
+			array( 'many builders aim for roughly a quarter', 'on the GPU,', __( 'many builders put roughly 35–50% of the PC parts budget into the GPU,', 'computingskill' ) ),
+		),
+
+		// U1 (U-08): ray tracing raises the recommended VRAM, not the minimum.
+		'gpu-vram-calculator' => array(
+			array(
+				'The calculator starts from its 1440p high-texture baseline of 8GB', 'for the same settings.',
+				__( 'The calculator starts from its 1440p high-texture minimum of 8GB (frame buffers, high-resolution textures and typical open-world asset streaming). Ray tracing (BVH structures and denoising buffers) adds about 2GB, so with it on the calculator recommends 10GB or more, and 12GB as the comfortable figure. That is why the GeForce RTX 4060’s 8GB of GDDR6 is tight for ray-traced 1440p gaming, while the GeForce RTX 4070’s 12GB of GDDR6X has comfortable headroom for the same settings.', 'computingskill' ),
+			),
 		),
 	);
 }
@@ -336,15 +360,18 @@ add_filter( 'the_content', 'cs_calculator_page_text', 8 );
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-k4' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-u1' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// K4 8GB vs 16GB section, title and FAQ (inc/k4-pages.php). K3, K2,
-		// K1, D2, D3, D5 and D10 ran with earlier revs; their pages are
-		// dated already.
-		'how-much-vram-do-i-need',
+		// U1 (user-side audit): tools and page text changed. K4 (how-much-
+		// vram-do-i-need), K3, K2, K1, D2, D3, D5 and D10 ran with earlier
+		// revs; their pages are dated already.
+		'can-i-run-it', 'fps-calculator', 'psu-calculator', 'psu', 'how-to-choose-a-psu',
+		'gpu-vram-calculator', 'pc-compatibility-checker', 'cpu-performance-calculator',
+		'pc-build-cost-calculator', 'pc-upgrade-calculator', 'download-time-calculator',
+		'ram-calculator', 'cpu-tier-list', 'pc-bottleneck-calculator', 'cpu-bottleneck-explained',
 	);
 }
 

@@ -197,6 +197,12 @@ while ( have_posts() ) :
 					<?php if ( 'cpu' === $r1080['component'] ) : ?>
 						<p><?php printf( esc_html__( 'At 1080p the balance tips the other way: the %1$s becomes the likely limit (~%2$s CPU bottleneck), mainly in CPU-heavy games or when chasing very high frame rates.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( cs_bn_pct( $r1080 ) ) ); ?></p>
 					<?php endif; ?>
+				<?php elseif ( 'cpu' === $primary && cs_bn_is_top_cpu( $cpu ) ) : ?>
+					<?php // U1 (U-04): nothing faster exists, so no CPU upgrade advice. ?>
+					<p><?php printf( esc_html__( 'The %2$s is fast enough to outrun even the %1$s, one of the fastest gaming CPUs available, at lower resolutions such as 1080p, especially in CPU-heavy games and competitive shooters running uncapped frame rates. That is normal for a flagship card, and no faster CPU exists to fix it: raise the resolution to 1440p or 4K, or turn the settings up, to shift the load back onto the GPU.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
+					<?php if ( 'gpu' === $r4k['component'] ) : ?>
+						<p><?php printf( esc_html__( 'At 4K the load moves onto the graphics card and the %1$s sets the frame rate instead, which is normal at that resolution.', 'computingskill' ), esc_html( $gpu['name'] ) ); ?></p>
+					<?php endif; ?>
 				<?php elseif ( 'cpu' === $primary ) : ?>
 					<p><?php printf( esc_html__( 'The %1$s is the real bottleneck in this pairing, especially at 1080p and in CPU-heavy games (large open worlds, simulation and strategy titles, competitive shooters running uncapped framerates). A CPU upgrade — or simply raising the resolution/settings to shift load back onto the GPU — will get more out of the %2$s.', 'computingskill' ), esc_html( $cpu['name'] ), esc_html( $gpu['name'] ) ); ?></p>
 					<?php if ( 'gpu' === $r4k['component'] ) : ?>

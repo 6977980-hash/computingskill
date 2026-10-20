@@ -802,16 +802,23 @@ function cs_pp_cpu_html( $slug, $cpu ) {
 		array( esc_html__( 'CPU-heavy (strategy, simulation, MMO)', 'computingskill' ), $ceil['cpu-heavy'] ),
 	) );
 
-	$html .= '<h2>' . esc_html( sprintf( __( 'Best GPU for the %s', 'computingskill' ), $name ) ) . '</h2>';
+	// U1 (U-40): a ceiling, not a buying recommendation ("up to the RTX 5090"
+	// read as "pair a $100 CPU with a 5090").
+	$html .= '<h2>' . esc_html( sprintf( __( 'Best GPU for the %s: the Fastest Card It Keeps Up With', 'computingskill' ), $name ) ) . '</h2>';
 	$items = array();
 	foreach ( $labels as $res => $l ) {
 		list( $g_slug, $g ) = $max[ $res ];
 		if ( $g ) {
 			$link    = isset( $pairs[ $slug . '|' . $g_slug ] ) ? ' (<a href="' . esc_url( $pairs[ $slug . '|' . $g_slug ] ) . '">' . esc_html__( 'pair page', 'computingskill' ) . '</a>)' : '';
-			$items[] = '<li><strong>' . esc_html( $l ) . ':</strong> ' . sprintf( esc_html__( 'up to the %s', 'computingskill' ), cs_pp_part_link( $g_slug, $g ) ) . $link . '</li>';
+			$items[] = '<li><strong>' . esc_html( $l ) . ':</strong> ' . sprintf( esc_html__( 'keeps up with cards as fast as the %s', 'computingskill' ), cs_pp_part_link( $g_slug, $g ) ) . $link . '</li>';
 		}
 	}
-	$html .= '<p>' . esc_html__( 'The fastest graphics card in our list this CPU runs without a noticeable CPU bottleneck (under 15%, typical AAA game at high settings). Any card up to it is a good match; a faster card still works, but part of it goes unused at that resolution.', 'computingskill' ) . '</p><ul>' . implode( '', $items ) . '</ul>';
+	$html .= '<p>' . esc_html__( 'This is a ceiling, not a buying recommendation: the fastest graphics card in our list this CPU runs without a noticeable CPU bottleneck (under 15%, typical AAA game at high settings). Any card up to it is a good match, so pick one for your budget and screen; a faster card still works, but part of it goes unused at that resolution.', 'computingskill' ) . '</p><ul>' . implode( '', $items ) . '</ul>';
+	$html .= '<p>' . sprintf(
+		/* translators: %s: link */
+		esc_html__( 'To choose a card for your budget and resolution, see the %s.', 'computingskill' ),
+		cs_tl_link( 'gpu-tier-list', __( 'GPU tier list', 'computingskill' ) )
+	) . '</p>';
 
 	$default = array( 'rtx-3060', 'rtx-4060', 'rtx-5060', 'rx-9060-xt', 'rtx-5070', 'rx-9070-xt', 'rtx-5070-ti', 'rtx-5080', 'rtx-4090' );
 	$list    = array();
@@ -887,7 +894,7 @@ function cs_pp_cpu_html( $slug, $cpu ) {
 	$g1440 = $max['1440p'][1];
 	$html .= cs_tl_faq( array(
 		sprintf( __( 'Is the %s good for gaming?', 'computingskill' ), $name ) => sprintf( __( 'It is a %1$s-tier, %2$s gaming CPU in our list (score %3$d). It prepares about %4$d FPS in a typical AAA game and %5$d FPS in esports titles, so it suits high-refresh gaming up to that point.', 'computingskill' ), $letter, strtolower( cs_tl_cpu_label( $cpu['score'] ) ), (int) $cpu['score'], $ceil['aaa'], $ceil['esports'] ),
-		sprintf( __( 'What is the best GPU for the %s?', 'computingskill' ), $name ) => $g1440 ? sprintf( __( 'Up to the %1$s at 1440p without a noticeable bottleneck%2$s. At 4K the card does more of the work, so faster cards still make sense.', 'computingskill' ), cs_pp_short( $g1440 ), $max['1080p'][1] ? sprintf( __( ', and up to the %s at 1080p', 'computingskill' ), cs_pp_short( $max['1080p'][1] ) ) : '' ) : __( 'Every card in our list leaves this CPU waiting at 1440p.', 'computingskill' ),
+		sprintf( __( 'What is the best GPU for the %s?', 'computingskill' ), $name ) => $g1440 ? sprintf( __( 'It depends on your budget and screen: any card up to the fastest one this CPU keeps up with is a good match. That ceiling is the %1$s at 1440p without a noticeable bottleneck%2$s. At 4K the card does more of the work, so faster cards still make sense. The GPU tier list helps you pick one for your budget.', 'computingskill' ), cs_pp_short( $g1440 ), $max['1080p'][1] ? sprintf( __( ', and the %s at 1080p', 'computingskill' ), cs_pp_short( $max['1080p'][1] ) ) : '' ) : __( 'Every card in our list leaves this CPU waiting at 1440p.', 'computingskill' ),
 		sprintf( __( 'What can I upgrade the %s to?', 'computingskill' ), $name ) => $upgrade ? sprintf( __( 'On the same %1$s motherboard, the fastest gaming option in our list is the %2$s (score %3$d). A BIOS update may be needed first.', 'computingskill' ), $cpu['socket'], cs_pp_short( $upgrade ), (int) $upgrade['score'] ) : sprintf( __( 'It is already the fastest gaming CPU in our list for %s; a bigger step means a new platform.', 'computingskill' ), $cpu['socket'] ),
 		sprintf( __( 'Does the %s support DDR5?', 'computingskill' ), $name ) => sprintf( __( 'Its %1$s platform supports %2$s.', 'computingskill' ), $cpu['socket'], cs_pp_lc( cs_bn_socket_memory( $cpu['socket'] ) ) ),
 	) );
@@ -932,7 +939,8 @@ function cs_pp_vs_gpu_html( $a_slug, $a, $b_slug, $b ) {
 	$w      = $fast ? $a : $b;
 	$lose   = $fast ? $b : $a;
 	$gap    = cs_pp_gap( $w['score'], $lose['score'] );
-	$gap1440 = cs_pp_gap( max( $fa['1440p'][0], $fb['1440p'][0] ), min( $fa['1440p'][0], $fb['1440p'][0] ) );
+	// U1 (U-46): from the FPS as shown (rounded), so the % matches the table.
+	$gap1440 = cs_pp_gap( round( max( $fa['1440p'][0], $fb['1440p'][0] ) ), round( min( $fa['1440p'][0], $fb['1440p'][0] ) ) );
 	$feat_a = cs_pp_gpu_features( $a );
 	$feat_b = cs_pp_gpu_features( $b );
 
@@ -999,6 +1007,10 @@ function cs_pp_vs_gpu_html( $a_slug, $a, $b_slug, $b ) {
 		foreach ( $labels as $res => $l ) {
 			list( $x, $xl ) = cs_tl_fps( $top, $a, $res, $preset );
 			list( $y, $yl ) = cs_tl_fps( $top, $b, $res, $preset );
+			// U1 (U-46): the difference comes from the FPS shown (46 vs 45
+			// read "+4%" when worked out from 46.2 vs 44.6).
+			$x      = round( $x );
+			$y      = round( $y );
 			$d      = cs_pp_gap( $x, $y );
 			$rows[] = array( esc_html( $l . ', ' . $pl ), (int) round( $x ) . ( 'cpu' === $xl ? '*' : '' ), (int) round( $y ) . ( 'cpu' === $yl ? '*' : '' ), esc_html( abs( $d ) < 3 ? __( 'about even', 'computingskill' ) : sprintf( __( '%1$s +%2$d%%', 'computingskill' ), $d > 0 ? $an : $bn, abs( $d > 0 ? $d : cs_pp_gap( $y, $x ) ) ) ) );
 		}
