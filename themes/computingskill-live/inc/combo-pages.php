@@ -59,7 +59,8 @@ function cs_combo_pages_sync() {
 		}
 	}
 
-	$ok = true;
+	$ok      = true;
+	$created = false;
 	foreach ( $pairs as $pair ) {
 		$slug = $pair['cpu'] . '-' . $pair['gpu'];
 		if ( isset( $slugs[ $slug ] ) || ! isset( $cpus[ $pair['cpu'] ], $gpus[ $pair['gpu'] ] ) ) {
@@ -90,7 +91,12 @@ function cs_combo_pages_sync() {
 			$ok = false;
 		} else {
 			$slugs[ $slug ] = true;
+			$created        = true;
 		}
+	}
+	// E3 (ONP-03): /bottleneck/ lists every combo page, so its date moves too.
+	if ( $created && function_exists( 'cs_touch_hub_pages' ) ) {
+		cs_touch_hub_pages( array( 'bottleneck' ) );
 	}
 
 	if ( $ok ) {

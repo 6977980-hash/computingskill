@@ -84,7 +84,8 @@ function cs_print_schema() {
 	// FAQ text on those pages is untouched; only the structured-data emission
 	// is skipped.
 	$cs_faq_schema_excluded_slugs = array( 'privacy-policy', 'disclaimer' );
-	if ( cs_schema_should_emit( 'FAQPage' ) && is_singular() && ! is_page( $cs_faq_schema_excluded_slugs ) ) {
+	// E3 (ONP-04): the homepage FAQ (front-page.php) is marked up too.
+	if ( cs_schema_should_emit( 'FAQPage' ) && ( is_singular() || is_front_page() ) && ! is_page( $cs_faq_schema_excluded_slugs ) ) {
 		global $cs_faq_schema_queue;
 		if ( ! empty( $cs_faq_schema_queue ) ) {
 			$main_entity = array();
@@ -204,11 +205,12 @@ function cs_print_schema() {
 		$graphs = array_merge( array_values( $cs_rank_math_schema ), $graphs );
 	}
 
-	// WebPage with author and dates for combo and game pages (Oct 2026).
-	// Rank Math outputs no WebPage/Article node for these two post types
-	// (checked live 13 Oct 2026), so this cannot duplicate one; the guard
-	// below skips it if a future Rank Math setting adds its own.
-	if ( is_singular( array( 'cs_bottleneck', 'cs_game' ) ) ) {
+	// WebPage with author and dates for combo and game pages (Oct 2026),
+	// and since E3 (ONP-01) the part and comparison pages too.
+	// Rank Math outputs no WebPage/Article node for these post types
+	// (checked live 13 and 20 Oct 2026), so this cannot duplicate one; the
+	// guard below skips it if a future Rank Math setting adds its own.
+	if ( is_singular( array( 'cs_bottleneck', 'cs_game', 'cs_hardware', 'cs_comparison' ) ) ) {
 		$has_page = false;
 		foreach ( $graphs as $node ) {
 			$types = is_array( $node ) && isset( $node['@type'] ) ? (array) $node['@type'] : array();
@@ -218,7 +220,7 @@ function cs_print_schema() {
 			}
 		}
 		if ( ! $has_page ) {
-			$graphs[] = array(
+			$page_node = array(
 				'@type'         => 'WebPage',
 				'@id'           => get_permalink() . '#webpage',
 				'url'           => get_permalink(),
@@ -234,6 +236,25 @@ function cs_print_schema() {
 					'url'   => home_url( '/' ),
 				),
 			);
+			if ( is_singular( array( 'cs_hardware', 'cs_comparison' ) ) ) {
+				// The excerpt is the page's meta description (inc/part-pages.php).
+				$excerpt = wp_strip_all_tags( get_the_excerpt() );
+				if ( '' !== $excerpt ) {
+					$page_node['description'] = $excerpt;
+				}
+				// The page's own share card, the image these pages show in
+				// og:image (inc/technical-seo.php).
+				$card = function_exists( 'cs_og_card_url' ) ? cs_og_card_url() : '';
+				if ( $card ) {
+					$page_node['primaryImageOfPage'] = array(
+						'@type'  => 'ImageObject',
+						'url'    => $card,
+						'width'  => '1200',
+						'height' => '630',
+					);
+				}
+			}
+			$graphs[] = $page_node;
 		}
 	}
 
@@ -451,7 +472,9 @@ function cs_is_calculator_page() {
 		return true;
 	}
 	global $post;
-	return $post && has_shortcode( $post->post_content, 'cs_calculator' );
+	// E3 (SEO-04): Can I Run It is a tool with its own shortcode
+	// (inc/d10-pages.php), so it is a WebApplication like the others.
+	return $post && ( has_shortcode( $post->post_content, 'cs_calculator' ) || has_shortcode( $post->post_content, 'cs_can_i_run' ) );
 }
 
 

@@ -26,8 +26,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Disclaimer get their modified date set once, and the page cache is
  * purged once so the new footer and headers reach cached pages.
  */
-define( 'CS_LEGAL_REV', '2026-10-17-d1' );
-define( 'CS_PRIVACY_UPDATED', 'October 17, 2026' );
+define( 'CS_LEGAL_REV', '2026-10-20-e3' );
+define( 'CS_PRIVACY_UPDATED', 'October 20, 2026' );
 
 /* ------------------------------------------------------------------ */
 /* Privacy Policy (6.2)                                                */
@@ -110,6 +110,8 @@ function cs_privacy_policy_text( $content ) {
 
 	// Add analytics to the "Information We Collect" list (its first </ul>).
 	$item = '<li><strong>' . esc_html__( 'Analytics data, only with your consent.', 'computingskill' ) . '</strong> ' . esc_html__( 'If you accept analytics in the cookie banner, Google Analytics records how pages are used. See Analytics below.', 'computingskill' ) . '</li>';
+	// E3: the contact form's spam limit (E2, inc/contact-form.php).
+	$item .= "\n" . '<li><strong>' . esc_html__( 'A short-lived spam counter for the contact form.', 'computingskill' ) . '</strong> ' . esc_html__( 'To limit each visitor to 3 messages in 10 minutes, the site keeps a one-way, salted hash of your IP address with a count, never the address itself. It can’t be turned back into your IP address and is deleted automatically 10 minutes after your last message.', 'computingskill' ) . '</li>';
 	$pos  = strpos( $content, '</ul>' );
 	if ( false !== $pos ) {
 		$content = substr_replace( $content, $item . "\n", $pos, 0 );
@@ -227,7 +229,8 @@ function cs_terms_of_use_html() {
 <h2><?php esc_html_e( 'Estimates, not guarantees', 'computingskill' ); ?></h2>
 <p><?php
 	/* translators: %s: link to the Disclaimer page */
-	printf( esc_html__( 'Every result on this site is a specs-based estimate, not a measurement or a promise of how a real PC will perform. The %s explains these limits in detail and is part of these terms. Check manufacturer specifications and current reviews before you spend money.', 'computingskill' ), cs_policy_link( 'disclaimer', __( 'Disclaimer', 'computingskill' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- link built from escaped parts.
+	// E3 (FUN-03): "specs-based" no longer described how the scores are made (D3).
+	printf( esc_html__( 'Every result on this site is an estimate built from manufacturer specifications, our own gaming-performance scores (placed from published review averages) and documented formulas, not a measurement or a promise of how a real PC will perform. The %s explains these limits in detail and is part of these terms. Check manufacturer specifications and current reviews before you spend money.', 'computingskill' ), cs_policy_link( 'disclaimer', __( 'Disclaimer', 'computingskill' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- link built from escaped parts.
 ?></p>
 <h2><?php esc_html_e( 'Acceptable use', 'computingskill' ); ?></h2>
 <p><?php esc_html_e( 'Please don’t:', 'computingskill' ); ?></p>
@@ -309,7 +312,8 @@ function cs_legal_rev_apply() {
 	}
 	global $wpdb;
 	$touched = array();
-	foreach ( array( 'privacy-policy', 'disclaimer' ) as $slug ) {
+	// E3: Terms of Use added (its text is built by cs_terms_of_use_html()).
+	foreach ( array( 'privacy-policy', 'disclaimer', 'terms-of-use' ) as $slug ) {
 		$page = get_page_by_path( $slug );
 		if ( $page ) {
 			$touched[] = $page->ID;

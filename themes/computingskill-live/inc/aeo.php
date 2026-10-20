@@ -860,19 +860,35 @@ function cs_aeo_quick_answers( $slug = '' ) {
 		}
 	}
 	$combos = ( '' === $slug || 'bottleneck' === $slug ) && function_exists( 'cs_bn_published_pairs' ) ? count( cs_bn_published_pairs() ) : 0;
+	// E3: /hardware/ and /comparisons/ also list the D10 part and X vs Y
+	// pages; counted only on those two hubs (cs_pp_urls() is one query).
+	$parts = 0;
+	$vs    = 0;
+	if ( ( '' === $slug || 'hardware' === $slug || 'comparisons' === $slug ) && function_exists( 'cs_pp_urls' ) ) {
+		foreach ( array_keys( cs_pp_urls() ) as $key ) {
+			$parts += 0 === strpos( $key, 'cs_hardware|' ) ? 1 : 0;
+			$vs    += 0 === strpos( $key, 'cs_comparison|' ) ? 1 : 0;
+		}
+	}
 	return array(
 		'how-much-ram-do-i-need-for-gaming-and-streaming' => __( 'For gaming and streaming on the same PC, 32GB of RAM is the sweet spot for most setups. 16GB can run both but leaves almost no margin once the game, OBS or Streamlabs, Discord and a browser are open together, and 64GB only pays off for heavier work alongside the stream, such as 4K capture or editing while live.', 'computingskill' ),
 		'methodology'    => __( 'Every result on ComputingSkill is an estimate built from manufacturers’ published specs and documented formulas, not from our own benchmarks. CPU and GPU scores are a relative gaming index positioned from public review averages (RTX 4090 = 100 for GPUs), and each calculator’s formula is listed below.', 'computingskill' ),
 		'about-us'       => __( 'ComputingSkill is a free set of PC hardware calculators, tools and guides run by Ali Ahmad. The calculators turn published specs and documented formulas into estimates; we do not run a hardware lab or our own benchmarks, and the Methodology page shows how each number is produced.', 'computingskill' ),
-		'calculators'    => sprintf( __( 'ComputingSkill has %d free PC hardware calculators, covering bottlenecks, FPS, PSU wattage, power draw and electricity cost, cooling, RAM, VRAM, build cost, upgrades and part compatibility. Start with the PC Bottleneck Calculator to see whether your CPU or GPU limits your frame rate.', 'computingskill' ), $n_calc ),
+		'calculators'    => sprintf( __( 'ComputingSkill has %d free PC hardware calculators, covering bottlenecks, FPS, which games your PC can run, PSU wattage, power draw and electricity cost, cooling, RAM, VRAM, build cost, upgrades and part compatibility. Start with the PC Bottleneck Calculator to see whether your CPU or GPU limits your frame rate.', 'computingskill' ), $n_calc ),
 		'bottleneck'     => sprintf( __( 'This page lists %d CPU and GPU pairings with their estimated bottleneck at 1080p, 1440p and 4K for a typical AAA game at high settings. A CPU bottleneck %% is the share of the GPU left idle; GPU-limited is normal for gaming. For a pair that isn’t listed, use the PC Bottleneck Calculator.', 'computingskill' ), $combos ),
 		'computer-tools' => __( 'Computer Tools are ComputingSkill’s everyday utilities, in three groups: storage (drive space, SSD lifespan and TBW, unit conversion), internet (download, upload and transfer time, bandwidth, data usage, Mbps and MB/s) and display (PPI, DPI, monitor size, aspect ratio, resolution, refresh rate).', 'computingskill' ),
 		'storage-tools'  => __( 'Storage tools convert storage units (decimal and binary), estimate how much space files need and how long an SSD lasts from its TBW rating, and convert between TBW and DWPD.', 'computingskill' ),
 		'internet-tools' => __( 'Internet tools estimate download, upload and file transfer times, the bandwidth you need, and your monthly data use, and convert between Mbps and MB/s. The key rule: divide an internet speed in Mbps by 8 to get MB/s.', 'computingskill' ),
 		'display-tools'  => __( 'Display tools calculate a screen’s pixel density (PPI), print resolution (DPI), a monitor’s real width and height, aspect ratio and resolution names, and the frame time for a refresh rate.', 'computingskill' ),
-		'hardware'       => __( 'The Hardware section has one plain-English page per PC component (CPU, GPU, RAM, VRAM, SSD, HDD, PSU, motherboard, CPU cooler and case), explaining what each part does and which specs matter before you buy. Ranked lists are on the GPU and CPU tier lists.', 'computingskill' ),
-		'guides'         => __( 'The guides answer the bigger PC questions step by step: how much RAM and VRAM you need, how to choose a gaming GPU and a PSU, how to upgrade a gaming PC, how to improve FPS, and what CPU and GPU bottlenecks really are.', 'computingskill' ),
-		'comparisons'    => __( 'The comparisons put two options side by side and recommend one by use case: SSD vs HDD, NVMe vs SATA, DDR4 vs DDR5 and 1080p vs 1440p vs 4K, plus ranked GPU and CPU tier lists.', 'computingskill' ),
+		'hardware'       => $parts
+			/* translators: %d: number of CPU and GPU pages */
+			? sprintf( __( 'The Hardware section has one plain-English page per PC component (CPU, GPU, RAM, VRAM, SSD, HDD, PSU, motherboard, CPU cooler and case), explaining what each part does and which specs matter before you buy, plus %d pages on individual CPUs and graphics cards with their specs, estimated FPS and best pairings. Ranked lists are on the GPU and CPU tier lists.', 'computingskill' ), $parts )
+			: __( 'The Hardware section has one plain-English page per PC component (CPU, GPU, RAM, VRAM, SSD, HDD, PSU, motherboard, CPU cooler and case), explaining what each part does and which specs matter before you buy. Ranked lists are on the GPU and CPU tier lists.', 'computingskill' ),
+		'guides'         => __( 'The guides answer the bigger PC questions step by step: how much RAM and VRAM you need, how to choose a gaming GPU and a PSU, how to upgrade a gaming PC, how to improve FPS, why GPU usage drops in games, what DLSS, FSR and frame generation do, and what CPU and GPU bottlenecks really are.', 'computingskill' ),
+		'comparisons'    => $vs
+			/* translators: %d: number of head-to-head comparison pages */
+			? sprintf( __( 'The comparisons put two options side by side and recommend one by use case: SSD vs HDD, NVMe vs SATA, DDR4 vs DDR5 and 1080p vs 1440p vs 4K, plus ranked GPU and CPU tier lists and %d head-to-head pages for specific graphics cards and processors.', 'computingskill' ), $vs )
+			: __( 'The comparisons put two options side by side and recommend one by use case: SSD vs HDD, NVMe vs SATA, DDR4 vs DDR5 and 1080p vs 1440p vs 4K, plus ranked GPU and CPU tier lists.', 'computingskill' ),
 		'home'           => __( 'ComputingSkill is a free set of PC hardware calculators: check whether your CPU or GPU limits your frame rate at 1080p, 1440p and 4K, estimate FPS, PSU wattage, RAM and VRAM needs, and compare parts on our GPU and CPU tier lists. Results are estimates from manufacturer specs and documented formulas, not lab benchmarks.', 'computingskill' ),
 		'games'          => __( 'Pick a game to see its publisher’s official minimum and recommended CPU, GPU, RAM and storage, then check your own CPU and GPU against it in the FPS Calculator. The FPS figure is a general estimate for that type of game, not a benchmark of the game itself.', 'computingskill' ),
 		'blog'           => __( 'The ComputingSkill blog collects our articles, guides and comparisons on building, upgrading and choosing PC parts. Calculators, tools and part explainers have their own hubs, linked above.', 'computingskill' ),
@@ -980,6 +996,8 @@ function cs_llms_txt() {
 		'gpu-tier-list'           => array( __( 'GPU Tier List', 'computingskill' ), __( 'every graphics card ranked by gaming score, with FPS estimates at 1080p, 1440p and 4K', 'computingskill' ) ),
 		'cpu-tier-list'           => array( __( 'CPU Tier List', 'computingskill' ), __( 'every processor ranked by gaming score, with FPS ceilings and the fastest GPU each drives at 1440p', 'computingskill' ) ),
 		'pc-bottleneck-calculator' => array( __( 'PC Bottleneck Calculator', 'computingskill' ), __( 'main tool: which part limits a CPU + GPU pair at 1080p, 1440p and 4K', 'computingskill' ) ),
+		// E3 (ONP-02): the only sitemap URL llms.txt left out.
+		'computer-tools'          => array( __( 'Computer Tools', 'computingskill' ), __( 'everyday storage, internet and display tools in one hub', 'computingskill' ) ),
 		'about-us'                => array( __( 'About Us', 'computingskill' ), __( 'who runs the site and how content is sourced', 'computingskill' ) ),
 		'editorial-policy'        => array( __( 'Editorial Policy', 'computingskill' ), __( 'how pages are written, checked and corrected', 'computingskill' ) ),
 	) as $slug => $l ) {

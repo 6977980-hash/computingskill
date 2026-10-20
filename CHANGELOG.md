@@ -2,6 +2,18 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.52 (20 Oct 2026) — E3 technical SEO + trust
+- Part (`/hardware/{part}/`) and comparison (`/comparisons/{a}-vs-{b}/`) pages show "By Ali Ahmad · Last updated" and carry a WebPage node with author, publisher, dates, description and the page's share card as `primaryImageOfPage` (ONP-01).
+- Comparison title tags are at most 60 characters (shorter endings for long part names; the H1 keeps the full title); DLSS guide title 59 characters (SEO-03).
+- `/comparisons/{b}-vs-{a}/` 301s to the existing `{a}-vs-{b}` page (SEO-06).
+- Can I Run It is linked from the homepage, the /calculators/ and /games/ hubs; the low GPU usage and DLSS/FSR guides are on /guides/ and in a new "Which Page Do You Need?" box on the FPS Calculator, Can I Run It, How to Improve FPS and both guides; the bottleneck explainers link them too (SEO-02).
+- Can I Run It is a WebApplication (og:type website), like the other calculators (SEO-04).
+- Homepage FAQ has FAQPage schema (ONP-04).
+- CPU and GPU Performance Calculator intro and FAQ answers, and their llms.txt lines, describe the score-based method; /computer-tools/ added to llms.txt (ONP-02). Hub quick answers name the new pages.
+- Dates (ONP-03): /calculators/, /guides/, /hardware/, /comparisons/ and the CPU/GPU Performance pages are dated today; 5 hubs and 16 tool pages that changed in D8 move from September to 18 Oct 2026. New part, comparison and combo pages now also move their hub's date.
+- Terms of Use no longer say "specs-based estimate"; Privacy Policy explains the contact form's 10-minute hashed-IP spam counter (CS_LEGAL_REV 2026-10-20-e3) (FUN-03).
+- Comments feed link removed from `<head>`; comment feed URLs 301 to the main feed / the post. A real `/favicon.ico` is written once from the site icon (the host served a static 404). Post category label only links categories that aren't noindexed as thin (SEO-07).
+
 ## 1.0.51 (20 Oct 2026) — E2 deploy + security
 Deployer plugin 1.3.0:
 - The theme is copied into a hidden staging folder, checked file by file, and swapped in with a folder rename, so a deploy never leaves the site half old, half new; a failed copy leaves the live theme untouched. If the folder can't be renamed it falls back to temp file + rename per file, `functions.php` last.

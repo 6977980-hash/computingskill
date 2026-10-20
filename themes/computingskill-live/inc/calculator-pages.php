@@ -131,7 +131,21 @@ function cs_calculator_page_fixes() {
 		'cpu-performance-calculator' => array(
 			array(
 				'by weighing core and thread count', 'than an older one.',
-				sprintf( __( 'from its gaming-performance score, %s, so it ranks how fast a CPU runs games rather than its core count or clock speed.', 'computingskill' ), $score ),
+				sprintf( __( 'from its gaming score on %s, so it ranks how fast a CPU runs games rather than its core count or clock speed.', 'computingskill' ), $score ),
+			),
+			// E3 (ONP-02): the intro and two FAQ answers still described the
+			// old specs-based method.
+			array(
+				'This calculator takes a CPU', 'without needing to memorize benchmark charts.',
+				__( 'This calculator shows a CPU’s gaming-performance score and the tier it falls in, so you can quickly gauge whether a chip is entry-level, mid-range, high-end or flagship for gaming without needing to memorize benchmark charts.', 'computingskill' ),
+			),
+			array(
+				'Clock speed and architecture generation both affect performance', 'differ substantially in real performance.',
+				__( 'Because the score follows how fast each CPU runs games in published reviews, not its core count. Architecture, cache size and clock speed all change how much work each core gets done, so two six-core chips can land far apart: the Ryzen 5 7600 scores 67 and the Core i5-12400F 55.', 'computingskill' ),
+			),
+			array(
+				'This calculator produces a general estimate based on published specifications and known generational performance patterns.', 'known generational performance patterns.',
+				__( 'The score is ComputingSkill’s own gaming index, placed from publicly reported third-party review averages, not the result of running Cinebench, PassMark or any other benchmark ourselves.', 'computingskill' ),
 			),
 			array(
 				'The estimate weighs core and thread count', 'several generations apart.',
@@ -167,6 +181,19 @@ function cs_calculator_page_fixes() {
 				__( 'Cross-brand comparisons work the same way: the Radeon RX 7800 XT (60 compute units, RDNA 3) and the GeForce RTX 4070 Super (7168 CUDA cores, Ada Lovelace) can’t be compared by core count, so the calculator compares their scores instead: 58 for the RX 7800 XT and 62 for the RTX 4070 Super, both rated Mid-range / 1440p.', 'computingskill' ),
 			),
 			array( 'This tool estimates a tier from published specifications', 'published specifications', __( 'This tool reports a tier and score placed from published specifications and third-party review averages', 'computingskill' ) ),
+			// E3 (ONP-02): three FAQ answers still described the old method.
+			array(
+				'Because the calculator adjusts for architecture generation and efficiency', 'use different core designs.',
+				__( 'The score follows how each card performs in games in published third-party reviews rather than its core count, so NVIDIA, AMD and Intel cards sit on one scale, with the RTX 4090 at 100.', 'computingskill' ),
+			),
+			array(
+				'A newer, more efficient architecture with fewer cores', 'as much as raw specifications.',
+				__( 'So a newer card with fewer cores can run games faster than an older one with more. The calculator doesn’t count cores at all: each card’s score is placed from how it performs in published reviews, which already takes that into account.', 'computingskill' ),
+			),
+			array(
+				'It reflects general architecture-level improvements', 'precise ray tracing benchmark.',
+				__( 'No. The score stands for average rasterized gaming performance at high settings, without ray tracing, so cards with stronger ray tracing hardware can pull further ahead in ray-traced games. For ray-tracing-heavy use, treat the tier as a general guide rather than a ray tracing benchmark.', 'computingskill' ),
+			),
 		),
 
 		// Audit 1.18.

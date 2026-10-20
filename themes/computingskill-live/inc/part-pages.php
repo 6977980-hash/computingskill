@@ -123,6 +123,37 @@ function cs_pp_vs_title( $type, $a, $b ) {
 	return sprintf( __( '%1$s vs %2$s: Specs, Gaming FPS and Which to Buy', 'computingskill' ), cs_pp_short( $a ), cs_pp_short( $b ) );
 }
 
+/**
+ * E3 (SEO-03): <title> for a comparison page, at most 60 characters. The
+ * post title (the H1) keeps the full "Specs, Gaming FPS and Which to Buy"
+ * wording; the title tag falls back to shorter endings for long names.
+ * '' when the post is not one of the generated pairs (Rank Math's title
+ * is kept then).
+ */
+function cs_pp_vs_title_tag( $post_id ) {
+	$slug = get_post_field( 'post_name', $post_id );
+	foreach ( cs_pp_vs_pairs() as $p ) {
+		list( $type, $a, $b ) = $p;
+		$data = cs_pp_data( $type );
+		if ( cs_pp_vs_slug( $a, $b ) !== $slug || ! isset( $data[ $a ], $data[ $b ] ) ) {
+			continue;
+		}
+		$pair = cs_pp_short( $data[ $a ] ) . ' vs ' . cs_pp_short( $data[ $b ] );
+		foreach ( array(
+			__( ': Specs, Gaming FPS and Which to Buy', 'computingskill' ),
+			__( ': Specs, FPS & Which to Buy', 'computingskill' ),
+			__( ': Gaming FPS & Specs', 'computingskill' ),
+			__( ' Gaming FPS', 'computingskill' ),
+		) as $suffix ) {
+			if ( cs_title_length( $pair . $suffix ) <= 60 ) {
+				return $pair . $suffix;
+			}
+		}
+		return $pair;
+	}
+	return '';
+}
+
 /* ------------------------------------------------------------------ */
 /* Creating the posts                                                  */
 /* ------------------------------------------------------------------ */
@@ -188,6 +219,7 @@ function cs_pp_sync() {
 	$done = (array) get_option( 'cs_part_pages_created', array() );
 	$ref  = get_page_by_path( 'methodology' );
 	$author = $ref ? (int) $ref->post_author : 0;
+	$hubs   = array();
 
 	foreach ( $wanted as $w ) {
 		list( $pt, $slug, $title, $excerpt, $content, $kind ) = $w;
@@ -212,6 +244,11 @@ function cs_pp_sync() {
 		}
 		update_post_meta( $id, '_cs_generated', $kind );
 		$done[] = $key;
+		$hubs[ 'part' === $kind ? 'hardware' : 'comparisons' ] = true;
+	}
+	// E3 (ONP-03): the hub that lists the new pages is updated too.
+	if ( $hubs && function_exists( 'cs_touch_hub_pages' ) ) {
+		cs_touch_hub_pages( array_keys( $hubs ) );
 	}
 	update_option( 'cs_part_pages_created', array_values( array_unique( $done ) ), true );
 	update_option( 'cs_part_pages_synced', $hash, true );

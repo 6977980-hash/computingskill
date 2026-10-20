@@ -428,6 +428,12 @@ function cs_games_hub_overview( $games ) {
 		<h2><?php esc_html_e( 'How to Read PC Game System Requirements', 'computingskill' ); ?></h2>
 		<p><?php esc_html_e( 'The minimum spec is the weakest hardware the publisher says will start and run the game, usually at low settings. The recommended spec is what the publisher suggests for a smoother experience at higher settings; some publishers state a target frame rate or resolution for each tier, many do not. Neither tier promises a frame rate on your PC, because drivers, background apps, resolution and in-game settings all change the result.', 'computingskill' ); ?></p>
 		<p><?php esc_html_e( 'Clearing the recommended spec on paper also does not tell you whether your CPU and graphics card are well matched. A fast GPU paired with an older CPU can still stutter in busy scenes. That is why every game page here links to our PC Bottleneck Calculator and FPS Calculator, which estimate how your exact parts pair up at 1080p, 1440p and 4K.', 'computingskill' ); ?></p>
+		<?php // E3 (SEO-02): the games hub did not link the tool that checks every game at once. ?>
+		<p><?php printf(
+			/* translators: %s: link to the Can I Run It tool */
+			esc_html__( 'To check every game below against your own CPU, graphics card and RAM in one go, use %s.', 'computingskill' ),
+			'<a href="' . esc_url( home_url( '/can-i-run-it/' ) ) . '">' . esc_html__( 'Can I Run It?', 'computingskill' ) . '</a>'
+		); ?></p>
 		<p>
 			<?php
 			echo esc_html( sprintf(

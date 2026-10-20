@@ -190,6 +190,13 @@ function cs_shorten_long_titles( $title ) {
 	if ( is_singular( 'cs_bottleneck' ) ) {
 		return cs_bn_title_tag( get_queried_object_id() );
 	}
+	// E3 (SEO-03): 35 of the 54 comparison titles were 61-72 characters.
+	if ( is_singular( 'cs_comparison' ) && function_exists( 'cs_pp_vs_title_tag' ) ) {
+		$vs = cs_pp_vs_title_tag( get_queried_object_id() );
+		if ( '' !== $vs ) {
+			return $vs;
+		}
+	}
 	if ( is_singular( 'cs_game' ) ) {
 		/* translators: %s: game name */
 		$base = sprintf( __( '%s System Requirements', 'computingskill' ), get_the_title() );
@@ -258,6 +265,8 @@ function cs_title_overrides() {
 		'best-gpu-for-ryzen-5-5600' => __( 'Best GPU for Ryzen 5 5600 & 5600X (2026, No Bottleneck)', 'computingskill' ),
 		'gpu-tier-list'             => __( 'GPU Tier List 2026: Graphics Cards Ranked for Gaming', 'computingskill' ),
 		'cpu-tier-list'             => __( 'CPU Tier List 2026: Best Gaming Processors Ranked', 'computingskill' ),
+		// E3 (SEO-03): the post title is 61 characters.
+		'dlss-fsr-frame-generation-explained' => __( 'DLSS vs FSR vs XeSS: Upscaling & Frame Generation Explained', 'computingskill' ),
 		'archive:cs_game'           => __( 'PC Game System Requirements: Can Your PC Run It?', 'computingskill' ),
 		'term:buying-guides'        => __( 'PC Buying Guides: Articles - Computing Skill', 'computingskill' ),
 	);

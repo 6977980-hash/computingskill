@@ -100,6 +100,18 @@ function cs_url_guards() {
 		}
 	}
 
+	// E3 (SEO-06): /comparisons/{b}-vs-{a}/ 301s to the page that exists
+	// as /comparisons/{a}-vs-{b}/ (people and AI answers write a pair
+	// either way round).
+	if ( is_404() && function_exists( 'cs_pp_urls' ) && preg_match( '#^/comparisons/([a-z0-9-]+?)-vs-([a-z0-9-]+)/?$#', strtolower( $path ), $m ) ) {
+		$urls = cs_pp_urls();
+		$key  = 'cs_comparison|' . $m[2] . '-vs-' . $m[1];
+		if ( isset( $urls[ $key ] ) ) {
+			wp_safe_redirect( $urls[ $key ], 301 );
+			exit;
+		}
+	}
+
 	if ( ! is_singular() ) {
 		return;
 	}
@@ -573,3 +585,227 @@ function cs_og_add_card( $image ) {
 }
 add_action( 'rank_math/opengraph/facebook/add_additional_images', 'cs_og_add_card' );
 add_action( 'rank_math/opengraph/twitter/add_additional_images', 'cs_og_add_card' );
+
+/* -------------------------------------------------------------------------
+ * E3 (20 Oct 2026, full audit SEO-07 and ONP-03)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * SEO-07: comments are off site-wide (inc/hardening.php), so the empty
+ * comments feed is no longer announced in <head>, and its URLs (the site's
+ * /comments/feed/ and any post's /feed/) 301 to the main feed or the post.
+ */
+add_filter( 'feed_links_show_comments_feed', '__return_false' );
+
+function cs_comments_feed_redirect() {
+	if ( ! is_comment_feed() ) {
+		return;
+	}
+	$target = is_singular() ? get_permalink( get_queried_object_id() ) : get_feed_link();
+	wp_safe_redirect( $target ? $target : home_url( '/' ), 301 );
+	exit;
+}
+add_action( 'template_redirect', 'cs_comments_feed_redirect', 1 );
+
+/**
+ * SEO-07: /favicon.ico answered with the host's static 404 page, because
+ * the request never reaches WordPress (its own favicon redirect can't run).
+ * A real favicon.ico is written to the site root once, built from the site
+ * icon set in wp-admin (16, 32 and 48 px PNGs in one .ico file). An
+ * existing favicon.ico is never replaced. Returns true when the file is
+ * there.
+ */
+function cs_write_favicon_ico() {
+	$file = ABSPATH . 'favicon.ico';
+	if ( file_exists( $file ) ) {
+		return true;
+	}
+	$icon_id = (int) get_option( 'site_icon' );
+	$source  = $icon_id ? get_attached_file( $icon_id ) : '';
+	if ( ! $source || ! is_readable( $source ) || ! function_exists( 'imagecreatefromstring' ) || ! function_exists( 'imagepng' ) || ! wp_is_writable( ABSPATH ) ) {
+		return false;
+	}
+	$src = @imagecreatefromstring( (string) file_get_contents( $source ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+	if ( ! $src ) {
+		return false;
+	}
+	$pngs = array();
+	foreach ( array( 16, 32, 48 ) as $size ) {
+		$img = imagecreatetruecolor( $size, $size );
+		imagealphablending( $img, false );
+		imagesavealpha( $img, true );
+		imagefill( $img, 0, 0, imagecolorallocatealpha( $img, 0, 0, 0, 127 ) );
+		imagecopyresampled( $img, $src, 0, 0, 0, 0, $size, $size, imagesx( $src ), imagesy( $src ) );
+		ob_start();
+		imagepng( $img );
+		$pngs[ $size ] = ob_get_clean();
+		imagedestroy( $img );
+	}
+	imagedestroy( $src );
+
+	// ICO header, one 16-byte directory entry per image, then the PNGs.
+	$ico    = pack( 'vvv', 0, 1, count( $pngs ) );
+	$offset = 6 + 16 * count( $pngs );
+	$data   = '';
+	foreach ( $pngs as $size => $png ) {
+		$ico    .= pack( 'CCCCvvVV', $size, $size, 0, 0, 1, 32, strlen( $png ), $offset );
+		$offset += strlen( $png );
+		$data   .= $png;
+	}
+	$tmp = $file . '.tmp-' . getmypid();
+	$ok  = false !== @file_put_contents( $tmp, $ico . $data, LOCK_EX ) && @rename( $tmp, $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+	if ( ! $ok && file_exists( $tmp ) ) {
+		@unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+	}
+	return $ok;
+}
+
+/**
+ * Sets a page's modified date (byline, schema dateModified and sitemap
+ * lastmod all read it) to a GMT time, only when it is older. Direct
+ * update: wp_update_post() would add a revision for a date change.
+ */
+function cs_set_page_modified( $id, $gmt ) {
+	global $wpdb;
+	$post = get_post( $id );
+	if ( ! $post || strtotime( $post->post_modified_gmt . ' UTC' ) >= strtotime( $gmt . ' UTC' ) ) {
+		return false;
+	}
+	$wpdb->update(
+		$wpdb->posts,
+		array( 'post_modified' => get_date_from_gmt( $gmt ), 'post_modified_gmt' => $gmt ),
+		array( 'ID' => (int) $id ),
+		array( '%s', '%s' ),
+		array( '%d' )
+	);
+	clean_post_cache( (int) $id );
+	return true;
+}
+
+/**
+ * Hubs whose list grows on their own (new part, comparison or combo pages
+ * created by the sync jobs) move their "Last updated" date with it.
+ */
+function cs_touch_hub_pages( $slugs ) {
+	$ids = array();
+	foreach ( (array) $slugs as $slug ) {
+		$page = get_page_by_path( $slug );
+		if ( $page && 'publish' === $page->post_status && cs_set_page_modified( $page->ID, current_time( 'mysql', true ) ) ) {
+			$ids[] = $page->ID;
+		}
+	}
+	if ( $ids && function_exists( 'cs_perf_purge_posts' ) ) {
+		cs_perf_purge_posts( $ids );
+	}
+	return $ids;
+}
+
+/**
+ * Bump when the E3 job below needs to run again.
+ */
+if ( ! defined( 'CS_E3_REV' ) ) {
+	define( 'CS_E3_REV', '2026-10-20-e3' );
+}
+
+/**
+ * ONP-03 dates, with the date each page really changed:
+ *  - 'now': pages whose text E3 changes (hub quick answers and "Which One
+ *    Do You Need?" lists, CPU/GPU Performance text);
+ *  - D8 (18 Oct 2026, 09:16 UTC): hubs and tool pages that got their
+ *    quick answer, hub text or server-side reference table then, but kept a
+ *    September date because those come from the_content filters.
+ * Never moves a date backwards.
+ */
+function cs_e3_dated_pages() {
+	return array(
+		'now' => array( 'calculators', 'guides', 'hardware', 'comparisons', 'cpu-performance-calculator', 'gpu-performance-calculator' ),
+		'2026-10-18 09:16:36' => array(
+			'bottleneck', 'computer-tools', 'storage-tools', 'display-tools', 'internet-tools',
+			'ssd-tbw-calculator', 'file-transfer-time-calculator', 'monitor-size-calculator', 'aspect-ratio-calculator',
+			'bandwidth-calculator', 'download-time-calculator', 'dpi-calculator', 'gpu-power-consumption-calculator',
+			'mb-s-to-mbps-converter', 'mbps-to-mb-s-converter', 'ppi-calculator', 'refresh-rate-calculator',
+			'resolution-calculator', 'ssd-lifespan-calculator', 'storage-calculator', 'upload-time-calculator',
+		),
+	);
+}
+
+/**
+ * Pages whose HTML E3 changes without a date change (titles, byline,
+ * schema, link boxes): purged once so the change goes out.
+ */
+function cs_e3_purge_slugs() {
+	return array( 'can-i-run-it', 'fps-calculator', 'pc-bottleneck-calculator', 'cpu-vs-gpu-calculator', 'how-to-improve-fps', 'cpu-bottleneck-explained', 'gpu-bottleneck-explained', 'low-gpu-usage-in-games', 'dlss-fsr-frame-generation-explained' );
+}
+
+function cs_e3_run() {
+	if ( wp_installing() || get_option( 'cs_e3_rev' ) === CS_E3_REV ) {
+		return;
+	}
+	if ( ! add_option( 'cs_e3_lock', time(), '', 'no' ) ) {
+		if ( time() - (int) get_option( 'cs_e3_lock' ) > 300 ) {
+			delete_option( 'cs_e3_lock' );
+		}
+		return;
+	}
+	$purge = array();
+	foreach ( cs_e3_dated_pages() as $when => $slugs ) {
+		$gmt = 'now' === $when ? current_time( 'mysql', true ) : $when;
+		foreach ( $slugs as $slug ) {
+			$page = get_page_by_path( $slug );
+			if ( $page && 'publish' === $page->post_status ) {
+				cs_set_page_modified( $page->ID, $gmt );
+				$purge[] = $page->ID;
+			}
+		}
+	}
+	foreach ( cs_e3_purge_slugs() as $slug ) {
+		$page = get_page_by_path( $slug );
+		if ( $page ) {
+			$purge[] = $page->ID;
+		}
+	}
+	// Part and comparison pages: new byline, schema and comparison titles.
+	$purge = array_merge( $purge, get_posts( array(
+		'post_type'      => array( 'cs_hardware', 'cs_comparison' ),
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) ) );
+
+	$favicon = cs_write_favicon_ico();
+	// llms.txt: new CPU/GPU Performance descriptions and /computer-tools/.
+	if ( function_exists( 'cs_llms_write' ) ) {
+		cs_llms_write();
+	}
+	if ( class_exists( '\RankMath\Sitemap\Cache' ) && method_exists( '\RankMath\Sitemap\Cache', 'invalidate_storage' ) ) {
+		\RankMath\Sitemap\Cache::invalidate_storage();
+	}
+	if ( function_exists( 'cs_perf_purge_posts' ) ) {
+		cs_perf_purge_posts( $purge );
+	}
+	do_action( 'litespeed_purge_url', home_url( '/' ) );
+	if ( post_type_exists( 'cs_game' ) && get_post_type_archive_link( 'cs_game' ) ) {
+		do_action( 'litespeed_purge_url', get_post_type_archive_link( 'cs_game' ) );
+	}
+
+	update_option( 'cs_e3_favicon', $favicon ? 'ok' : 'skipped', true );
+	update_option( 'cs_e3_rev', CS_E3_REV, true );
+	delete_option( 'cs_e3_lock' );
+}
+add_action( 'init', 'cs_e3_run', 42 );
+
+/**
+ * If the site icon could not be read when the E3 job ran, try the favicon
+ * again from wp-admin, at most once a day.
+ */
+function cs_favicon_retry() {
+	if ( 'ok' === get_option( 'cs_e3_favicon' ) || false === get_option( 'cs_e3_favicon' ) || get_transient( 'cs_favicon_retry' ) ) {
+		return;
+	}
+	set_transient( 'cs_favicon_retry', 1, DAY_IN_SECONDS );
+	if ( cs_write_favicon_ico() ) {
+		update_option( 'cs_e3_favicon', 'ok', true );
+	}
+}
+add_action( 'admin_init', 'cs_favicon_retry' );

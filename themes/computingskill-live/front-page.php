@@ -93,6 +93,9 @@ get_header();
 				array( 'title' => __( 'PC Upgrade Calculator', 'computingskill' ), 'url' => home_url( '/pc-upgrade-calculator/' ) ),
 				array( 'title' => __( 'PC Compatibility Checker', 'computingskill' ), 'url' => home_url( '/pc-compatibility-checker/' ) ),
 				array( 'title' => __( 'CPU vs GPU Calculator', 'computingskill' ), 'url' => home_url( '/cpu-vs-gpu-calculator/' ) ),
+				// E3 (SEO-02): Can I Run It (D10) was not linked from the homepage.
+				array( 'title' => __( 'Can I Run It?', 'computingskill' ), 'url' => home_url( '/can-i-run-it/' ) ),
+				array( 'title' => __( 'PC Cooling Calculator', 'computingskill' ), 'url' => home_url( '/pc-cooling-calculator/' ) ),
 			) );
 			?>
 			<p class="cs-section-more"><a href="<?php echo esc_url( home_url( '/calculators/' ) ); ?>"><?php esc_html_e( 'View all calculators →', 'computingskill' ); ?></a></p>

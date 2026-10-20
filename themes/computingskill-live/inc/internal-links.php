@@ -515,6 +515,7 @@ function cs_il_topic_groups() {
 			'bottleneck'               => __( 'ready-made results for common pairs, side by side', 'computingskill' ),
 			'cpu-vs-gpu-calculator'    => __( 'a quick look at the two scores and the balance, no settings', 'computingskill' ),
 			'cpu-bottleneck-explained' => __( 'what a CPU bottleneck is and how to spot one', 'computingskill' ),
+			'gpu-bottleneck-explained' => __( 'why a GPU-limited game is the normal case', 'computingskill' ),
 		),
 		'speed'      => array(
 			'mbps-to-mb-s-converter' => __( 'turning an advertised plan speed (Mbps) into file speed (MB/s)', 'computingskill' ),
@@ -525,6 +526,14 @@ function cs_il_topic_groups() {
 			'upload-time-calculator'        => __( 'how long an upload or cloud backup takes on your upload speed', 'computingskill' ),
 			'file-transfer-time-calculator' => __( 'copies over USB, Wi-Fi, Ethernet or between drives', 'computingskill' ),
 			'bandwidth-calculator'          => __( 'the speed you need to move data in a set time', 'computingskill' ),
+		),
+		// E3 (SEO-02): the low GPU usage and upscaling guides had 2 inbound pages.
+		'fps'        => array(
+			'fps-calculator'                      => __( 'an FPS estimate for your parts, game type, settings and upscaling', 'computingskill' ),
+			'can-i-run-it'                        => __( 'every game in our list checked against your PC at once', 'computingskill' ),
+			'how-to-improve-fps'                  => __( 'settings and upgrades that raise your frame rate', 'computingskill' ),
+			'low-gpu-usage-in-games'              => __( 'low FPS while the graphics card is not fully used', 'computingskill' ),
+			'dlss-fsr-frame-generation-explained' => __( 'what upscaling and frame generation add, and which cards support them', 'computingskill' ),
 		),
 		'ssd'        => array(
 			'ssd-lifespan-calculator' => __( 'how many years a drive lasts at your daily writes', 'computingskill' ),
@@ -609,6 +618,8 @@ function cs_il_context_links() {
 		'dpi-calculator'             => array( __( 'Screen Sharpness', 'computingskill' ), 'ppi-calculator,resolution-calculator' ),
 		'ppi-calculator'             => array( __( 'More Screen Maths', 'computingskill' ), 'dpi-calculator,monitor-size-calculator,refresh-rate-calculator' ),
 		'how-to-improve-fps'         => array( __( 'Check Your Numbers', 'computingskill' ), 'fps-calculator,refresh-rate-calculator,pc-bottleneck-calculator' ),
+		'cpu-bottleneck-explained'   => array( __( 'Low GPU Usage?', 'computingskill' ), 'low-gpu-usage-in-games,how-to-improve-fps,cpu-tier-list' ),
+		'gpu-bottleneck-explained'   => array( __( 'More FPS From Your GPU', 'computingskill' ), 'dlss-fsr-frame-generation-explained,low-gpu-usage-in-games,gpu-tier-list' ),
 		'1080p-vs-1440p-vs-4k'       => array( __( 'Size Up Your Monitor', 'computingskill' ), 'ppi-calculator,monitor-size-calculator,refresh-rate-calculator,dpi-calculator' ),
 		'download-time-calculator'   => array( __( 'Unit Converters', 'computingskill' ), 'mbps-to-mb-s-converter,mb-s-to-mbps-converter,internet-data-usage-calculator' ),
 		'how-much-ram-do-i-need'     => array( __( 'Games and Their RAM Needs', 'computingskill' ), 'call-of-duty-warzone,baldurs-gate-3,cyberpunk-2077,minecraft' ),
@@ -756,6 +767,7 @@ function cs_il_hub_guides() {
 			'items' => array(
 				'pc-bottleneck-calculator'  => __( 'Will my CPU hold back my graphics card?', 'computingskill' ),
 				'fps-calculator'            => __( 'Roughly what frame rate will my parts reach in a game?', 'computingskill' ),
+				'can-i-run-it'              => __( 'Which games can my PC run, and at what settings?', 'computingskill' ),
 				'psu-calculator'            => __( 'How many watts does my power supply need?', 'computingskill' ),
 				'pc-compatibility-checker'  => __( 'Do my parts fit and work together?', 'computingskill' ),
 				'pc-upgrade-calculator'     => __( 'Which upgrade helps my PC most?', 'computingskill' ),
@@ -835,8 +847,10 @@ function cs_il_hub_guides() {
 			'intro' => __( 'Pick a guide by the problem you have:', 'computingskill' ),
 			'items' => array(
 				'how-to-improve-fps'                             => __( 'My games stutter or run below my monitor’s refresh rate.', 'computingskill' ),
+				'low-gpu-usage-in-games'                         => __( 'My GPU usage sits well below 100% in games.', 'computingskill' ),
+				'dlss-fsr-frame-generation-explained'            => __( 'Should I turn on DLSS, FSR or frame generation?', 'computingskill' ),
 				'how-to-upgrade-a-gaming-pc'                     => __( 'I have a budget and want the upgrade that helps most.', 'computingskill' ),
-				'cpu-bottleneck-explained'                       => __( 'My GPU usage sits well below 100% in games.', 'computingskill' ),
+				'cpu-bottleneck-explained'                       => __( 'I want to know if my CPU holds back my graphics card.', 'computingskill' ),
 				'how-to-choose-a-gaming-gpu'                     => __( 'I am buying a graphics card.', 'computingskill' ),
 				'how-much-ram-do-i-need-for-gaming-and-streaming' => __( 'I want to stream while I play.', 'computingskill' ),
 				'how-much-vram-do-i-need'                        => __( 'I am moving to 1440p or 4K.', 'computingskill' ),

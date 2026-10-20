@@ -2,8 +2,7 @@
 /**
  * Fallback singular template.
  *
- * Handles two cases: (1) real blog posts ('post') get date/category meta
- * and comments; (2) the site's custom post types (cs_calculator, cs_tool,
+ * Handles two cases: (1) real blog posts ('post') get date/category meta; (2) the site's custom post types (cs_calculator, cs_tool,
  * cs_hardware, cs_guide, cs_comparison, cs_resource) fall through to this
  * file whenever no page-templates/*.php is assigned, and get the same
  * clean breadcrumbs + H1 + content layout as page.php, without blog
@@ -29,15 +28,26 @@ $cs_is_blog_post = ( 'post' === get_post_type() );
 			<article <?php post_class( 'cs-article' ); ?>>
 				<header class="cs-article-header">
 					<h1 class="cs-article-title"><?php the_title(); ?></h1>
+					<?php
+					// E3 (ONP-01): every page here gets the byline and date, not
+					// only posts; the part and comparison pages (D10) had none.
+					cs_article_meta();
+					?>
 					<?php if ( $cs_is_blog_post ) : ?>
-						<?php cs_article_meta(); ?>
 						<p class="cs-article-meta">
 							<?php esc_html_e( 'Published', 'computingskill' ); ?>
 							<time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date() ); ?></time>
 							<?php
-							$categories = get_the_category_list( ', ' );
+							// E3 (SEO-07): no link to a category archive that is
+							// noindexed for being thin (inc/technical-seo.php).
+							$categories = array();
+							foreach ( get_the_category() as $cs_cat ) {
+								if ( ! function_exists( 'cs_is_thin_term' ) || ! cs_is_thin_term( $cs_cat ) ) {
+									$categories[] = '<a href="' . esc_url( get_category_link( $cs_cat ) ) . '" rel="category tag">' . esc_html( $cs_cat->name ) . '</a>';
+								}
+							}
 							if ( $categories ) {
-								echo ' &middot; ' . wp_kses_post( $categories );
+								echo ' &middot; ' . wp_kses_post( implode( ', ', $categories ) );
 							}
 							?>
 						</p>
