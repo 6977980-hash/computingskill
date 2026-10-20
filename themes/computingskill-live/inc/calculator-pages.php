@@ -368,16 +368,15 @@ function cs_page_text_swap( $content, $list ) {
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-u4' );
+	define( 'CS_CALC_PAGES_REV', '2026-10-20-u4b' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// U4 (user-side audit): /comparisons/ has a rewritten intro and its
-		// lists moved up and were grouped. The menu, jump links, tool boxes
-		// and other hub changes are navigation only. U3, U2, U1, K4, K3, K2,
-		// K1, D2, D3, D5 and D10 ran with earlier revs; their pages are dated.
-		'comparisons',
+		// U4 follow-up: /bottleneck/ method wording (inc/u2-text.php). U4
+		// (/comparisons/), U3, U2, U1, K4, K3, K2, K1, D2, D3, D5 and D10 ran
+		// with earlier revs; their pages are dated.
+		'bottleneck',
 	);
 }
 

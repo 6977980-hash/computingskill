@@ -59,6 +59,12 @@ function cs_u2_page_fixes() {
 				__( 'The CPU and GPU tools ask you to pick your models from a list. If yours isn’t listed, choose “Other / not listed” where the tool offers it and then the listed part closest to yours, and the estimate uses that part’s data. The power, storage, internet and display tools take plain numbers such as watts, GB, Mbps or inches.', 'computingskill' ),
 			),
 		),
+		// U4 follow-up: the bottleneck hub's intro and one FAQ answer (the FAQ
+		// schema reads the same shortcode text).
+		'bottleneck' => array(
+			array( 'the same specs-based estimate model as', 'the same specs-based estimate model as', __( 'the same gaming-performance scores (placed from published review averages) as', 'computingskill' ) ),
+			array( 'a specs-based estimate', 'a specs-based estimate', __( 'an estimate from our gaming-performance scores', 'computingskill' ) ),
+		),
 		'disclaimer' => array(
 			array( 'produces a specs-based estimate', 'produces a specs-based estimate', __( 'produces an estimate', 'computingskill' ) ),
 			array(

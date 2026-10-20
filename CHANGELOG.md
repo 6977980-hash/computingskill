@@ -2,6 +2,9 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.63 (20 Oct 2026) — U4 follow-up: /bottleneck/ method wording
+- /bottleneck/ intro ("the same specs-based estimate model as") and the FAQ answer "Are these bottleneck percentages exact?" (visible and FAQPage schema) now describe the CPU/GPU gaming-performance scores like the rest of the site (U-05 wording, `inc/u2-text.php`). `CS_CALC_PAGES_REV` 2026-10-20-u4b dates /bottleneck/ only.
+
 ## 1.0.62 (20 Oct 2026) — U4 navigation, layout and accessibility
 From the 20 Oct user-side audit (U4: U-19..U-24, U-27, U-29..U-33, U-35, U-37..U-39). No scores, calculator numbers or engine constants changed. New file `inc/u4-nav.php`.
 - U-19: `html { scroll-padding-top }` = sticky header height + 16px (main.js keeps `--cs-header-offset` up to date, measured with the menu closed), so anchors (/methodology/#m-psu) and Shift+Tab focus land below the header.
