@@ -45,6 +45,20 @@ function cs_register_ga4_setting() {
 	);
 }
 add_action( 'admin_init', 'cs_register_ga4_setting' );
+
+/**
+ * Oct 2026: the owner's GA4 property is G-JS2CQFVCCQ. It is fixed in the
+ * theme so it replaces the old ID (G-NJRNE0GTDC) still saved in the
+ * option, and the Settings field shows this ID too. Everything below
+ * (consent banner, admin exclusion, Site Kit check) still applies.
+ */
+define( 'CS_GA4_MEASUREMENT_ID', 'G-JS2CQFVCCQ' );
+add_filter(
+	'pre_option_cs_ga4_measurement_id',
+	static function () {
+		return CS_GA4_MEASUREMENT_ID;
+	}
+);
 add_action( 'rest_api_init', 'cs_register_ga4_setting' );
 
 // add_settings_field() only exists in wp-admin, so the visible field is
