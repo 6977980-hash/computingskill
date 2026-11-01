@@ -658,7 +658,7 @@ function cs_pp_gpu_html( $slug, $gpu ) {
 	) . '</p>';
 
 	// Best CPU.
-	$html .= '<h2>' . esc_html( sprintf( __( 'Best CPU for the %s', 'computingskill' ), $name ) ) . '</h2>';
+	$html .= '<h2>' . esc_html( sprintf( __( 'Best CPU for the %s Without a Bottleneck', 'computingskill' ), $name ) ) . '</h2>';
 	$p     = array();
 	if ( $min1080 ) {
 		$p[] = sprintf(

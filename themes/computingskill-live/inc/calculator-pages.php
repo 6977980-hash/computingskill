@@ -368,15 +368,22 @@ function cs_page_text_swap( $content, $list ) {
  * list only the pages that changed.
  */
 if ( ! defined( 'CS_CALC_PAGES_REV' ) ) {
-	define( 'CS_CALC_PAGES_REV', '2026-10-20-u4b' );
+	define( 'CS_CALC_PAGES_REV', '2026-11-01-g1' );
 }
 
 function cs_calc_pages_changed() {
 	return array(
-		// U4 follow-up: /bottleneck/ method wording (inc/u2-text.php). U4
-		// (/comparisons/), U3, U2, U1, K4, K3, K2, K1, D2, D3, D5 and D10 ran
-		// with earlier revs; their pages are dated.
-		'bottleneck',
+		// G1 (inc/g1-pages.php): new sections and FAQ. U4 follow-up
+		// (/bottleneck/), U4, U3, U2, U1, K4, K3, K2, K1, D2, D3, D5 and D10
+		// ran with earlier revs; their pages are dated.
+		'gpu-power-consumption-calculator',
+		'bandwidth-calculator',
+		'resolution-calculator',
+		'ssd-tbw-calculator',
+		'ssd-lifespan-calculator',
+		'storage-calculator',
+		'upload-time-calculator',
+		'1080p-vs-1440p-vs-4k',
 	);
 }
 

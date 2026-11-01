@@ -31,7 +31,8 @@ function cs_extra_faq_definitions() {
 		function_exists( 'cs_k1_extra_faqs' ) ? cs_k1_extra_faqs() : array(),
 		function_exists( 'cs_k2_extra_faqs' ) ? cs_k2_extra_faqs() : array(),
 		function_exists( 'cs_k3_extra_faqs' ) ? cs_k3_extra_faqs() : array(),
-		function_exists( 'cs_k4_extra_faqs' ) ? cs_k4_extra_faqs() : array()
+		function_exists( 'cs_k4_extra_faqs' ) ? cs_k4_extra_faqs() : array(),
+		function_exists( 'cs_g1_extra_faqs' ) ? cs_g1_extra_faqs() : array()
 	);
 }
 

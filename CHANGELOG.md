@@ -2,6 +2,16 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.65 (1 Nov 2026) — G1: live GSC query gaps
+From the live Search Console pull of 1 Nov 2026 (report: audit/gsc-live-2026-11-01/gsc-live-report.md in the project files). New code: `themes/computingskill-live/inc/g1-pages.php`.
+- Titles (`cs_title_overrides()`): keyword titles for the GPU Power Consumption Calculator, 1080p vs 1440p vs 4K, PC Bottleneck Calculator and Bandwidth Calculator (they were "{Name} - Computing Skill"); Best GPU for Ryzen 5 5600 names its picks; Storage Calculator says "How Much Space".
+- Descriptions (`cs_page_description_overrides()`): same pages, each with a number or the answer.
+- /gpu-power-consumption-calculator/: "GPU Electricity Cost per Month" table (5 GPUs, 3 h a day, 70% of board power, $0.15 and $0.30/kWh) and "Sizing Power for Peak GPU Demand" (transients and ATX 3.0, several GPUs, GPUs per megawatt, BTU/h cooling).
+- /bandwidth-calculator/: "How to Calculate Bandwidth" with the formula, a 50GB-in-8-hours example and a 20-person office table.
+- Extra FAQ (`cs_g1_extra_faqs()`): 66% of 1080p and linear scale (resolution), TBW limit and Total LBAs Written (TBW, lifespan), how long 1TB lasts (storage), 1GB at 10 Mbps and YouTube upload (upload), difference between 1080p, 1440p and 4K.
+- GPU part pages: H2 "Best CPU for the {GPU} Without a Bottleneck".
+- `CS_CALC_PAGES_REV` 2026-11-01-g1 dates the 8 changed pages.
+
 ## 1.0.63 (20 Oct 2026) — U4 follow-up: /bottleneck/ method wording
 - /bottleneck/ intro ("the same specs-based estimate model as") and the FAQ answer "Are these bottleneck percentages exact?" (visible and FAQPage schema) now describe the CPU/GPU gaming-performance scores like the rest of the site (U-05 wording, `inc/u2-text.php`). `CS_CALC_PAGES_REV` 2026-10-20-u4b dates /bottleneck/ only.
 

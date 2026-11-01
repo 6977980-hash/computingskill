@@ -53,6 +53,7 @@ require_once CS_THEME_DIR . '/inc/k1-pages.php';
 require_once CS_THEME_DIR . '/inc/k2-pages.php';
 require_once CS_THEME_DIR . '/inc/k3-pages.php';
 require_once CS_THEME_DIR . '/inc/k4-pages.php';
+require_once CS_THEME_DIR . '/inc/g1-pages.php';
 require_once CS_THEME_DIR . '/inc/a11y.php';
 require_once CS_THEME_DIR . '/inc/u2-text.php';
 require_once CS_THEME_DIR . '/inc/u4-nav.php';

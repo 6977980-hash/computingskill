@@ -265,14 +265,16 @@ function cs_title_overrides() {
 		'hardware'                  => __( 'PC Hardware Explained: CPU, GPU, RAM, PSU & More', 'computingskill' ),
 		'methodology'               => __( 'Methodology: How Our PC Calculators Work', 'computingskill' ),
 		'ssd-vs-hdd'                => __( 'SSD vs HDD: Speed, Durability, Price & Which to Pick', 'computingskill' ),
-		'best-gpu-for-ryzen-5-5600' => __( 'Best GPU for Ryzen 5 5600 & 5600X (2026, No Bottleneck)', 'computingskill' ),
+		// G1 (live GSC, 1 Nov 2026): page one with 0 clicks, so the title names the picks.
+		'best-gpu-for-ryzen-5-5600' => __( 'Best GPU for Ryzen 5 5600 (2026): RX 9060 XT to RTX 5070', 'computingskill' ),
 		'gpu-tier-list'             => __( 'GPU Tier List 2026: Graphics Cards Ranked for Gaming', 'computingskill' ),
 		'cpu-tier-list'             => __( 'CPU Tier List 2026: Best Gaming Processors Ranked', 'computingskill' ),
 		// E3 (SEO-03): the post title is 61 characters.
 		'dlss-fsr-frame-generation-explained' => __( 'DLSS vs FSR vs XeSS: Upscaling & Frame Generation Explained', 'computingskill' ),
 		// K1 (GSC, 20 Oct 2026): calculators already ranking 10-20 had
 		// "{Name} - Computing Skill" titles that named none of their queries.
-		'storage-calculator'        => __( 'Storage Calculator: Space for Photos, 4K Video & Games', 'computingskill' ),
+		// G1: "storage needs/size calculator" searches.
+		'storage-calculator'        => __( 'Storage Calculator: How Much Space for Photos, Video & Games', 'computingskill' ),
 		'ssd-tbw-calculator'        => __( 'SSD TBW & DWPD Calculator: What TBW Means for a Drive', 'computingskill' ),
 		'ssd-lifespan-calculator'   => __( 'SSD Lifespan Calculator: How Long Does an SSD Last?', 'computingskill' ),
 		'resolution-calculator'     => __( 'Resolution Calculator: Pixels, Megapixels & Aspect Ratio', 'computingskill' ),
@@ -287,6 +289,11 @@ function cs_title_overrides() {
 		'pc-power-consumption-calculator'  => __( 'PC Power Consumption Calculator: Wattage & Electricity Cost', 'computingskill' ),
 		'pc-compatibility-checker'  => __( 'PC Part Compatibility Checker: CPU, Motherboard, GPU & PSU', 'computingskill' ),
 		'cpu-bottleneck-explained'  => __( 'What Is a CPU Bottleneck? Signs & How to Fix It', 'computingskill' ),
+		// G1 (live GSC, 1 Nov 2026): these four still had "{Name} - Computing Skill".
+		'gpu-power-consumption-calculator' => __( 'GPU Power Consumption Calculator: Watts & Electricity Cost', 'computingskill' ),
+		'1080p-vs-1440p-vs-4k'      => __( '1080p vs 1440p vs 4K: Pixels, FPS Cost & Which to Pick', 'computingskill' ),
+		'pc-bottleneck-calculator'  => __( 'Bottleneck Calculator: Is Your CPU or GPU Holding You Back?', 'computingskill' ),
+		'bandwidth-calculator'      => __( 'Bandwidth Calculator: How Much Bandwidth Do You Need?', 'computingskill' ),
 		'archive:cs_game'           => __( 'PC Game System Requirements: Can Your PC Run It?', 'computingskill' ),
 		'term:buying-guides'        => __( 'PC Buying Guides: Articles - Computing Skill', 'computingskill' ),
 	);
@@ -400,7 +407,13 @@ function cs_page_description_overrides() {
 		'privacy-policy' => __( 'How ComputingSkill handles contact messages, server logs, cookies and Google Analytics (only with your consent), what we never sell, and your privacy rights.', 'computingskill' ),
 		'terms-of-use' => __( 'The terms for using ComputingSkill.com: free calculators and guides, estimates rather than guarantees, acceptable use, our content and trademarks.', 'computingskill' ),
 		// D6 (2.7): the post's own description was 164 characters.
-		'best-gpu-for-ryzen-5-5600' => __( 'Which graphics card suits a Ryzen 5 5600 or 5600X without a bottleneck? Estimates for 20 GPUs at 1080p, 1440p and 4K, with the best match for each.', 'computingskill' ),
+		// G1: the picks themselves, so the snippet answers the query.
+		'best-gpu-for-ryzen-5-5600' => __( 'Best GPU for a Ryzen 5 5600 or 5600X: RX 9060 XT 16GB or RTX 5060 at 1080p, RTX 5070 or RX 9070 at 1440p, with no real bottleneck. 20 GPUs compared.', 'computingskill' ),
+		// G1 (inc/g1-pages.php).
+		'gpu-power-consumption-calculator' => __( 'How many watts does a GPU use? Idle, gaming (about 70% of board power) and full load, plus monthly electricity cost and how to size power for peak demand.', 'computingskill' ),
+		'1080p-vs-1440p-vs-4k' => __( '1080p is 2.1MP, 1440p 3.7MP and 4K 8.3MP, four times 1080p. See the visual difference, the GPU power each needs, the best monitor size and which to pick.', 'computingskill' ),
+		'pc-bottleneck-calculator' => __( 'Free bottleneck calculator: pick your CPU and GPU to see which part limits FPS at 1080p, 1440p and 4K, how much of the card goes unused, and what to upgrade.', 'computingskill' ),
+		'bandwidth-calculator' => __( 'How much bandwidth do you need? A 50GB backup in 8 hours needs about 14 Mbps. Calculate bandwidth from data and time, with the formula and an office example.', 'computingskill' ),
 		'editorial-policy' => __( 'How ComputingSkill writes and checks its calculators and guides: who writes them, where the numbers come from, independence, and how corrections are made.', 'computingskill' ),
 	);
 }
