@@ -2,6 +2,13 @@
 
 Theme versions (`themes/computingskill-live/style.css`). Earlier versions are in the git history and the project's audit notes.
 
+## 1.0.66 (21 Nov 2026) — GTA 6 PC status page
+GTA VI launched 19 Nov 2026 on PS5 and Xbox Series X|S only; Rockstar has announced no PC version and no PC requirements (checked 21 Nov 2026). New code: `themes/computingskill-live/inc/gta6-page.php`.
+- New page /gta-6-system-requirements/ (created once, guide template, shortcode `[cs_gta6_status]`): quick answer, official vs reported table with sources, Rockstar console-to-PC history, GTA V Enhanced and RDR2 official specs (from data/games-data.php), console-level GPU table (hardware-data scores vs PS5 level ~42, labelled as a comparison), VRAM/CPU/RAM/storage notes, laptop guidance, scam warning, 6 FAQ (FAQPage schema). No GTA 6 spec or FPS figure anywhere.
+- GTA 6 is deliberately NOT in data/games-data.php until Rockstar publishes PC specs; then add a `gta-6` entry and update `cs_gta6_status()`.
+- Links: short note on the GTA V Enhanced and RDR2 game pages, Can I Run It and How Much VRAM Do I Need (`the_content`), a banner on /games/ (archive-cs_game.php), and a Guides entry in the content index (guides hub, breadcrumbs, llms.txt).
+- Title and description in `inc/seo-compat.php`. `CS_GTA6_REV` dates the 4 linked pages, rewrites llms.txt, clears the Rank Math sitemap cache and purges LiteSpeed once.
+
 ## 1.0.65 (1 Nov 2026) — G1: live GSC query gaps
 From the live Search Console pull of 1 Nov 2026 (report: audit/gsc-live-2026-11-01/gsc-live-report.md in the project files). New code: `themes/computingskill-live/inc/g1-pages.php`.
 - Titles (`cs_title_overrides()`): keyword titles for the GPU Power Consumption Calculator, 1080p vs 1440p vs 4K, PC Bottleneck Calculator and Bandwidth Calculator (they were "{Name} - Computing Skill"); Best GPU for Ryzen 5 5600 names its picks; Storage Calculator says "How Much Space".

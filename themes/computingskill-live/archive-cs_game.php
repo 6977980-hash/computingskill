@@ -52,6 +52,7 @@ $total_games = count( $games_data );
 			<span class="cs-games-cir-desc"><?php esc_html_e( 'Pick your CPU, graphics card and RAM to see which of these games your PC runs, at which settings and roughly how many FPS.', 'computingskill' ); ?></span>
 			<span class="cs-games-cir-go" aria-hidden="true">→</span>
 		</a>
+		<?php echo function_exists( 'cs_gta6_hub_link' ) ? cs_gta6_hub_link() : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 		<?php if ( have_posts() ) : ?>
 			<div class="cs-card-grid cs-games-grid">
 				<?php while ( have_posts() ) : the_post();

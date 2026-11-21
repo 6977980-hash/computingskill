@@ -126,6 +126,7 @@ function cs_content_index_groups() {
 				array( 'slug' => 'how-to-improve-fps', 'title' => __( 'How to Improve FPS on Your PC', 'computingskill' ), 'desc' => __( 'Practical software and hardware fixes to improve FPS on your gaming PC, from graphics settings to component upgrades.', 'computingskill' ) ),
 				array( 'slug' => 'dlss-fsr-frame-generation-explained', 'title' => __( 'DLSS vs FSR vs XeSS: Upscaling and Frame Generation', 'computingskill' ), 'desc' => __( 'How upscaling and frame generation work, which cards support DLSS, FSR 4 and XeSS, how much FPS they add and when to turn them on.', 'computingskill' ) ),
 				array( 'slug' => 'low-gpu-usage-in-games', 'title' => __( 'Low GPU Usage in Games: Causes and Fixes', 'computingskill' ), 'desc' => __( 'Why GPU usage drops in games, how to tell a CPU bottleneck from a frame cap, and fixes for CPU at 100%, stutter and FPS drops.', 'computingskill' ) ),
+				array( 'slug' => 'gta-6-system-requirements', 'title' => __( 'GTA 6 PC System Requirements and Release Status', 'computingskill' ), 'desc' => __( 'Is GTA 6 on PC? Official facts vs reports, Rockstar’s GTA V and RDR2 PC specs, and how common graphics cards compare with the PS5.', 'computingskill' ) ),
 				array( 'slug' => 'how-to-upgrade-a-gaming-pc', 'title' => __( 'How to Upgrade a Gaming PC', 'computingskill' ), 'desc' => __( 'A step-by-step framework for upgrading a gaming PC: diagnosing bottlenecks, the right upgrade order, and compatibility checks.', 'computingskill' ) ),
 			),
 		),

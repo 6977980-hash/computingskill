@@ -269,6 +269,8 @@ function cs_title_overrides() {
 		'best-gpu-for-ryzen-5-5600' => __( 'Best GPU for Ryzen 5 5600 (2026): RX 9060 XT to RTX 5070', 'computingskill' ),
 		'gpu-tier-list'             => __( 'GPU Tier List 2026: Graphics Cards Ranked for Gaming', 'computingskill' ),
 		'cpu-tier-list'             => __( 'CPU Tier List 2026: Best Gaming Processors Ranked', 'computingskill' ),
+		// GTA 6 (inc/gta6-page.php): answers the search in the title.
+		'gta-6-system-requirements' => __( 'GTA 6 PC System Requirements: Not Released Yet', 'computingskill' ),
 		// E3 (SEO-03): the post title is 61 characters.
 		'dlss-fsr-frame-generation-explained' => __( 'DLSS vs FSR vs XeSS: Upscaling & Frame Generation Explained', 'computingskill' ),
 		// K1 (GSC, 20 Oct 2026): calculators already ranking 10-20 had
@@ -414,6 +416,8 @@ function cs_page_description_overrides() {
 		'1080p-vs-1440p-vs-4k' => __( '1080p is 2.1MP, 1440p 3.7MP and 4K 8.3MP, four times 1080p. See the visual difference, the GPU power each needs, the best monitor size and which to pick.', 'computingskill' ),
 		'pc-bottleneck-calculator' => __( 'Free bottleneck calculator: pick your CPU and GPU to see which part limits FPS at 1080p, 1440p and 4K, how much of the card goes unused, and what to upgrade.', 'computingskill' ),
 		'bandwidth-calculator' => __( 'How much bandwidth do you need? A 50GB backup in 8 hours needs about 14 Mbps. Calculate bandwidth from data and time, with the formula and an office example.', 'computingskill' ),
+		// GTA 6 (inc/gta6-page.php).
+		'gta-6-system-requirements' => __( 'GTA 6 is not on PC yet and Rockstar has published no PC requirements. Official facts vs reports, its last PC specs, and how your GPU compares with the PS5.', 'computingskill' ),
 		'editorial-policy' => __( 'How ComputingSkill writes and checks its calculators and guides: who writes them, where the numbers come from, independence, and how corrections are made.', 'computingskill' ),
 	);
 }
