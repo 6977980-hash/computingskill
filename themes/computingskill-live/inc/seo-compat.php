@@ -417,7 +417,7 @@ function cs_page_description_overrides() {
 		'pc-bottleneck-calculator' => __( 'Free bottleneck calculator: pick your CPU and GPU to see which part limits FPS at 1080p, 1440p and 4K, how much of the card goes unused, and what to upgrade.', 'computingskill' ),
 		'bandwidth-calculator' => __( 'How much bandwidth do you need? A 50GB backup in 8 hours needs about 14 Mbps. Calculate bandwidth from data and time, with the formula and an office example.', 'computingskill' ),
 		// GTA 6 (inc/gta6-page.php).
-		'gta-6-system-requirements' => __( 'GTA 6 is not on PC yet and Rockstar has published no PC requirements. Official facts vs reports, its last PC specs, and how your GPU compares with the PS5.', 'computingskill' ),
+		'gta-6-system-requirements' => __( 'GTA 6 is not on PC yet and Rockstar has published no PC requirements. Official facts vs reports, GTA V and RDR2 PC specs, and how your GPU compares with the PS5.', 'computingskill' ),
 		'editorial-policy' => __( 'How ComputingSkill writes and checks its calculators and guides: who writes them, where the numbers come from, independence, and how corrections are made.', 'computingskill' ),
 	);
 }

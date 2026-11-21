@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Bump when the page text or the links change (purges cache, refreshes llms.txt). */
 if ( ! defined( 'CS_GTA6_REV' ) ) {
-	define( 'CS_GTA6_REV', '2026-11-21-a' );
+	define( 'CS_GTA6_REV', '2026-11-21-b' );
 }
 
 /** The slug of the status page. */
